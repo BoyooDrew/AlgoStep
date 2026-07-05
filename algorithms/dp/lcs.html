@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>动态规划-最长公共子序列(LCS)</title>
+
+<link rel="stylesheet" href="../../css/common.css">
+<link rel="stylesheet" href="../../css/layout.css">
+
+<style>
+    /* 左侧网格区：覆盖 canvas-container 的默认行为 */
+    .grid-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .grid-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 10px;
+    }
+
+    .grid-header h2 {
+        margin: 0;
+        font-size: 15px;
+        color: #a78bfa;
+        letter-spacing: 0.5px;
+    }
+
+    .grid-header .step-counter {
+        min-width: 48px;
+        padding: 6px 10px;
+        text-align: center;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 14px;
+        font-weight: 700;
+        color: #fbbf24;
+        background: rgba(251, 191, 36, 0.12);
+        border: 1px solid rgba(251, 191, 36, 0.35);
+        border-radius: 8px;
+    }
+
+    .grid-container {
+        display: grid;
+        justify-content: center;
+        gap: 4px;
+        padding: 10px;
+        background: #0f172a;
+        border-radius: 10px;
+        overflow: auto;
+        min-height: 320px;
+        flex: 1 1 auto;
+    }
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+    <!-- 区块 1：标题区 -->
+    <header>
+        <div>
+            <h1>最长公共子序列 · Longest Common Subsequence</h1>
+            <div class="subtitle">
+                动态规划可视化：dp[i][j] = dp[i-1][j-1]+1（匹配）或 max(dp[i-1][j], dp[i][j-1])（不匹配）
+            </div>
+        </div>
+        <span class="badge">DP · LCS</span>
+    </header>
+
+    <!-- 区块 2：控制区 -->
+    <section class="control-panel">
+        <h3 class="panel-title">· Controls · 控制面板</h3>
+
+        <div class="control-row">
+            <div class="control-group">
+                <span class="control-label">字符串 A:</span>
+                <input type="text" class="input-number" id="stringA"
+                       value="ABCBDAB" maxlength="12">
+            </div>
+            <div class="control-group">
+                <span class="control-label">字符串 B:</span>
+                <input type="text" class="input-number" id="stringB"
+                       value="BDCABA" maxlength="12">
+            </div>
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnGenerate">生成场景</button>
+                <button class="btn btn-danger" id="btnReset">重置</button>
+                <button class="btn btn-accent" id="btnTrace">回溯路径</button>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnStart">▶ 开始</button>
+                <button class="btn btn-secondary" id="btnPause">⏸ 暂停</button>
+                <button class="btn btn-accent" id="btnPrev">◀ 上一步</button>
+                <button class="btn btn-accent" id="btnNext">下一步 ▶</button>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">速度：</span>
+                <input type="range" class="slider" id="speed-slider"
+                       min="100" max="2000" step="50" value="800">
+                <span class="slider-value" id="speed-value">800ms</span>
+                <span class="slider-value" id="speed-label" style="color:#f59e0b;">中等</span>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <span class="control-label">进度：</span>
+            <input type="range" class="slider" id="progress-slider"
+                   min="1" max="1" step="1" value="1">
+            <span class="slider-value" id="progress-text">0 / 0</span>
+        </div>
+    </section>
+
+    <!-- 区块 3：步骤解释区 -->
+    <section class="explanation-panel">
+        <div class="formula-box">
+            <span class="formula-text" id="formula-text">等待开始...</span>
+            <span id="current-result">LCS 长度: <span id="result-value">0</span></span>
+        </div>
+
+        <div class="step-info">
+            <span class="step-counter" id="step-counter">0</span>
+            <div class="step-description">
+                <div class="step-en" id="step-en">Click "Generate" to start visualization.</div>
+                <div class="step-zh" id="step-zh">点击上方"生成场景"以开始演示。</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 区块 4：演示区 + 代码区 -->
+    <section class="visualization-section">
+
+        <div class="canvas-container grid-section">
+            <div class="grid-header">
+                <h2>动态规划表 (DP Table)</h2>
+                <div class="step-counter" id="gridStep">0</div>
+            </div>
+            <div class="grid-container" id="grid"></div>
+        </div>
+
+        <div class="info-panel">
+            <div class="code-panel" id="codePanel">
+                <div class="code-line" id="line-0">// 最长公共子序列 (LCS) 动态规划解法（基础数组版）</div>
+                <div class="code-line" id="line-1">int longestCommonSubseq(string A, string B) {</div>
+                <div class="code-line" id="line-2">    int n = A.length(), m = B.length();</div>
+                <div class="code-line" id="line-3">    int dp[100][100] = {0};</div>
+                <div class="code-line" id="line-4"></div>
+                <div class="code-line" id="line-5">    for (int i = 1; i <= n; i++)</div>
+                <div class="code-line" id="line-6">        for (int j = 1; j <= m; j++)</div>
+                <div class="code-line" id="line-7">            if (A[i - 1] == B[j - 1])</div>
+                <div class="code-line" id="line-8">                dp[i][j] = dp[i - 1][j - 1] + 1;</div>
+                <div class="code-line" id="line-9">            else</div>
+                <div class="code-line" id="line-10">                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);</div>
+                <div class="code-line" id="line-11"></div>
+                <div class="code-line" id="line-12">    return dp[n][m];</div>
+                <div class="code-line" id="line-13">}</div>
+            </div>
+
+            <div class="array-container" id="arrayContainer"></div>
+        </div>
+    </section>
+</div>
+
+<script src="../../js/common.js"></script>
+<script src="../../js/code-panel.js"></script>
+<script src="../../js/controls.js"></script>
+
+<script>
+(function () {
+    const codePanel = new CodePanel('#codePanel');
+
+    const stringAInput = document.getElementById('stringA');
+    const stringBInput = document.getElementById('stringB');
+    const gridEl = document.getElementById('grid');
+    const formulaText = document.getElementById('formula-text');
+    const resultValue = document.getElementById('result-value');
+    const stepCounterEl = document.getElementById('step-counter');
+    const stepEnEl = document.getElementById('step-en');
+    const stepZhEl = document.getElementById('step-zh');
+    const arrayContainer = document.getElementById('arrayContainer');
+    const gridStepEl = document.getElementById('gridStep');
+
+    let s1 = 'ABCBDAB';
+    let s2 = 'BDCABA';
+    let n = s1.length;
+    let m = s2.length;
+    let dp = [];
+    let cells = [];
+
+    /* ========= 控制器 ========= */
+    const controller = new StepController({
+        onStep: function (step, index) {
+            if (!step) return;
+
+            if (step.codeLines && step.codeLines.length) {
+                codePanel.highlight(step.codeLines);
+            } else if (step.codeLine !== undefined) {
+                codePanel.highlight(step.codeLine);
+            }
+
+            stepCounterEl.textContent = index + 1;
+            if (gridStepEl) gridStepEl.textContent = index + 1;
+            stepEnEl.textContent = step.en || '';
+            stepZhEl.textContent = step.zh || '';
+            formulaText.textContent = step.formula || '';
+            if (resultValue && step.value !== undefined) resultValue.textContent = step.value;
+            else if (resultValue && dp[n] && dp[n][m] !== undefined) resultValue.textContent = dp[n][m];
+
+            renderStepVisual(step);
+        }
+    });
+
+    /* ========= 网格构建 ========= */
+    function clearCellClasses() {
+        const all = gridEl.querySelectorAll('.cell.dp-val');
+        all.forEach(c => {
+            c.classList.remove('processing', 'match', 'mismatch', 'finished', 'path');
+            c.style.transform = '';
+            c.style.boxShadow = '';
+        });
+        const headers = gridEl.querySelectorAll('.cell.header');
+        headers.forEach(c => c.classList.remove('active-header'));
+    }
+
+    function setCellClass(row, col, cls) {
+        if (cells[row] && cells[row][col]) cells[row][col].classList.add(cls);
+    }
+
+    function createGrid() {
+        gridEl.innerHTML = '';
+        cells = [];
+        gridEl.style.gridTemplateColumns = `repeat(${m + 2}, auto)`;
+
+        // 第一行：空 + 空串 + B 字符
+        appendCell('', 'header');
+        appendCell('\u2205', 'header');
+        for (let j = 0; j < m; j++) appendCell(s2[j], 'header', -1, j + 1);
+
+        // 第二行：空串 + 0 0 0 ...
+        appendCell('\u2205', 'header');
+        for (let j = 0; j <= m; j++) appendCell('0', 'dp-val', 0, j);
+
+        // 其余行
+        for (let i = 1; i <= n; i++) {
+            appendCell(s1[i - 1], 'header', i, -1);
+            appendCell('0', 'dp-val', i, 0);
+            for (let j = 1; j <= m; j++) appendCell('', 'dp-val', i, j);
+        }
+    }
+
+    function appendCell(text, className, row, col) {
+        const cell = document.createElement('div');
+        cell.className = 'cell ' + className;
+        cell.textContent = text;
+        if (row !== undefined && col !== undefined) {
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+            if (row >= 0 && col >= 0) {
+                if (!cells[row]) cells[row] = [];
+                cells[row][col] = cell;
+            }
+        }
+        gridEl.appendChild(cell);
+        return cell;
+    }
+
+    /* ========= 数组卡片展示 ========= */
+    function renderArrayInfo(step) {
+        arrayContainer.innerHTML = '';
+        if (!step || step.row === undefined || step.col === undefined) return;
+
+        const items = [
+            { label: 'i', value: step.row },
+            { label: 'j', value: step.col }
+        ];
+        if (step.char1 !== undefined) items.push({ label: 'A[i]', value: step.char1 });
+        if (step.char2 !== undefined) items.push({ label: 'B[j]', value: step.char2 });
+        if (step.value !== undefined) items.push({ label: 'dp', value: step.value });
+        if (step.prev  !== undefined) items.push({ label: '\u2196', value: step.prev });
+        if (step.top   !== undefined) items.push({ label: '\u2191', value: step.top });
+        if (step.left  !== undefined) items.push({ label: '\u2190', value: step.left });
+
+        items.forEach(it => {
+            const cell = document.createElement('div');
+            cell.className = 'array-cell';
+            cell.innerHTML = `<span class="cell-index">${it.label}</span><span class="cell-value">${it.value}</span>`;
+            arrayContainer.appendChild(cell);
+        });
+    }
+
+    /* ========= 每步可视化 ========= */
+    function renderStepVisual(step) {
+        clearCellClasses();
+
+        if (step.row !== undefined && step.col !== undefined) {
+            // 行表头
+            gridEl.querySelectorAll(`.cell.header[data-row="${step.row}"]`).forEach(el => {
+                el.classList.add('active-header');
+            });
+            // 列表头：第一行内的第 step.col 个 B 字符
+            const firstRowCells = Array.from(gridEl.children).slice(0, m + 2);
+            const colHeaderIdx = 1 + step.col; // 跳过 空 + 空串
+            if (firstRowCells[colHeaderIdx]) firstRowCells[colHeaderIdx].classList.add('active-header');
+        }
+
+        switch (step.type) {
+            case 'intro':
+                break;
+            case 'setup':
+                for (let i = 0; i <= n; i++) if (cells[i] && cells[i][0]) cells[i][0].textContent = '0';
+                for (let j = 0; j <= m; j++) if (cells[0] && cells[0][j]) cells[0][j].textContent = '0';
+                break;
+            case 'focus':
+                setCellClass(step.row, step.col, 'processing');
+                break;
+            case 'match':
+                setCellClass(step.row, step.col, 'match');
+                if (cells[step.row] && cells[step.row][step.col]) {
+                    cells[step.row][step.col].textContent = step.value;
+                }
+                if (cells[step.row - 1] && cells[step.row - 1][step.col - 1]) {
+                    cells[step.row - 1][step.col - 1].style.transform = 'scale(1.1)';
+                    cells[step.row - 1][step.col - 1].style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.55)';
+                }
+                break;
+            case 'mismatch':
+                setCellClass(step.row, step.col, 'mismatch');
+                if (cells[step.row] && cells[step.row][step.col]) {
+                    cells[step.row][step.col].textContent = step.value;
+                }
+                if (cells[step.row - 1] && cells[step.row - 1][step.col]) {
+                    cells[step.row - 1][step.col].style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.6)';
+                }
+                if (cells[step.row] && cells[step.row][step.col - 1]) {
+                    cells[step.row][step.col - 1].style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.6)';
+                }
+                break;
+            case 'finish':
+                setCellClass(step.row, step.col, 'finished');
+                if (cells[step.row] && cells[step.row][step.col]) {
+                    cells[step.row][step.col].textContent = step.value;
+                }
+                break;
+        }
+
+        renderArrayInfo(step);
+    }
+
+    /* ========= 步骤生成 ========= */
+    function generateSteps() {
+        const steps = [];
+        dp = Array(n + 1).fill().map(() => Array(m + 1).fill(0));
+
+        steps.push({
+            type: 'intro',
+            en: `Finding LCS for A="${s1}" and B="${s2}"`,
+            zh: `寻找字符串 A="${s1}" 与 B="${s2}" 的最长公共子序列`,
+            formula: `LCS(A="${s1}", B="${s2}")`,
+            codeLines: [0, 1, 2, 3],
+            value: 0, row: 0, col: 0
+        });
+
+        steps.push({
+            type: 'setup',
+            en: 'Initialize dp[i][0] = 0 and dp[0][j] = 0 for all i, j',
+            zh: '初始化：dp[i][0] = 0, dp[0][j] = 0（空串的 LCS 为 0）',
+            formula: '边界: dp[i][0] = 0, dp[0][j] = 0',
+            codeLines: [3],
+            value: 0, row: 0, col: 0
+        });
+
+        for (let i = 1; i <= n; i++) {
+            for (let j = 1; j <= m; j++) {
+                const char1 = s1[i - 1];
+                const char2 = s2[j - 1];
+
+                steps.push({
+                    type: 'focus',
+                    en: `Comparing A[${i}]='${char1}' with B[${j}]='${char2}'`,
+                    zh: `比较 A[${i}]='${char1}' 与 B[${j}]='${char2}'`,
+                    formula: `比较: A[${i}]='${char1}' vs B[${j}]='${char2}'`,
+                    row: i, col: j, char1: char1, char2: char2,
+                    codeLines: [5, 6, 7], value: 0
+                });
+
+                if (char1 === char2) {
+                    dp[i][j] = dp[i - 1][j - 1] + 1;
+                    steps.push({
+                        type: 'match',
+                        en: `Match! dp[${i}][${j}] = dp[${i-1}][${j-1}] + 1 = ${dp[i][j]}`,
+                        zh: `匹配！dp[${i}][${j}] = dp[${i-1}][${j-1}] + 1 = ${dp[i][j]}`,
+                        formula: `匹配: dp[${i}][${j}] = dp[${i-1}][${j-1}] + 1 = ${dp[i][j]}`,
+                        row: i, col: j, char1: char1, char2: char2,
+                        value: dp[i][j], prev: dp[i - 1][j - 1],
+                        codeLines: [8]
+                    });
+                } else {
+                    const top = dp[i - 1][j];
+                    const left = dp[i][j - 1];
+                    dp[i][j] = Math.max(top, left);
+                    steps.push({
+                        type: 'mismatch',
+                        en: `No match. dp[${i}][${j}] = max(${top}, ${left}) = ${dp[i][j]}`,
+                        zh: `不匹配。dp[${i}][${j}] = max(dp[${i-1}][${j}]=${top}, dp[${i}][${j-1}]=${left}) = ${dp[i][j]}`,
+                        formula: `不匹配: dp[${i}][${j}] = max(${top}, ${left}) = ${dp[i][j]}`,
+                        row: i, col: j, char1: char1, char2: char2,
+                        value: dp[i][j], top: top, left: left,
+                        codeLines: [10]
+                    });
+                }
+            }
+        }
+
+        steps.push({
+            type: 'finish',
+            en: `Done! LCS length = dp[${n}][${m}] = ${dp[n][m]}`,
+            zh: `完成！LCS 长度 = dp[${n}][${m}] = ${dp[n][m]}`,
+            formula: `完成! LCS 长度 = ${dp[n][m]}`,
+            row: n, col: m, value: dp[n][m],
+            codeLines: [12]
+        });
+
+        return steps;
+    }
+
+    /* ========= 路径回溯 ========= */
+    function tracePath() {
+        if (!dp || !dp.length) return;
+        gridEl.querySelectorAll('.cell.dp-val').forEach(c => {
+            c.classList.remove('processing', 'match', 'mismatch', 'finished');
+            c.style.boxShadow = '';
+            c.style.transform = '';
+        });
+
+        let i = n, j = m;
+        const path = [];
+        while (i > 0 && j > 0) {
+            if (s1[i - 1] === s2[j - 1] && dp[i][j] === dp[i - 1][j - 1] + 1) {
+                if (cells[i] && cells[i][j]) {
+                    cells[i][j].classList.add('path', 'match');
+                    cells[i][j].style.transform = 'scale(1.12)';
+                    cells[i][j].style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.55)';
+                }
+                path.push({ i, j, char: s1[i - 1] });
+                i--; j--;
+            } else if (dp[i - 1][j] >= dp[i][j - 1]) {
+                if (cells[i] && cells[i][j]) cells[i][j].classList.add('path');
+                i--;
+            } else {
+                if (cells[i] && cells[i][j]) cells[i][j].classList.add('path');
+                j--;
+            }
+        }
+
+        const lcsString = path.slice().reverse().map(p => p.char).join('');
+        stepEnEl.textContent = `LCS Path Found: "${lcsString}"`;
+        stepZhEl.textContent = `找到 LCS 路径: "${lcsString}"`;
+        formulaText.textContent = `LCS = "${lcsString}"`;
+        if (gridStepEl) gridStepEl.textContent = 'TRACE';
+
+        arrayContainer.innerHTML = '';
+        path.slice().reverse().forEach(p => {
+            const cell = document.createElement('div');
+            cell.className = 'array-cell';
+            cell.innerHTML = `<span class="cell-index">(${p.i},${p.j})</span><span class="cell-value">${p.char}</span>`;
+            arrayContainer.appendChild(cell);
+        });
+    }
+
+    /* ========= 生成 / 重置 ========= */
+    function generate() {
+        s1 = (stringAInput.value || 'ABCBDAB').trim().toUpperCase();
+        s2 = (stringBInput.value || 'BDCABA').trim().toUpperCase();
+        stringAInput.value = s1;
+        stringBInput.value = s2;
+        n = s1.length;
+        m = s2.length;
+
+        createGrid();
+        const newSteps = generateSteps();
+        controller.setSteps(newSteps);
+        controller.reset();
+
+        codePanel.clearHighlight();
+        formulaText.textContent = '等待开始...';
+        if (gridStepEl) gridStepEl.textContent = '0';
+        arrayContainer.innerHTML = '';
+    }
+
+    function reset() {
+        codePanel.clearHighlight();
+        stepCounterEl.textContent = '0';
+        stepEnEl.textContent = 'Click "Generate" to start visualization.';
+        stepZhEl.textContent = '点击上方"生成场景"以开始演示。';
+        formulaText.textContent = '等待开始...';
+        if (resultValue) resultValue.textContent = '0';
+        if (gridStepEl) gridStepEl.textContent = '0';
+        arrayContainer.innerHTML = '';
+    }
+
+    /* ========= 绑定 ========= */
+    bindControls({
+        controller: controller,
+        onGenerate: generate,
+        onReset: reset,
+        onReplay: function () { reset(); generate(); controller.play(); }
+    });
+
+    document.getElementById('btnTrace').addEventListener('click', function () {
+        controller.pause();
+        tracePath();
+    });
+
+    window.addEventListener('load', function () { generate(); });
+})();
+</script>
+    <div style="width:100%;text-align:center;padding:20px;color:#6b7280;font-size:13px;border-top:1px solid #e5e7eb;margin-top:auto;">© 2026 AlgoStep. Created by 赵博宇. All rights reserved.</div>
+</body>
+</html>
