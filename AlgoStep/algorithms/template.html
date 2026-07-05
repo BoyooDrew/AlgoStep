@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>算法可视化 - 模板页</title>
+
+<!-- =======================================================
+     CSS：先通用，后布局（如页面有专属动画，再在下面补）
+     相对路径：当前页在 /algorithms/，CSS/JS 在根目录
+     ======================================================= -->
+<link rel="stylesheet" href="../css/common.css" />
+<link rel="stylesheet" href="../css/layout.css" />
+
+<style>
+    /* -------- 本页专属（若需要） -------- */
+    /* 数组卡片（台阶问题的 dp[1..n] 展示） */
+    .array-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px;
+        background: #0f172a;
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        border-radius: 10px;
+    }
+    .array-cell {
+        min-width: 56px;
+        height: 56px;
+        padding: 4px 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        color: #cbd5e1;
+        background: #111827;
+        border: 2px solid #475569;
+        border-radius: 8px;
+        transition: transform .2s ease, background-color .2s ease,
+                    border-color .2s ease, box-shadow .2s ease;
+    }
+    .array-cell .cell-index { font-size: 11px; color: #94a3b8; }
+    .array-cell .cell-value { font-size: 18px; font-weight: 700; color: #f8fafc; }
+    .array-cell.highlight {
+        border-color: #8b5cf6;
+        background: rgba(139, 92, 246, 0.22);
+        transform: scale(1.08);
+        box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+    }
+    .array-cell.final {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.18);
+    }
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+    <!-- ===========================================================
+         区块 1：标题区（渐变蓝色，左侧竖线强调）
+         =========================================================== -->
+    <header>
+        <div>
+            <h1>算法名称 · Algorithm Template</h1>
+            <div class="subtitle">
+                一行简介：此处用最简洁的语言描述本算法解决了什么问题。
+            </div>
+        </div>
+        <span class="badge">TEMPLATE / 模板</span>
+    </header>
+
+    <!-- ===========================================================
+         区块 2：控制区（淡蓝，左侧品牌色竖线）
+         子区：
+            第一行：场景参数（输入/选择）+ 生成按钮
+            第二行：播放 / 暂停 / 上一步 / 下一步 / 重置 + 速度滑块
+            第三行：进度滑块
+         =========================================================== -->
+    <section class="control-panel">
+        <h3 class="panel-title">· Controls · 控制面板</h3>
+
+        <!-- 第一行：场景参数 -->
+        <div class="control-row">
+            <div class="control-group">
+                <span class="control-label">参数 N：</span>
+                <input type="number" class="input-number" id="paramInput"
+                       value="5" min="1" max="40" />
+            </div>
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnGenerate">生成场景</button>
+                <button class="btn btn-danger"  id="btnReset">重置</button>
+            </div>
+        </div>
+
+        <!-- 第二行：操作按钮 + 速度 -->
+        <div class="control-row">
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnStart">▶ 播放</button>
+                <button class="btn btn-secondary" id="btnPause">⏸ 暂停</button>
+                <button class="btn btn-accent" id="btnPrev">◀ 上一步</button>
+                <button class="btn btn-accent" id="btnNext">下一步 ▶</button>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">速度：</span>
+                <input type="range" class="slider" id="speed-slider"
+                       min="100" max="2000" step="50" value="800" />
+                <span class="slider-value" id="speed-value">800ms</span>
+                <span class="slider-value" id="speed-label"
+                      style="color:#f59e0b;">中等</span>
+            </div>
+        </div>
+
+        <!-- 第三行：进度 -->
+        <div class="control-row">
+            <span class="control-label">进度：</span>
+            <input type="range" class="slider" id="progress-slider"
+                   min="1" max="1" step="1" value="1" />
+            <span class="slider-value" id="progress-text">0 / 0</span>
+        </div>
+    </section>
+
+    <!-- ===========================================================
+         区块 3：步骤解释区（淡黄，左侧琥珀色竖线）
+         左边：公式/状态转移公式；右边：当前步骤文字描述
+         =========================================================== -->
+    <section class="explanation-panel">
+        <div class="formula-box">
+            <span class="formula-text">状态转移公式</span>
+            <span id="current-result">
+                例如：dp[i] = dp[i-1] + dp[i-2]
+            </span>
+        </div>
+
+        <div class="step-info">
+            <span class="step-counter" id="step-counter">0</span>
+            <div class="step-description">
+                <div class="step-en" id="step-en">
+                    Click "Generate" to start the visualization.
+                </div>
+                <div class="step-zh" id="step-zh">
+                    点击上方"生成场景"以开始演示。
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===========================================================
+         区块 4：演示区 + 代码区（紫色，左右各 50%）
+         左：演示区（canvas / 柱状图 / 网格）
+         右：代码区 + 辅助数据区（数组/状态表）
+         =========================================================== -->
+    <section class="visualization-section">
+
+        <!-- 左侧：演示区 -->
+        <div class="canvas-container">
+            <canvas id="mainCanvas"></canvas>
+        </div>
+
+        <!-- 右侧：代码 + 数据 -->
+        <div class="info-panel">
+
+            <!-- 代码面板：手写 .code-line，由 CodePanel 组件做着色 -->
+            <div class="code-panel" id="codePanel">
+                <div class="code-line" id="line-0">// 示例算法：动态规划入口</div>
+                <div class="code-line" id="line-1">int solve(int n) {</div>
+                <div class="code-line" id="line-2">    if (n <= 1) return 1;</div>
+                <div class="code-line" id="line-3">    vector&lt;int&gt; dp(n + 1, 0);</div>
+                <div class="code-line" id="line-4">    dp[0] = 1; dp[1] = 1;</div>
+                <div class="code-line" id="line-5">    for (int i = 2; i &lt;= n; ++i) {</div>
+                <div class="code-line" id="line-6">        dp[i] = dp[i - 1] + dp[i - 2];</div>
+                <div class="code-line" id="line-7">    }</div>
+                <div class="code-line" id="line-8">    return dp[n];</div>
+                <div class="code-line" id="line-9">}</div>
+            </div>
+
+            <!-- 辅助数据展示区：本页以 dp 数组卡片示例 -->
+            <div class="array-container" id="arrayContainer">
+                <!-- 由 JS 动态插入 -->
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- ===========================================================
+     JS：先控制器，后 CodePanel，最后是本页业务脚本
+     =========================================================== -->
+<script src="../js/common.js"></script>
+<script src="../js/code-panel.js"></script>
+<script src="../js/controls.js"></script>
+
+<script>
+(function () {
+    /* ---------- 页面局部变量 ---------- */
+    const canvas   = document.getElementById('mainCanvas');
+    const ctx      = canvas.getContext('2d');
+    const codePanel = new CodePanel('#codePanel');
+    const arrayContainer = document.getElementById('arrayContainer');
+
+    const paramInput = document.getElementById('paramInput');
+
+    let steps = [];     // 每步 { i, dp, en, zh, codeLine }
+    let state = null;   // 当前算法过程中间态
+
+    /* ---------- Canvas 基础设置（自适应高度/宽度） ---------- */
+    function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width  = rect.width  * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        drawCanvas();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    /* ---------- 渲染：dp 卡片 + 画布 ---------- */
+    function renderArrayCells(highlightIndex) {
+        if (!state || !state.dp) { arrayContainer.innerHTML = ''; return; }
+        const html = state.dp.map((v, i) => {
+            const hl = (i === highlightIndex) ? ' highlight' : '';
+            const fn = (highlightIndex === state.dp.length - 1 && i === highlightIndex)
+                ? ' final' : '';
+            return `<div class="array-cell${hl}${fn}">
+                <span class="cell-index">dp[${i}]</span>
+                <span class="cell-value">${v}</span>
+            </div>`;
+        }).join('');
+        arrayContainer.innerHTML = html;
+    }
+
+    function drawCanvas() {
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+        ctx.clearRect(0, 0, w, h);
+
+        // 背景网格（作为装饰）
+        ctx.strokeStyle = 'rgba(59, 130, 246, 0.08)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < w; x += 40) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y < h; y += 40) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+
+        if (!state || !state.dp) {
+            ctx.fillStyle = '#64748b';
+            ctx.font = '18px "JetBrains Mono", Consolas, monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('点击 "生成场景" 开始可视化', w / 2, h / 2);
+            return;
+        }
+
+        // 简单柱状图：展示 dp[0..n] 的值
+        const values = state.dp;
+        const maxV = Math.max.apply(null, values);
+        const padding = 40;
+        const barAreaW = w - padding * 2;
+        const barAreaH = h - padding * 2;
+        const barGap = 6;
+        const barW = Math.max(10, (barAreaW - barGap * (values.length - 1)) / values.length);
+
+        for (let i = 0; i < values.length; i++) {
+            const v = values[i];
+            const barH = Math.max(4, barAreaH * (v / maxV));
+            const x = padding + i * (barW + barGap);
+            const y = h - padding - barH;
+
+            ctx.fillStyle = (i === state.highlight) ? '#fbbf24' : '#8b5cf6';
+            ctx.fillRect(x, y, barW, barH);
+
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '12px "JetBrains Mono", Consolas, monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('dp[' + i + ']=' + v, x + barW / 2, h - padding + 16);
+        }
+    }
+
+    /* ---------- 算法：生成 steps ---------- */
+    function buildSteps(n) {
+        const result = [];
+        const dp = new Array(n + 1).fill(0);
+        dp[0] = 1;
+        if (n >= 1) dp[1] = 1;
+
+        result.push({
+            dp: dp.slice(),
+            highlight: -1,
+            codeLine: 2,   // 高亮 if (n<=1) return 1; 的位置（示例）
+            formula: 'dp[0] = 1, dp[1] = 1',
+            en: 'Initialize base cases: dp[0] = 1, dp[1] = 1.',
+            zh: '初始化边界条件：dp[0] = 1, dp[1] = 1。'
+        });
+
+        for (let i = 2; i <= n; i++) {
+            dp[i] = dp[i - 1] + dp[i - 2];
+            result.push({
+                dp: dp.slice(),
+                highlight: i,
+                codeLine: 6,
+                formula: `dp[${i}] = dp[${i-1}] + dp[${i-2}] = ${dp[i]}`,
+                en: `Computing dp[${i}] = dp[${i-1}] + dp[${i-2}] = ${dp[i]}.`,
+                zh: `计算第 ${i} 步：dp[${i}] = dp[${i-1}] + dp[${i-2}] = ${dp[i]}。`
+            });
+        }
+
+        result.push({
+            dp: dp.slice(),
+            highlight: n,
+            codeLine: 8,
+            formula: `return dp[${n}] = ${dp[n]}`,
+            en: `Final answer: dp[${n}] = ${dp[n]}.`,
+            zh: `最终答案：dp[${n}] = ${dp[n]}。`
+        });
+
+        return result;
+    }
+
+    /* ---------- StepController 绑定 ---------- */
+    const controller = new StepController({
+        onStep(step, index) {
+            state = { dp: step.dp, highlight: step.highlight };
+            codePanel.highlight(step.codeLine);
+            document.getElementById('step-counter').textContent = (index + 1);
+            document.getElementById('step-en').textContent = step.en;
+            document.getElementById('step-zh').textContent = step.zh;
+            document.getElementById('current-result').textContent = step.formula;
+            renderArrayCells(step.highlight);
+            drawCanvas();
+        }
+    });
+
+    /* ---------- 业务：生成 / 重置 ---------- */
+    function generate() {
+        const n = Math.max(1, Math.min(40, parseInt(paramInput.value || '5', 10)));
+        paramInput.value = n;
+        steps = buildSteps(n);
+        controller.setSteps(steps);
+        controller.reset();
+    }
+
+    function reset() {
+        state = null;
+        codePanel.clearHighlight();
+        document.getElementById('step-counter').textContent = '0';
+        document.getElementById('step-en').textContent = 'Click "Generate" to start visualization.';
+        document.getElementById('step-zh').textContent = '点击上方 "生成场景" 以开始演示。';
+        document.getElementById('current-result').textContent = '例如：dp[i] = dp[i-1] + dp[i-2]';
+        renderArrayCells(-1);
+        drawCanvas();
+    }
+
+    /* ---------- 统一绑定 ---------- */
+    bindControls({
+        controller: controller,
+        onGenerate: generate,
+        onReset:    reset,
+        onReplay:   function () { reset(); generate(); controller.play(); }
+    });
+
+    /* ---------- 初始化 ---------- */
+    window.addEventListener('load', function () {
+        resizeCanvas();
+        reset();
+    });
+})();
+</script>
+    <div style="width:100%;text-align:center;padding:20px;color:#6b7280;font-size:13px;border-top:1px solid #e5e7eb;margin-top:auto;">© 2026 AlgoStep. Created by 赵博宇. All rights reserved.</div>
+
+</body>
+</html>
