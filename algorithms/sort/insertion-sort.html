@@ -66,24 +66,50 @@
         z-index: 1;
     }
 
-    /* 待插入元素 key：紫色/靛蓝色，略带浮起 */
+    /* 待插入元素 key：紫色/靛蓝色，略带浮起（仅在 key 还未被覆盖时使用）。
+       当执行到 "int key = arr[i]; int j = i - 1;" 这一段时，
+       我们还会在此柱子上方额外叠加一个 "key↓" 文字标签，由 .bar-key-label 控制。 */
     .bar.key {
         background: linear-gradient(180deg, #8b5cf6 0%, #4c1d95 100%);
         box-shadow: 0 6px 18px rgba(139, 92, 246, 0.55);
-        transform: translateY(-8px) scale(1.02);
+        transform: translateY(-6px);
     }
 
-    /* 正在被比较的元素：橙色 */
+    /* "key↓" 文字标签：贴在 key 柱子的上方。
+       使用一个绝对定位的子元素，以便只在特定步骤中呈现。 */
+    .bar-key-label {
+        position: absolute;
+        top: -28px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #c4b5fd;
+        white-space: nowrap;
+        pointer-events: none;
+    }
+
+    /* 正在被比较的元素：橙色（覆盖 sorted 绿色，但被 shift 红色覆盖）。
+       这样即使是已排序的柱子，只要参与比较，也会显示为橙色。 */
     .bar.compare {
-        background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
-        box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45);
+        background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%) !important;
+        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.55) !important;
         transform: translateY(-4px);
     }
 
-    /* 正在向右移动，腾出空间的元素 */
+    /* 正在向右移动，腾出空间的元素（红色，优先级最高，会覆盖橙色）。 */
     .bar.shift {
-        background: linear-gradient(180deg, #ef4444 0%, #991b1b 100%);
-        box-shadow: 0 4px 18px rgba(239, 68, 68, 0.45);
+        background: linear-gradient(180deg, #ef4444 0%, #991b1b 100%) !important;
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.55) !important;
+    }
+
+    /* 被移动后留下的空位（原 j 位置），降低高度+半透明，以便视觉上不与 key 冲突 */
+    .bar.empty {
+        background: linear-gradient(180deg, #475569 0%, #1e293b 100%);
+        color: rgba(203, 213, 225, 0.6);
+        opacity: 0.45;
+        box-shadow: none;
     }
 
     /* 已排序部分 */
@@ -92,19 +118,8 @@
         box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
     }
 
-    /* key 浮起位置指示（可选顶部小标） */
-    .bar.key::before {
-        content: 'key';
-        position: absolute;
-        top: -28px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 10px;
-        color: #c4b5fd;
-        font-weight: 700;
-        white-space: nowrap;
-        letter-spacing: 1px;
-    }
+    /* （柱子不再自带 key↓ 标记；统一由顶部的"🎯 key = X"浮标呈现，
+       避免 key 位置被其他元素覆盖后仍错误地显示 key↓） */
 
     .bar-index {
         position: absolute;
@@ -352,77 +367,143 @@
         return arr;
     }
 
-    /* ---------- 渲染：柱状图 + 已排序背景 ----------
+    /* ---------- 渲染：柱状图 + 已排序背景 + 悬浮 key 浮标 ----------
        step 字段：
-         key     : 当前 key 的位置 (紫色 + 浮起)
-         compare : 被比较的元素位置 (橙色)
-         shift   : 正在右移的元素 (红色)
-         sorted  : 已排序位置数组 (绿色)
-         sortedCount : 已排序部分的元素个数 (用于绘制浅色背景)
+         keyPos        : key 柱子的位置（紫色浮起的柱子）；可为 null
+         keyValue      : key 的值（用于底部浮标显示，保证 key 永远可见）
+         compare       : 当前被比较的索引（橙色）
+         shift         : 刚被向右移动的索引（红色）
+         empty         : 当前视觉上空位（灰色半透明，高度降低）
+         sorted        : 已排序位置数组（绿色）
+         sortedCount   : 已排序部分的元素个数（用于绘制浅色背景）
     -------------------------------------------------------- */
     function renderBars(arr, step) {
-        const keyPos = step.key !== undefined && step.key !== null ? [step.key] : [];
         const compare = step.compare || [];
         const shift = step.shift || [];
+        const empty = step.empty || [];
         const sorted = step.sorted || [];
+        const keyPos = step.keyPos !== undefined && step.keyPos !== null ? [step.keyPos] : [];
+        const keyValue = step.keyValue;
 
         const max = Math.max.apply(null, arr.length ? arr : [1]);
         barChart.innerHTML = '';
 
         // 已排序部分浅色背景：覆盖前 (sortedCount) 个柱子
-        // 通过设置一个绝对定位元素，宽度按比例计算
         const sortedCount = step.sortedCount || 0;
         if (sortedCount > 0) {
             const bg = document.createElement('div');
             bg.className = 'chart-bg-sorted';
-            // 用百分比表示前 sortedCount 个柱子占的宽度
             const total = arr.length;
-            // flex:1 的柱子，每根的百分比
             const percent = (sortedCount / total) * 100;
             bg.style.width = `calc(${percent}% - 12px)`;
             barChart.appendChild(bg);
         }
 
-        for (let i = 0; i < arr.length; i++) {
+        // 柱子
+        for (let idx = 0; idx < arr.length; idx++) {
             const bar = document.createElement('div');
             bar.className = 'bar';
-            if (sorted.indexOf(i) !== -1) bar.classList.add('sorted');
-            if (keyPos.indexOf(i) !== -1) bar.classList.add('key');
-            if (compare.indexOf(i) !== -1) bar.classList.add('compare');
-            if (shift.indexOf(i) !== -1) bar.classList.add('shift');
+            // 颜色状态按优先级累加：sorted / key / shift 作为基础色，
+            // 而 compare 优先级最高（CSS 中使用 !important），因此参与比较的
+            // 柱子（哪怕是已排序的）都会强制显示橙色。
+            if (sorted.indexOf(idx) !== -1) bar.classList.add('sorted');
+            const isKeyPos = keyPos.indexOf(idx) !== -1;
+            const isOverwritten = (step.keyOverwritten || []).indexOf(idx) !== -1;
+            if (isKeyPos && !isOverwritten) bar.classList.add('key');
+            if (shift.indexOf(idx) !== -1) bar.classList.add('shift');
+            if (empty.indexOf(idx) !== -1) bar.classList.add('empty');
+            // compare 放到最后，保证类名在最后（CSS 也使用 !important）
+            if (compare.indexOf(idx) !== -1) bar.classList.add('compare');
 
-            const relH = Math.max(10, Math.round((arr[i] / max) * 340));
+            const isEmpty = empty.indexOf(idx) !== -1;
+            const val = arr[idx];
+            let relH;
+            if (isEmpty) {
+                relH = 16;
+                bar.textContent = '·';
+            } else {
+                relH = Math.max(10, Math.round((val / max) * 340));
+                bar.textContent = String(val);
+            }
             bar.style.height = relH + 'px';
-            bar.textContent = String(arr[i]);
 
-            const idx = document.createElement('span');
-            idx.className = 'bar-index';
-            idx.textContent = '[' + i + ']';
-            bar.appendChild(idx);
+            // 在"取出key"后的所有步骤中（直到key真正插入），
+            // 给当前 key 所在柱子顶部叠加显示 "key ↓" 标签。
+            // 只要 keyPos 包含该位置，并且该位置未被标记为"已覆盖"，就显示。
+            if (isKeyPos && !isOverwritten) {
+                const keyTag = document.createElement('span');
+                keyTag.className = 'bar-key-label';
+                keyTag.textContent = 'key ↓';
+                bar.appendChild(keyTag);
+            }
+
+            const idxSpan = document.createElement('span');
+            idxSpan.className = 'bar-index';
+            idxSpan.textContent = '[' + idx + ']';
+            bar.appendChild(idxSpan);
 
             barChart.appendChild(bar);
         }
+
+        // key 浮标（始终可见，不受柱子状态影响）
+        // ——当被比较的元素中包含 key 当前占位位置时，给浮标添加橙色底纹
+        if (keyValue !== undefined && keyValue !== null) {
+            // 只要 key 存在，就给顶部浮标使用橙色底纹——
+            // 表示 key 始终"处于比较/移动过程中"。
+            const floatLabel = document.createElement('div');
+            floatLabel.style.cssText = [
+                `position:absolute;`,
+                `top:6px;`,
+                `left:0;right:0;`,
+                `text-align:center;`,
+                `font-family:'JetBrains Mono',Consolas,monospace;`,
+                `font-size:13px;`,
+                `font-weight:700;`,
+                `letter-spacing:1px;`,
+                `pointer-events:none;`,
+                `z-index:2;`,
+                `padding:6px 14px;`,
+                `border-radius:8px;`,
+                `background:rgba(245,158,11,0.18);`,
+                `color:#ffb74d;`,
+                `border:1px solid rgba(245,158,11,0.55);`
+            ].join(' ');
+            floatLabel.textContent = `🎯 key = ${keyValue}`;
+            barChart.appendChild(floatLabel);
+        }
+
         snapshotText.textContent = '[' + arr.join(', ') + ']';
     }
 
     function renderInitial() {
-        renderBars(initialArray, { key: null, compare: [], shift: [], sorted: [0], sortedCount: 1 });
+        renderBars(initialArray, {
+            keyPos: [],
+            keyValue: null,
+            keyOverwritten: [],
+            showKeyLabel: false,
+            compare: [],
+            shift: [],
+            empty: [],
+            sorted: [0],
+            sortedCount: 1
+        });
     }
 
     /* ---------- 算法：生成 steps ----------
        每个 step 包含：
          { en, zh, formula, codeLines,
-           arr, key, compare, shift, sorted, sortedCount }
+           arr, keyPos, keyValue, compare, shift, empty, sorted, sortedCount }
 
-       流程：
-         1) 初始：arr[0] 视为已排序
-         2) for i = 1..n-1:
-             a. key = arr[i]，j = i-1 （标记 key，高亮代码行 4-6）
-             b. while j>=0 && arr[j]>key:
-                 i) 比较步骤：compare [j]，key [i] （行 7）
-                 ii) 后移步骤：arr[j+1]=arr[j], j-- （行 8-9）
-             c. 退出 while：arr[j+1]=key 插入 （行 11）
-             d. 本轮结束：arr[0..i] 已排序 （行 12）
+       可视化保证：
+         • key 永远以两种方式可见：
+           1) 顶部"🎯 key = X"浮标（keyValue）
+           2) 某一根柱子呈紫色浮起（keyPos）
+         • 比较步骤：被比较索引（j）橙色高亮
+         • 移动步骤：arr[j] 向右移动到 arr[j+1]
+           - j 位置变"空位"（empty，灰色半透明）
+           - j+1 位置红色（shift），显示刚移动过去的值
+         • 插入步骤：keyPos 变为最终插入位置 j+1，其他状态清空
+         • 每轮结束：sorted 扩展到 arr[0..i]
     ------------------------------------------------------------ */
     function buildSteps(arr) {
         const a = arr.slice();
@@ -436,9 +517,12 @@
             formula: `arr = [${a.join(', ')}]  ·  n = ${n}`,
             codeLines: [3, 4],
             arr: a.slice(),
-            key: null,
+            keyPos: [],
+            keyValue: null,
+            keyOverwritten: [],
             compare: [],
             shift: [],
+            empty: [],
             sorted: [0],
             sortedCount: 1
         });
@@ -446,66 +530,97 @@
         for (let i = 1; i < n; i++) {
             const key = a[i];
 
-            // (a) 取出 key，标记为待插入
+            // (a) 取出 key：位置 i 变紫色浮起，并在柱子上方加 "key↓" 标签
             result.push({
                 en: `Round for i = ${i}: pick key = arr[${i}] = ${key}. Start to find an insertion position in arr[0..${i - 1}].`,
                 zh: `第 ${i} 轮：取出 key = arr[${i}] = ${key}，在 arr[0..${i - 1}] 中向前寻找插入位置。`,
                 formula: `i = ${i}, key = ${key}, j = ${i - 1}`,
                 codeLines: [4, 5, 6],
                 arr: a.slice(),
-                key: i,
+                keyPos: [i],
+                keyValue: key,
+                keyOverwritten: [],
+                showKeyLabel: true,   // 在 key 柱子上方叠加显示 "key↓"
                 compare: [],
                 shift: [],
+                empty: [],
                 sorted: range(0, i),
                 sortedCount: i
             });
 
             let j = i - 1;
+            // key 视觉上的"当前占位"位置。
+            // 一开始 key 占据位置 i；随着 arr[j] 覆盖 arr[j+1]，
+            // key 相当于"向左移动一格"——它的新视觉位置变为 j。
+            let keySlot = i;
+            // 累积：所有曾被"腾出空间"覆盖过的位置，持续红色标记，直到 key 插入。
+            const shiftedPositions = [];
             while (j >= 0 && a[j] > key) {
-                // (b.i) 比较步骤
+                // (b.i) 比较步骤：把 arr[j] 变成橙色（表示它正与 key 比较）。
+                // 同时保持之前所有"腾出空间"的位置仍然为红色（通过 shiftedPositions）。
                 result.push({
-                    en: `Compare arr[${j}] = ${a[j]} with key = ${key}. arr[${j}] > key, so we shift.`,
-                    zh: `比较 arr[${j}] = ${a[j]} 与 key = ${key}。因 arr[${j}] > key，需要将其向右移动。`,
+                    en: `Compare arr[${j}] = ${a[j]} with key = ${key}. arr[${j}] > key, so we shift it right.`,
+                    zh: `比较 arr[${j}] = ${a[j]} 与 key = ${key}。arr[${j}] > key，将该元素向右移动。`,
                     formula: `arr[${j}] = ${a[j]} > key = ${key} → 后移`,
                     codeLines: 7,
                     arr: a.slice(),
-                    key: i,
+                    keyPos: [keySlot],
+                    keyValue: key,
+                    keyOverwritten: [],
+                    // 当前正在比较的 arr[j] 橙色；之前所有腾出空间的位置保持红色
                     compare: [j],
-                    shift: [],
+                    shift: shiftedPositions.slice(),
+                    empty: [],
                     sorted: range(0, i),
                     sortedCount: i
                 });
 
-                // (b.ii) 后移步骤
+                // (b.ii) 移动步骤：
+                //   • arr[j] 保持默认高度与颜色（值不变）
+                //   • arr[j+1] 被 a[j] 覆盖 → 加入 shiftedPositions，标记红色
+                //   • key 的视觉占位位置向左移动一格（keySlot = j）
+                const visualArr = a.slice();
+                visualArr[j + 1] = a[j];
+                const prevKeySlot = keySlot;
+                shiftedPositions.push(j + 1);  // 累积记录：位置 j+1 被腾出空间
+                keySlot = j;
+
+                result.push({
+                    en: `Shift arr[${j}] (value ${a[j]}) to arr[${j + 1}] — overwrite position ${j + 1}. Overwritten positions (${shiftedPositions.join(', ')}) stay red until key is inserted.`,
+                    zh: `把 arr[${j}] = ${a[j]} 复制到 arr[${j + 1}]（覆盖目标位置）。所有被腾出空间的位置（${shiftedPositions.join('，')}）保持红色，直到 key 被插入。`,
+                    formula: `arr[${j + 1}] = ${a[j]}`,
+                    codeLines: [8, 9],
+                    arr: visualArr,
+                    keyPos: [keySlot],
+                    keyValue: key,
+                    keyOverwritten: [prevKeySlot],
+                    compare: [],
+                    shift: shiftedPositions.slice(),  // 累积红色标记
+                    empty: [],
+                    sorted: range(0, i),
+                    sortedCount: i
+                });
+
+                // 真正修改数组：arr[j+1] = arr[j]; j--
                 a[j + 1] = a[j];
                 j--;
-
-                result.push({
-                    en: `Shift arr[${j + 1}] to position ${j + 2}. Now j = ${j}.`,
-                    zh: `将 arr[${j + 1}] 向右移动到位置 ${j + 2}。现在 j = ${j}。`,
-                    formula: `arr[${j + 2}] = ${a[j + 2]}, j = ${j}`,
-                    codeLines: [8, 9],
-                    arr: a.slice(),
-                    key: j + 1, // 移动过程中 key 的视觉位置在 j+1
-                    compare: [],
-                    shift: [j + 2], // 后移的元素
-                    sorted: range(0, i),
-                    sortedCount: i
-                });
             }
 
-            // 循环结束后的比较（若循环因条件不满足而退出）
-            // 若因 j<0 退出或因 arr[j] <= key 退出，展示最终状态
+            // while 退出：arr[j] <= key（或 j < 0）
+            // —— 保持 arr[j] 橙色，所有已腾出空间的位置保持红色
             if (j >= 0) {
                 result.push({
-                    en: `Compare arr[${j}] = ${a[j]} with key = ${key}. arr[${j}] <= key, so we stop. Insert position is ${j + 1}.`,
-                    zh: `比较 arr[${j}] = ${a[j]} 与 key = ${key}。因 arr[${j}] ≤ key，停止向前查找，插入位置为 ${j + 1}。`,
+                    en: `Compare arr[${j}] = ${a[j]} with key = ${key} (currently visualized at position ${keySlot}). arr[${j}] ≤ key, so we stop. Insert position is ${j + 1}.`,
+                    zh: `比较 arr[${j}] = ${a[j]} 与 key = ${key}（当前视觉位置 ${keySlot}）。arr[${j}] ≤ key，停止向前查找，插入位置为 ${j + 1}。`,
                     formula: `arr[${j}] = ${a[j]} ≤ key = ${key} → 循环终止`,
                     codeLines: 7,
                     arr: a.slice(),
-                    key: i,
+                    keyPos: [keySlot],
+                    keyValue: key,
+                    keyOverwritten: [],
                     compare: [j],
-                    shift: [],
+                    shift: shiftedPositions.slice(),
+                    empty: [],
                     sorted: range(0, i),
                     sortedCount: i
                 });
@@ -516,15 +631,19 @@
                     formula: `j = -1 → 插入位置 0`,
                     codeLines: 7,
                     arr: a.slice(),
-                    key: i,
+                    keyPos: [keySlot],
+                    keyValue: key,
+                    keyOverwritten: [],
                     compare: [],
-                    shift: [],
+                    shift: shiftedPositions.slice(),
+                    empty: [],
                     sorted: range(0, i),
                     sortedCount: i
                 });
             }
 
-            // (c) 插入 key 到正确位置
+            // (c) 插入 key 到正确位置：在视觉上把位置 j+1 先显示为"被插入"的紫色 key，
+            // 随后清空颜色并标为绿色 sorted。
             a[j + 1] = key;
 
             result.push({
@@ -533,9 +652,12 @@
                 formula: `arr[${j + 1}] = ${key}`,
                 codeLines: 11,
                 arr: a.slice(),
-                key: null,
+                keyPos: [],
+                keyValue: null,
+                keyOverwritten: [],
                 compare: [],
                 shift: [],
+                empty: [],
                 sorted: range(0, i + 1),
                 sortedCount: i + 1
             });
@@ -547,9 +669,12 @@
                 formula: `sorted: [0..${i}]`,
                 codeLines: 12,
                 arr: a.slice(),
-                key: null,
+                keyPos: [],
+                keyValue: null,
+                keyOverwritten: [],
                 compare: [],
                 shift: [],
+                empty: [],
                 sorted: range(0, i + 1),
                 sortedCount: i + 1
             });
@@ -563,9 +688,12 @@
             formula: `✓ 已排序 · sorted`,
             codeLines: 14,
             arr: a.slice(),
-            key: null,
+            keyPos: [],
+            keyValue: null,
+            keyOverwritten: [],
             compare: [],
             shift: [],
+            empty: [],
             sorted: allSorted,
             sortedCount: n
         });
