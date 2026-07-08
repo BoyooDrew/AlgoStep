@@ -181,7 +181,12 @@
             }
         }
 
-        highlight(arg) {
+        /**
+         * 高亮指定代码行。
+         * @param {number|number[]|string|string[]|null|undefined} arg
+         * @param {string} [variant] 可选的高亮变体类名，例如 'recursion'、'swap'，用于给当前高亮加上特定配色。
+         */
+        highlight(arg, variant) {
             if (!this._lineNodes || !this._lineNodes.length) return;
             this.clearHighlight();
 
@@ -195,7 +200,11 @@
                 .map(i => Number(i))
                 .filter(i => !isNaN(i) && i >= 0 && i < this._lineNodes.length);
 
-            indices.forEach(i => this._lineNodes[i].classList.add('active'));
+            const variantClass = variant ? `active-${variant}` : '';
+            indices.forEach(i => {
+                this._lineNodes[i].classList.add('active');
+                if (variantClass) this._lineNodes[i].classList.add(variantClass);
+            });
 
             const first = indices[0];
             if (first !== undefined && this._lineNodes[first]) {
@@ -205,7 +214,13 @@
 
         clearHighlight() {
             if (!this._lineNodes) return;
-            this._lineNodes.forEach(n => n.classList.remove('active'));
+            this._lineNodes.forEach(n => {
+                n.classList.remove('active');
+                // 清理所有 active-* 变体类
+                Array.from(n.classList).forEach(cls => {
+                    if (cls.startsWith('active-')) n.classList.remove(cls);
+                });
+            });
         }
 
         setCode(code, language) {

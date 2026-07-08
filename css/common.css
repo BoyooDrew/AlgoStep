@@ -407,6 +407,15 @@ header .badge {
     font-weight: 600;
 }
 
+/* 递归调用高亮变体：在快速排序等算法中标识"函数调用"行时使用
+   稳定的洋红/品红底 + 洋红左边框，与 pivot 柱子颜色一致 */
+.code-panel .code-line.active-recursion {
+    background: linear-gradient(90deg, rgba(236, 72, 153, 0.38) 0%, rgba(236, 72, 153, 0.12) 100%) !important;
+    border-left: 3px solid #ec4899 !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+}
+
 /* 代码语法高亮（由 code-panel.js 注入 span） */
 .code-panel .cp-kw  { color: #c678dd; font-weight: 600; }
 .code-panel .cp-str { color: #98c379; }

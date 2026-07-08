@@ -12,7 +12,8 @@
 <link rel="stylesheet" href="../../css/layout.css" />
 
 <style>
-    /* -------- 本页专属：柱状图可视化（与排序类保持统一风格） -------- */
+    /* -------- 本页专属：柱状图可视化（与排序类保持统一风格） --------
+       顶部留 48px padding：上方 24px 给 depth-label，下方 24px 给柱顶角色标签（pivot/i/j/swap） */
     .bar-chart {
         width: 100%;
         height: 420px;
@@ -20,21 +21,30 @@
         align-items: flex-end;
         justify-content: center;
         gap: 8px;
-        padding: 20px 12px 40px;
+        padding: 48px 16px 40px;
         background: linear-gradient(180deg, #0f172a, #020617);
         border-radius: 10px;
         position: relative;
         overflow: hidden;
+        box-sizing: border-box;
+        margin-top: 0;
     }
 
-    /* 当前分区范围背景：浅色半透明，左/右虚线框住 [left, right] */
+    /* 移除 canvas-container 的额外定位样式，一切由 bar-chart 自身管理 */
+    .canvas-container {
+        position: static;
+        overflow: visible;
+    }
+
+    /* 当前分区范围背景：浅色半透明，左/右虚线框住 [left, right]
+       top/bottom 缩小以避让柱顶标签与柱底索引（top: 44px 位于 depth-label 下方、柱顶标签之上） */
     .chart-range-bg {
         position: absolute;
-        top: 20px;
-        bottom: 20px;
-        background: rgba(251, 191, 36, 0.06);
-        border-left: 2px dashed rgba(251, 191, 36, 0.55);
-        border-right: 2px dashed rgba(251, 191, 36, 0.55);
+        top: 44px;
+        bottom: 32px;
+        background: rgba(236, 72, 153, 0.06);
+        border-left: 2px dashed rgba(236, 72, 153, 0.55);
+        border-right: 2px dashed rgba(236, 72, 153, 0.55);
         border-radius: 6px;
         pointer-events: none;
         transition: left 420ms cubic-bezier(.2,.7,.2,1),
@@ -42,22 +52,26 @@
         z-index: 0;
     }
 
-    /* 递归深度标签：叠加在分区背景上方 */
+    /* 递归深度标签：放在图表顶部正中间，位于柱顶上方（柱子的顶部 padding 区域），
+       不与角色标签冲突。柱顶角色标签通过 bar 的 margin-top + 负 top
+       保证贴在柱子顶部而不是贴在图表顶部。 */
     .depth-label {
         position: absolute;
-        top: 6px;
-        left: 12px;
-        padding: 4px 10px;
-        background: rgba(251, 191, 36, 0.18);
-        color: #fbbf24;
-        border: 1px solid rgba(251, 191, 36, 0.55);
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 4px 12px;
+        background: rgba(236, 72, 153, 0.22);
+        color: #f9a8d4;
+        border: 1px solid rgba(236, 72, 153, 0.55);
         border-radius: 6px;
         font-size: 11px;
         font-weight: 700;
         letter-spacing: 1px;
         font-family: 'JetBrains Mono', Consolas, monospace;
         pointer-events: none;
-        z-index: 2;
+        z-index: 5;
+        white-space: nowrap;
     }
 
     .bar {
@@ -81,12 +95,14 @@
                     height 300ms ease;
         position: relative;
         z-index: 1;
+        /* 预留柱顶标签空间：柱子浮起 -6px 时 + 标签 22px 高度 */
+        margin-top: 28px;
     }
 
-    /* pivot：金色（基准元素） */
+    /* pivot：洋红 / 品红（基准点）——与橙色扫描有明显区分 */
     .bar.pivot {
-        background: linear-gradient(180deg, #fbbf24 0%, #b45309 100%) !important;
-        box-shadow: 0 6px 20px rgba(251, 191, 36, 0.55) !important;
+        background: linear-gradient(180deg, #ec4899 0%, #831843 100%) !important;
+        box-shadow: 0 6px 20px rgba(236, 72, 153, 0.55) !important;
         transform: translateY(-6px);
     }
 
@@ -108,7 +124,7 @@
         box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4) !important;
     }
 
-    /* 交换时：黄色强调（仅短暂高亮，表示刚发生 swap） */
+    /* 交换中：黄色（短暂强调） */
     .bar.swap {
         background: linear-gradient(180deg, #facc15 0%, #a16207 100%) !important;
         box-shadow: 0 4px 16px rgba(250, 204, 21, 0.55) !important;
@@ -120,34 +136,36 @@
         box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
     }
 
-    /* 柱子上方 "pivot" 文字标签 */
-    .bar-pivot-label {
+    /* 柱顶统一标签（pivot / scan / i / j 等角色信息都用这个类）
+       紧贴柱顶上方，保证不越过容器顶边界，也不对柱子主体遮挡 */
+    .bar-top-label {
         position: absolute;
-        top: -28px;
+        top: -22px;
         left: 50%;
         transform: translateX(-50%);
         font-size: 11px;
         font-weight: 700;
-        letter-spacing: 1px;
-        color: #fcd34d;
+        letter-spacing: 0.5px;
+        color: #e2e8f0;
         white-space: nowrap;
         pointer-events: none;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(15, 23, 42, 0.82);
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        line-height: 1.4;
+        text-align: center;
+        box-sizing: border-box;
     }
 
-    /* 柱子上方 "scan" 文字标签 */
-    .bar-scan-label {
-        position: absolute;
-        top: -28px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        color: #fdba74;
-        white-space: nowrap;
-        pointer-events: none;
-    }
+    /* 不同角色用不同文字颜色 + 背景色微调，使视觉上立刻区分 */
+    .bar-top-label.role-pivot { color: #f9a8d4; border-color: rgba(236,72,153,0.55); background: rgba(236, 72, 153, 0.18); }
+    .bar-top-label.role-scan  { color: #fdba74; border-color: rgba(245,158,11,0.55); background: rgba(245, 158, 11, 0.18); }
+    .bar-top-label.role-i     { color: #93c5fd; border-color: rgba(59,130,246,0.55); background: rgba(59, 130, 246, 0.18); }
+    .bar-top-label.role-j     { color: #fca5a5; border-color: rgba(239,68,68,0.55); background: rgba(239, 68, 68, 0.18); }
+    .bar-top-label.role-swap  { color: #fde68a; border-color: rgba(250,204,21,0.55); background: rgba(250, 204, 21, 0.22); }
 
+    /* 底部索引：位置略下移，避免与柱底贴太近 */
     .bar-index {
         position: absolute;
         bottom: -22px;
@@ -159,12 +177,12 @@
         font-family: 'JetBrains Mono', Consolas, monospace;
     }
 
-    /* 状态条：当前数组快照 */
+    /* 状态条：当前数组快照（洋红/粉色系边框，与 pivot 主色呼应） */
     .snapshot-bar {
         margin-top: 34px;
         padding: 10px 14px;
         background: #0b1220;
-        border: 1px solid rgba(251, 191, 36, 0.25);
+        border: 1px solid rgba(236, 72, 153, 0.28);
         border-radius: 8px;
         font-family: 'JetBrains Mono', Consolas, monospace;
         font-size: 12px;
@@ -173,20 +191,20 @@
         word-break: break-all;
     }
     .snapshot-bar .label {
-        color: #fcd34d;
+        color: #f9a8d4;
         font-weight: 700;
         margin-right: 6px;
     }
 
-    /* 图例 */
+    /* 图例：洋红色系，与 pivot 主色呼应 */
     .legend {
         display: flex;
         flex-wrap: wrap;
         gap: 14px;
         padding: 10px 14px;
         margin-top: 10px;
-        background: rgba(251, 191, 36, 0.06);
-        border: 1px dashed rgba(251, 191, 36, 0.3);
+        background: rgba(236, 72, 153, 0.06);
+        border: 1px dashed rgba(236, 72, 153, 0.3);
         border-radius: 8px;
         font-size: 12px;
         color: #cbd5e1;
@@ -199,7 +217,7 @@
         background: #6366f1;
         display: inline-block;
     }
-    .dot.pivot   { background: #fbbf24; }
+    .dot.pivot   { background: #ec4899; }
     .dot.scan    { background: #f59e0b; }
     .dot.less    { background: #3b82f6; }
     .dot.greater { background: #ef4444; }
@@ -327,14 +345,14 @@
             <div class="code-panel" id="codePanel">
 <div class="code-line" id="line-0">// 快速排序 - Quick Sort</div>
 <div class="code-line" id="line-1">// 平均时间复杂度: O(n log n)  空间复杂度: O(log n)</div>
-<div class="code-line" id="line-2">// 思想: 分治法 - 选基准值 (pivot)，将数组分成两部分，递归排序</div>
+<div class="code-line" id="line-2">// 思想: 分治法 - 选基准值 (pivot), 将数组分成两部分, 递归排序</div>
 <div class="code-line" id="line-3">void quickSort(int arr[], int left, int right) {</div>
-<div class="code-line" id="line-4">    if (left >= right) return;                         // 递归终止条件 (base case)</div>
+<div class="code-line" id="line-4">    if (left >= right) return;                   // 递归终止条件 (base case)</div>
 <div class="code-line" id="line-5">    // 分区操作 partition</div>
-<div class="code-line" id="line-6">    int pivot = arr[right];                            // 基准值 pivot (选最右元素)</div>
+<div class="code-line" id="line-6">    int pivot = arr[right];                      // 基准值 pivot (选最右元素)</div>
 <div class="code-line" id="line-7">    int i = left;</div>
-<div class="code-line" id="line-8">    for (int j = left; j < right; j++) {              // 扫描元素</div>
-<div class="code-line" id="line-9">        if (arr[j] < pivot) {                          // 比基准值小 -> 放左边</div>
+<div class="code-line" id="line-8">    for (int j = left; j < right; j++) {        // 扫描元素</div>
+<div class="code-line" id="line-9">        if (arr[j] < pivot) {                    // 比基准值小 → 放左边</div>
 <div class="code-line" id="line-10">            int temp = arr[i];</div>
 <div class="code-line" id="line-11">            arr[i] = arr[j];</div>
 <div class="code-line" id="line-12">            arr[j] = temp;</div>
@@ -346,8 +364,8 @@
 <div class="code-line" id="line-18">    arr[i] = arr[right];</div>
 <div class="code-line" id="line-19">    arr[right] = temp;</div>
 <div class="code-line" id="line-20">    // 此时: arr[left..i-1] < pivot <= arr[i+1..right]</div>
-<div class="code-line" id="line-21">    quickSort(arr, left, i - 1);                      // 递归排序左半部分</div>
-<div class="code-line" id="line-22">    quickSort(arr, i + 1, right);                     // 递归排序右半部分</div>
+<div class="code-line" id="line-21">    quickSort(arr, left, i - 1);                 // 递归排序左半部分 (recursion)</div>
+<div class="code-line" id="line-22">    quickSort(arr, i + 1, right);                // 递归排序右半部分 (recursion)</div>
 <div class="code-line" id="line-23">}</div>
             </div>
 
@@ -408,15 +426,24 @@
 
     /* ---------- 渲染：柱状图 + 分区背景 + 深度标签 ----------
        step 字段：
-         rangeL, rangeR : 当前分区范围 [L, R]（浅金色背景）
-         depth          : 当前递归深度（显示为标签）
-         pivotPos       : pivot 所在的索引（金色高亮 + "pivot" 文字）
+         rangeL, rangeR : 当前分区范围 [L, R]（洋红背景）
+         depth          : 当前递归深度（显示为右上角标签）
+         pivotPos       : pivot 所在的索引（洋红高亮 + 柱顶 "pivot" 标签）
          pivotValue     : pivot 值
-         scanPos        : 正在扫描的索引（橙色高亮 + "scan" 文字）
+         scanPos        : 正在扫描的索引（橙色高亮 + 柱顶 "j" 标签）
+         iPos           : 当前 i 位置（蓝色高亮 + 柱顶 "i" 标签）
+         jPos           : 当前 j 位置（红色高亮 + 柱顶 "j" 标签）
+                          注意 iPos/jPos 与 scanPos 可同时出现，用于强调位置信息
          lessPositions  : 已确认小于 pivot 的索引（蓝色）
          greaterPositions: 已确认大于 pivot 的索引（红色）
          swapPositions  : 刚刚发生交换的索引（黄色，一帧）
          sorted         : 已排序的索引（绿色）
+
+       柱顶标签规则：
+         - 每个柱子可以叠加 1 个标签（pivot / scan / i / j / swap 之一）
+         - 若当前柱子同时属于 pivot + 其他角色，则优先显示 pivot
+         - 标签紧贴柱顶上方（top:-24px），容器顶部 padding(48px) 足够容纳
+         - 递归深度标签固定在右上角（z-index 3），不会与柱顶标签重叠
     -------------------------------------------------------- */
     function renderBars(arr, step) {
         const less    = step.lessPositions   || [];
@@ -425,28 +452,39 @@
         const swap    = step.swapPositions   || [];
         const scan    = step.scanPos         !== undefined && step.scanPos !== null ? [step.scanPos] : [];
         const pivot   = step.pivotPos        !== undefined && step.pivotPos !== null ? [step.pivotPos] : [];
+        const iPos    = step.iPos            !== undefined && step.iPos !== null ? [step.iPos] : [];
+        const jPos    = step.jPos            !== undefined && step.jPos !== null ? [step.jPos] : [];
 
         const max = Math.max.apply(null, arr.length ? arr : [1]);
         barChart.innerHTML = '';
 
         // 分区范围背景：[rangeL, rangeR]
-        if (step.rangeL !== undefined && step.rangeR !== undefined && step.rangeL <= step.rangeR) {
+        if (step.rangeL !== undefined && step.rangeR !== null && step.rangeL !== null && step.rangeL <= step.rangeR) {
             const bg = document.createElement('div');
             bg.className = 'chart-range-bg';
             const total = arr.length;
             const leftPct  = (step.rangeL / total) * 100;
             const widthPct = ((step.rangeR - step.rangeL + 1) / total) * 100;
-            bg.style.left  = `calc(${leftPct}% )`;
-            bg.style.width = `calc(${widthPct}% - 6px)`;
+            bg.style.left  = `calc(${leftPct}% + 8px)`;
+            bg.style.width = `calc(${widthPct}% - 16px)`;
             barChart.appendChild(bg);
 
-            // 递归深度标签
+            // 递归深度标签：放在 bar-chart 自身的顶部正中间（图表的 padding 顶部区域）
+            // 柱顶角色标签贴在各柱子顶部，两条线互不重叠
             if (step.depth !== undefined && step.depth !== null) {
+                // 清理已有 depth-label（避免重复）
+                const prev = barChart.querySelector('.depth-label');
+                if (prev) prev.remove();
+
                 const depthLabel = document.createElement('div');
                 depthLabel.className = 'depth-label';
-                depthLabel.textContent = `递归深度 depth = ${step.depth} · range [${step.rangeL}, ${step.rangeR}]`;
+                depthLabel.textContent = `depth=${step.depth} · [${step.rangeL}, ${step.rangeR}]`;
                 barChart.appendChild(depthLabel);
             }
+        } else {
+            // 没有分区：确保没有残留 depth-label
+            const prev = barChart.querySelector('.depth-label');
+            if (prev) prev.remove();
         }
 
         // 柱子
@@ -460,15 +498,15 @@
             const isGreater = greater.indexOf(idx) !== -1;
             const isSwap    = swap.indexOf(idx)    !== -1;
             const isSorted  = sorted.indexOf(idx)  !== -1;
+            const isIPos    = iPos.indexOf(idx)    !== -1;
+            const isJPos    = jPos.indexOf(idx)    !== -1;
 
-            // 颜色优先级：swap（临时黄） > pivot（金） > scan（橙）
+            // 颜色优先级：swap（临时黄） > pivot（洋红） > scan（橙）
             //              > less（蓝）/greater（红） > sorted（绿） > 默认紫
-            // 注意：less/greater 只适用于"当前扫描范围内已确认的分区"，
-            // 若某位置既是 less 又是 pivot（不可能），以 pivot 优先。
             if (isSorted)         bar.classList.add('sorted');
-            if (isLess)           bar.classList.add('less');
-            if (isGreater)        bar.classList.add('greater');
-            if (isScan)           bar.classList.add('scan');
+            if (isLess && !isPivot) bar.classList.add('less');
+            if (isGreater && !isPivot) bar.classList.add('greater');
+            if (isScan && !isPivot && !isSwap) bar.classList.add('scan');
             if (isPivot)          bar.classList.add('pivot');
             if (isSwap)           bar.classList.add('swap');
 
@@ -477,19 +515,25 @@
             bar.style.height = relH + 'px';
             bar.textContent = String(val);
 
-            // 在 pivot 柱上方叠加 "pivot" 文字
-            if (isPivot && step.pivotLabel !== false) {
-                const tag = document.createElement('span');
-                tag.className = 'bar-pivot-label';
-                tag.textContent = `pivot = ${step.pivotValue}`;
-                bar.appendChild(tag);
+            // ---------- 柱顶标签（单一标签策略，避免重叠） ----------
+            // 只标记角色本身：pivot / i / j / swap；扫描位置由 j 直接表达
+            // 优先级：pivot > i,j 合并 > 单独 i > 单独 j > swap
+            let topLabel = null;
+            if (isPivot) {
+                topLabel = { role: 'pivot', text: 'pivot' };
+            } else if (isIPos && isJPos) {
+                topLabel = { role: 'scan', text: 'i,j' };
+            } else if (isIPos) {
+                topLabel = { role: 'i', text: 'i' };
+            } else if (isJPos) {
+                topLabel = { role: 'j', text: 'j' };
+            } else if (isSwap) {
+                topLabel = { role: 'swap', text: 'swap' };
             }
-
-            // 在 scan 柱上方叠加 "scan" 文字
-            if (isScan && step.scanLabel !== false) {
+            if (topLabel) {
                 const tag = document.createElement('span');
-                tag.className = 'bar-scan-label';
-                tag.textContent = `arr[${idx}]`;
+                tag.className = `bar-top-label role-${topLabel.role}`;
+                tag.textContent = topLabel.text;
                 bar.appendChild(tag);
             }
 
@@ -567,16 +611,17 @@
                     continue;
                 }
 
-                // 分区开始：标记当前范围 [left, right] 为当前处理，先高亮 pivot
+                // 分区开始：标记当前范围 [left, right]，高亮 pivot 并显示初始 i 位置
                 const pivot = a[frame.right];
                 result.push({
-                    en: `quickSort(arr, ${frame.left}, ${frame.right}). Choose pivot = arr[${frame.right}] = ${pivot}.`,
-                    zh: `进入 quickSort(arr, ${frame.left}, ${frame.right})。选择 pivot = arr[${frame.right}] = ${pivot}。`,
-                    formula: `pivot = arr[${frame.right}] = ${pivot}`,
+                    en: `quickSort(arr, ${frame.left}, ${frame.right}). Choose pivot = arr[${frame.right}] = ${pivot}. Start i = ${frame.left}.`,
+                    zh: `进入 quickSort(arr, ${frame.left}, ${frame.right})。选择 pivot = arr[${frame.right}] = ${pivot}，i = ${frame.left}。`,
+                    formula: `pivot = arr[${frame.right}] = ${pivot} · i = ${frame.left}`,
                     codeLines: [6, 7],
                     arr: a.slice(),
                     rangeL: frame.left, rangeR: frame.right, depth: frame.depth,
                     pivotPos: frame.right, pivotValue: pivot, scanPos: null,
+                    iPos: frame.left, jPos: null,
                     lessPositions: [], greaterPositions: [],
                     swapPositions: [], sorted: collectSorted(sortedFlags)
                 });
@@ -599,15 +644,16 @@
                     const pivot = frame.pivot;
                     const a_j = a[frame.j];
 
-                    // 扫描步骤：当前 j 高亮 scan（橙色）
+                    // 扫描步骤：当前 j 高亮 scan（橙色），同时显示 i 位置
                     result.push({
-                        en: `Scanning j = ${frame.j}: arr[${frame.j}] = ${a_j}. Compare with pivot = ${pivot}.`,
-                        zh: `扫描 j = ${frame.j}：arr[${frame.j}] = ${a_j}，与 pivot = ${pivot} 比较。`,
+                        en: `Scanning j = ${frame.j}: arr[${frame.j}] = ${a_j}. Compare with pivot = ${pivot}  (i = ${frame.i}).`,
+                        zh: `扫描 j = ${frame.j}：arr[${frame.j}] = ${a_j}，与 pivot = ${pivot} 比较（当前 i = ${frame.i}）。`,
                         formula: `arr[${frame.j}] = ${a_j}  vs  pivot = ${pivot}`,
                         codeLines: [8, 9],
                         arr: a.slice(),
                         rangeL: frame.left, rangeR: frame.right, depth: frame.depth,
                         pivotPos: frame.pivotPos, pivotValue: pivot, scanPos: frame.j,
+                        iPos: frame.i, jPos: frame.j,
                         lessPositions: frame.less.slice(),
                         greaterPositions: frame.greater.slice(),
                         swapPositions: [], sorted: collectSorted(sortedFlags)
@@ -617,7 +663,7 @@
                         // 需要与 a[i] 交换，然后 i++
                         const willSwap = (frame.i !== frame.j);
                         if (willSwap) {
-                            // 交换高亮：两柱子黄色
+                            // 交换高亮：两柱子黄色，同时显示 i / j 位置标签
                             result.push({
                                 en: `arr[${frame.j}] = ${a_j} < pivot = ${pivot}. Swap arr[${frame.i}] = ${a[frame.i]} with arr[${frame.j}] = ${a_j}.`,
                                 zh: `arr[${frame.j}] = ${a_j} < pivot = ${pivot}，交换 arr[${frame.i}] = ${a[frame.i]} 与 arr[${frame.j}] = ${a_j}。`,
@@ -625,7 +671,8 @@
                                 codeLines: [10, 11, 12],
                                 arr: a.slice(),
                                 rangeL: frame.left, rangeR: frame.right, depth: frame.depth,
-                                pivotPos: frame.pivotPos, pivotValue: pivot, scanPos: frame.j,
+                                pivotPos: frame.pivotPos, pivotValue: pivot, scanPos: null,
+                                iPos: frame.i, jPos: frame.j,
                                 lessPositions: frame.less.slice(),
                                 greaterPositions: frame.greater.slice(),
                                 swapPositions: [frame.i, frame.j],
@@ -643,7 +690,7 @@
                         const newI = frame.i + 1;
                         const newJ = frame.j + 1;
 
-                        // 展示"交换后状态"一帧（蓝色 less；注意 i 现在指向下一个可写位置，j 刚被设到 j+1）
+                        // 展示"交换后状态"一帧，保留新的 i/j 位置
                         result.push({
                             en: `After swap (or no-op). "${a_j}" now in less-part. i = ${newI}, j = ${newJ}. Continue scanning.`,
                             zh: `交换完成（或无需交换）。"${a_j}" 归入 less 部分。i = ${newI}，j = ${newJ}，继续扫描。`,
@@ -652,6 +699,7 @@
                             arr: a.slice(),
                             rangeL: frame.left, rangeR: frame.right, depth: frame.depth,
                             pivotPos: frame.pivotPos, pivotValue: pivot, scanPos: null,
+                            iPos: newI, jPos: null,
                             lessPositions: newLess,
                             greaterPositions: frame.greater.slice(),
                             swapPositions: [], sorted: collectSorted(sortedFlags)
@@ -666,13 +714,14 @@
                         // arr[j] >= pivot：归入 greater，不交换，j++
                         const newGreater = frame.greater.concat([frame.j]);
                         result.push({
-                            en: `arr[${frame.j}] = ${a_j} >= pivot = ${pivot}. It belongs to the greater part. j = ${frame.j + 1}.`,
-                            zh: `arr[${frame.j}] = ${a_j} >= pivot = ${pivot}，归入 greater 部分。j = ${frame.j + 1}。`,
+                            en: `arr[${frame.j}] = ${a_j} >= pivot = ${pivot}. It belongs to the greater part. Next j = ${frame.j + 1}, i = ${frame.i}.`,
+                            zh: `arr[${frame.j}] = ${a_j} >= pivot = ${pivot}，归入 greater 部分。Next j = ${frame.j + 1}，i 仍为 ${frame.i}。`,
                             formula: `greater: [${newGreater.map(idx=>a[idx]).join(', ')}]`,
                             codeLines: 9,
                             arr: a.slice(),
                             rangeL: frame.left, rangeR: frame.right, depth: frame.depth,
                             pivotPos: frame.pivotPos, pivotValue: pivot, scanPos: frame.j,
+                            iPos: frame.i, jPos: frame.j,
                             lessPositions: frame.less.slice(),
                             greaterPositions: newGreater,
                             swapPositions: [], sorted: collectSorted(sortedFlags)
@@ -700,6 +749,7 @@
                     arr: a.slice(),
                     rangeL: frame.left, rangeR: frame.right, depth: frame.depth,
                     pivotPos: frame.right, pivotValue: pivot, scanPos: null,
+                    iPos: frame.i, jPos: frame.right,
                     lessPositions: frame.less.slice(),
                     greaterPositions: frame.greater.slice(),
                     swapPositions: [frame.i, frame.right],
@@ -714,22 +764,47 @@
                 // 标记该位置已排序
                 sortedFlags[pivotFinal] = true;
 
-                // 展示分区完成后的结果
+                // 拆分：先提示「即将调用左子递归」并高亮 line-18；
+                // 再提示「即将调用右子递归」并高亮 line-19；
+                // 然后再真正 push 到栈上执行（栈 LIFO，后 push 先执行，所以先 push 右）
                 const finalLess    = range(frame.left, pivotFinal);
                 const finalGreater = range(pivotFinal + 1, frame.right + 1);
-                result.push({
-                    en: `Pivot ${pivot} is at its final position ${pivotFinal}. arr[${frame.left}..${pivotFinal - 1}] < ${pivot} <= arr[${pivotFinal + 1}..${frame.right}].`,
-                    zh: `pivot ${pivot} 已归位到位置 ${pivotFinal}。arr[${frame.left}..${pivotFinal - 1}] < ${pivot} <= arr[${pivotFinal + 1}..${frame.right}]。`,
-                    formula: `pivot 归位 [${frame.left}..${pivotFinal - 1}] < ${pivot} < [${pivotFinal + 1}..${frame.right}]`,
-                    codeLines: 20,
-                    arr: a.slice(),
-                    rangeL: frame.left, rangeR: frame.right, depth: frame.depth,
-                    pivotPos: pivotFinal, pivotValue: pivot, scanPos: null,
-                    lessPositions: finalLess,
-                    greaterPositions: finalGreater,
-                    swapPositions: [],
-                    sorted: collectSorted(sortedFlags)
-                });
+
+                // 1) 左区间函数调用提示
+                if (frame.left <= pivotFinal - 1) {
+                    result.push({
+                        en: `Pivot ${pivot} placed at ${pivotFinal}. Call quickSort(arr, ${frame.left}, ${pivotFinal - 1}) — sort left partition.`,
+                        zh: `pivot ${pivot} 已归位到位置 ${pivotFinal}。准备调用：quickSort(arr, ${frame.left}, ${pivotFinal - 1}) 排序左区间。`,
+                        formula: `递归调用 · quickSort(arr, ${frame.left}, ${pivotFinal - 1})  ← 左子区间`,
+                        codeLines: [21],
+                        codeVariant: 'recursion',
+                        arr: a.slice(),
+                        rangeL: frame.left, rangeR: frame.right, depth: frame.depth,
+                        pivotPos: pivotFinal, pivotValue: pivot, scanPos: null,
+                        lessPositions: finalLess,
+                        greaterPositions: finalGreater,
+                        swapPositions: [],
+                        sorted: collectSorted(sortedFlags)
+                    });
+                }
+
+                // 2) 右区间函数调用提示
+                if (pivotFinal + 1 <= frame.right) {
+                    result.push({
+                        en: `After left call, now call quickSort(arr, ${pivotFinal + 1}, ${frame.right}) — sort right partition.`,
+                        zh: `左区间已派发。准备调用：quickSort(arr, ${pivotFinal + 1}, ${frame.right}) 排序右区间。`,
+                        formula: `递归调用 · quickSort(arr, ${pivotFinal + 1}, ${frame.right})  ← 右子区间`,
+                        codeLines: [22],
+                        codeVariant: 'recursion',
+                        arr: a.slice(),
+                        rangeL: frame.left, rangeR: frame.right, depth: frame.depth,
+                        pivotPos: pivotFinal, pivotValue: pivot, scanPos: null,
+                        lessPositions: finalLess,
+                        greaterPositions: finalGreater,
+                        swapPositions: [],
+                        sorted: collectSorted(sortedFlags)
+                    });
+                }
 
                 // 递归：先右子，再左子（由于栈 LIFO，后 push 先执行）
                 callStack.push({
@@ -767,7 +842,7 @@
 
     /* ---------- 应用 step 到 UI ---------- */
     function applyStep(step, index) {
-        codePanel.highlight(step.codeLines);
+        codePanel.highlight(step.codeLines, step.codeVariant || null);
         renderBars(step.arr, step);
         if (formulaTextEl) formulaTextEl.textContent = step.formula || '';
     }
