@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>选择排序 · Selection Sort</title>
+
+<!-- =======================================================
+     CSS：先通用，后布局（如页面有专属动画，再在下面补）
+     相对路径：当前页在 /algorithms/sort/，CSS/JS 在根目录
+     ======================================================= -->
+<link rel="stylesheet" href="../../css/common.css" />
+<link rel="stylesheet" href="../../css/layout.css" />
+
+<style>
+    /* -------- 本页专属：柱状图可视化（与 bubble-sort 风格一致） -------- */
+    .bar-chart {
+        width: 100%;
+        height: 420px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 8px;
+        padding: 20px 12px 40px;
+        background: linear-gradient(180deg, #0f172a, #020617);
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .bar {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: 60px;
+        background: linear-gradient(180deg, #6366f1 0%, #4338ca 100%);
+        border-radius: 6px 6px 0 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 6px;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 13px;
+        font-weight: 700;
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        transition: transform 420ms cubic-bezier(.2,.7,.2,1),
+                    background 300ms ease,
+                    box-shadow 300ms ease,
+                    height 300ms ease;
+        position: relative;
+    }
+
+    .bar.compare {
+        background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
+        box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45);
+        transform: translateY(-6px);
+    }
+
+    .bar.min-found {
+        background: linear-gradient(180deg, #10b981 0%, #047857 100%);
+        box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45);
+        transform: translateY(-6px);
+    }
+
+    .bar.swap {
+        background: linear-gradient(180deg, #ef4444 0%, #991b1b 100%);
+        box-shadow: 0 4px 18px rgba(239, 68, 68, 0.45);
+    }
+
+    .bar.sorted {
+        background: linear-gradient(180deg, #10b981 0%, #065f46 100%);
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    }
+
+    /* 当前轮次目标位置：顶部小蓝线 */
+    .bar.target::before {
+        content: '';
+        position: absolute;
+        top: -18px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px;
+        height: 16px;
+        background: #3b82f6;
+        border-radius: 2px;
+        box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+    }
+
+    /* 当前轮次目标位置标签 */
+    .bar.target::after {
+        content: 'target';
+        position: absolute;
+        top: -36px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 10px;
+        color: #93c5fd;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .bar-index {
+        position: absolute;
+        bottom: -22px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 11px;
+        color: #64748b;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+    }
+
+    /* 状态条：当前数组快照 */
+    .snapshot-bar {
+        margin-top: 34px;
+        padding: 10px 14px;
+        background: #0b1220;
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 12px;
+        color: #cbd5e1;
+        line-height: 1.6;
+        word-break: break-all;
+    }
+
+    .snapshot-bar .label {
+        color: #c4b5fd;
+        font-weight: 700;
+        margin-right: 6px;
+    }
+
+    /* 图例 */
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        padding: 10px 14px;
+        margin-top: 10px;
+        background: rgba(139, 92, 246, 0.06);
+        border: 1px dashed rgba(139, 92, 246, 0.3);
+        border-radius: 8px;
+        font-size: 12px;
+        color: #cbd5e1;
+    }
+    .legend .item { display: flex; align-items: center; gap: 6px; }
+    .dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        background: #6366f1;
+        display: inline-block;
+    }
+    .dot.target { background: #3b82f6; }
+    .dot.compare { background: #f59e0b; }
+    .dot.min { background: #10b981; }
+    .dot.swap { background: #ef4444; }
+    .dot.sorted { background: #10b981; }
+
+    /* 数组输入框稍微加宽 */
+    #arrayInput { width: 320px; }
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+    <!-- ===========================================================
+         区块 1：标题区（渐变蓝色，左侧竖线强调）
+         =========================================================== -->
+    <header>
+        <div>
+            <h1>选择排序 · Selection Sort</h1>
+            <div class="subtitle">
+                每轮从未排序部分选出最小元素，放到已排序部分末尾。时间复杂度 O(n²)，空间复杂度 O(1)。
+            </div>
+        </div>
+        <span class="badge">入门 · Easy</span>
+    </header>
+
+    <!-- ===========================================================
+         区块 2：控制区（淡蓝，左侧品牌色竖线）
+         子区：
+            第一行：场景参数（数组输入 / 随机生成）+ 重置
+            第二行：播放 / 暂停 / 上一步 / 下一步 + 速度滑块
+            第三行：进度滑块
+         =========================================================== -->
+    <section class="control-panel">
+        <h3 class="panel-title">· Controls · 控制面板</h3>
+
+        <!-- 第一行：场景参数 -->
+        <div class="control-row">
+            <div class="control-group">
+                <span class="control-label">数组：</span>
+                <input type="text" class="input-number" id="arrayInput"
+                       placeholder="如：5,2,9,1,7,3,8,4" value="5,2,9,1,7,3,8,4" />
+            </div>
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnGenerate">生成场景</button>
+                <button class="btn btn-accent" id="btnRandom">随机</button>
+                <button class="btn btn-danger"  id="btnReset">重置</button>
+            </div>
+        </div>
+
+        <!-- 第二行：操作按钮 + 速度 -->
+        <div class="control-row">
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnStart">▶ 播放</button>
+                <button class="btn btn-secondary" id="btnPause">⏸ 暂停</button>
+                <button class="btn btn-accent" id="btnPrev">◀ 上一步</button>
+                <button class="btn btn-accent" id="btnNext">下一步 ▶</button>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">速度：</span>
+                <input type="range" class="slider" id="speed-slider"
+                       min="100" max="2000" step="50" value="800" />
+                <span class="slider-value" id="speed-value">800ms</span>
+                <span class="slider-value" id="speed-label"
+                      style="color:#f59e0b;">中等</span>
+            </div>
+        </div>
+
+        <!-- 第三行：进度 -->
+        <div class="control-row">
+            <span class="control-label">进度：</span>
+            <input type="range" class="slider" id="progress-slider"
+                   min="1" max="1" step="1" value="1" />
+            <span class="slider-value" id="progress-text">0 / 0</span>
+        </div>
+    </section>
+
+    <!-- ===========================================================
+         区块 3：步骤解释区（淡黄，左侧琥珀色竖线）
+         左边：公式/状态（当前轮次、已排序位置）；右边：当前步骤文字描述
+         =========================================================== -->
+    <section class="explanation-panel">
+        <div class="formula-box">
+            <span class="formula-text">状态 · Status</span>
+            <span id="formula-text">
+                点击"生成场景"开始演示
+            </span>
+        </div>
+
+        <div class="step-info">
+            <span class="step-counter" id="step-counter">0</span>
+            <div class="step-description">
+                <div class="step-en" id="step-en">
+                    Click "Generate" then "Start" to begin.
+                </div>
+                <div class="step-zh" id="step-zh">
+                    点击"生成场景"后按"开始演示"。
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===========================================================
+         区块 4：演示区 + 代码区（紫色，左右各 50%）
+         左：柱状图演示区；右：C++ 代码面板 + 图例
+         =========================================================== -->
+    <section class="visualization-section">
+
+        <!-- 左侧：演示区（柱状图） -->
+        <div class="canvas-container">
+            <div class="legend">
+                <span class="item"><span class="dot target"></span>目标位置 target (index i)</span>
+                <span class="item"><span class="dot compare"></span>正在比较 (scanning j)</span>
+                <span class="item"><span class="dot min"></span>当前最小值 (minIdx)</span>
+                <span class="item"><span class="dot swap"></span>正在交换 (swap)</span>
+                <span class="item"><span class="dot sorted"></span>已排序 (sorted)</span>
+            </div>
+            <div class="bar-chart" id="barChart"></div>
+            <div class="snapshot-bar" id="snapshotBar">
+                <span class="label">arr =</span><span id="snapshotText">[]</span>
+            </div>
+        </div>
+
+        <!-- 右侧：代码面板 -->
+        <div class="info-panel">
+
+            <!-- 代码面板：手写 .code-line，由 CodePanel 组件做着色 -->
+            <div class="code-panel" id="codePanel">
+<div class="code-line" id="line-0">// 选择排序 - Selection Sort</div>
+<div class="code-line" id="line-1">// 时间复杂度: O(n^2)  空间复杂度: O(1)</div>
+<div class="code-line" id="line-2">// 思想: 每轮从未排序部分选出最小元素, 放到已排序部分末尾</div>
+<div class="code-line" id="line-3">void selectionSort(int arr[], int n) {</div>
+<div class="code-line" id="line-4">    for (int i = 0; i < n - 1; i++) {         // 外层循环: 轮数</div>
+<div class="code-line" id="line-5">        int minIdx = i;                        // 假设当前位置最小</div>
+<div class="code-line" id="line-6">        for (int j = i + 1; j < n; j++) {       // 在未排序部分找最小值</div>
+<div class="code-line" id="line-7">            if (arr[j] < arr[minIdx]) {</div>
+<div class="code-line" id="line-8">                minIdx = j;                     // 更新最小值索引</div>
+<div class="code-line" id="line-9">            }</div>
+<div class="code-line" id="line-10">        }</div>
+<div class="code-line" id="line-11">        if (minIdx != i) {                     // 交换最小值到正确位置</div>
+<div class="code-line" id="line-12">            int temp = arr[i];</div>
+<div class="code-line" id="line-13">            arr[i] = arr[minIdx];</div>
+<div class="code-line" id="line-14">            arr[minIdx] = temp;</div>
+<div class="code-line" id="line-15">        }</div>
+<div class="code-line" id="line-16">        // 第 i 轮结束, arr[0..i] 已排序</div>
+<div class="code-line" id="line-17">    }</div>
+<div class="code-line" id="line-18">}</div>
+            </div>
+
+            <!-- 辅助说明：当前高亮含义 -->
+            <div class="legend">
+                <span class="item" style="color:#c4b5fd;font-weight:600;">
+                    💡 紫色高亮 = 当前正在执行的代码行
+                </span>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- ===========================================================
+     JS：先控制器，后 CodePanel，最后是本页业务脚本
+     =========================================================== -->
+<script src="../../js/common.js"></script>
+<script src="../../js/code-panel.js"></script>
+<script src="../../js/controls.js"></script>
+
+<script>
+(function () {
+    /* ---------- 页面局部变量 ---------- */
+    const barChart       = document.getElementById('barChart');
+    const snapshotText   = document.getElementById('snapshotText');
+    const codePanel      = new CodePanel('#codePanel');
+    const arrayInput     = document.getElementById('arrayInput');
+    const formulaTextEl  = document.getElementById('formula-text');
+
+    let steps = [];
+    let initialArray = [];
+
+    /* ---------- 工具：解析/生成数组 ---------- */
+    function parseInput(str) {
+        const parts = String(str || '')
+            .split(/[,\s]+/)
+            .map(s => s.trim())
+            .filter(s => s.length)
+            .map(s => Number(s))
+            .filter(n => !isNaN(n));
+        return parts;
+    }
+
+    function randomArray() {
+        const len = 6 + Math.floor(Math.random() * 6); // 6 ~ 11
+        const arr = [];
+        for (let i = 0; i < len; i++) {
+            arr.push(1 + Math.floor(Math.random() * 99));
+        }
+        return arr;
+    }
+
+    /* ---------- 渲染：柱状图 + 状态文本 ----------
+       step 中携带的可视化标记：
+         compare: 正在扫描/比较的位置 (橙色)
+         minIdx : 当前最小值位置 (绿色高亮)
+         target : 本轮目标位置 (顶部蓝色竖线)
+         swap   : 正在交换的两个位置
+         sorted : 已排序部分
+       高亮逻辑：compare 可能与 target/minIdx 组合，需叠加
+    -------------------------------------------------------- */
+    function renderBars(arr, step) {
+        const compare = step.compare || [];
+        const minIdx  = step.minIdx !== undefined && step.minIdx !== null ? [step.minIdx] : (step.minIdxList || []);
+        const target  = step.target !== undefined && step.target !== null ? [step.target] : [];
+        const swap    = step.swap || [];
+        const sorted  = step.sorted || [];
+        const minFound = !!step.minFound;
+
+        const max = Math.max.apply(null, arr.length ? arr : [1]);
+        barChart.innerHTML = '';
+        for (let i = 0; i < arr.length; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            if (sorted.indexOf(i) !== -1) bar.classList.add('sorted');
+            if (minIdx.indexOf(i) !== -1) {
+                bar.classList.add(minFound ? 'min-found' : 'compare');
+            }
+            if (compare.indexOf(i) !== -1 && minIdx.indexOf(i) === -1) {
+                bar.classList.add('compare');
+            }
+            if (target.indexOf(i) !== -1 && sorted.indexOf(i) === -1) bar.classList.add('target');
+            if (swap.indexOf(i) !== -1) bar.classList.add('swap');
+
+            const relH = Math.max(10, Math.round((arr[i] / max) * 340));
+            bar.style.height = relH + 'px';
+            bar.textContent = String(arr[i]);
+
+            const idx = document.createElement('span');
+            idx.className = 'bar-index';
+            idx.textContent = '[' + i + ']';
+            bar.appendChild(idx);
+
+            barChart.appendChild(bar);
+        }
+        snapshotText.textContent = '[' + arr.join(', ') + ']';
+    }
+
+    function renderInitial() {
+        renderBars(initialArray, { compare: [], minIdx: null, target: null, swap: [], sorted: [], minFound: false });
+    }
+
+    /* ---------- 算法：生成 steps ----------
+       每个 step 包含：
+         { en, zh, formula, codeLines,
+           arr, compare, minIdx, target, swap, sorted, minFound }
+    ------------------------------------------------------------ */
+    function buildSteps(arr) {
+        const a = arr.slice();
+        const n = a.length;
+        const result = [];
+        const sortedIdx = [];
+
+        // 初始步骤：展示原始数组
+        result.push({
+            en: `Initial array of ${n} elements. Ready to start selection sort.`,
+            zh: `共 ${n} 个元素的初始数组，准备开始选择排序。`,
+            formula: `arr = [${a.join(', ')}]  ·  n = ${n}`,
+            codeLines: [3, 4],
+            arr: a.slice(),
+            compare: [],
+            minIdx: null,
+            target: null,
+            swap: [],
+            sorted: [],
+            minFound: false
+        });
+
+        // 外层：n - 1 轮
+        for (let i = 0; i < n - 1; i++) {
+            // 每轮开始：标记目标位置 & minIdx = i
+            result.push({
+                en: `Round ${i + 1}: find the minimum in arr[${i}..${n - 1}]. Initial minIdx = ${i} (value ${a[i]}).`,
+                zh: `第 ${i + 1} 轮：在 arr[${i}..${n - 1}] 中寻找最小值。初始 minIdx = ${i} (值 ${a[i]})。`,
+                formula: `i = ${i}, minIdx = ${i}`,
+                codeLines: [4, 5],
+                arr: a.slice(),
+                compare: [],
+                minIdx: i,
+                target: i,
+                swap: [],
+                sorted: sortedIdx.slice(),
+                minFound: false
+            });
+
+            let minIdx = i;
+            for (let j = i + 1; j < n; j++) {
+                // 比较步骤：arr[j] vs arr[minIdx]
+                result.push({
+                    en: `Compare arr[${j}] = ${a[j]} with current minimum arr[${minIdx}] = ${a[minIdx]}.`,
+                    zh: `比较当前扫描位置 arr[${j}] = ${a[j]} 与当前最小值 arr[${minIdx}] = ${a[minIdx]}。`,
+                    formula: a[j] < a[minIdx]
+                        ? `${a[j]} < ${a[minIdx]} → 更新 minIdx = ${j}`
+                        : `${a[j]} ≥ ${a[minIdx]} → minIdx 保持 ${minIdx}`,
+                    codeLines: [6, 7],
+                    arr: a.slice(),
+                    compare: [j],
+                    minIdx: minIdx,
+                    target: i,
+                    swap: [],
+                    sorted: sortedIdx.slice(),
+                    minFound: false
+                });
+
+                if (a[j] < a[minIdx]) {
+                    // 更新 minIdx
+                    minIdx = j;
+                    result.push({
+                        en: `Found a smaller value. Update minIdx = ${minIdx} (value = ${a[minIdx]}).`,
+                        zh: `发现更小的值，更新 minIdx = ${minIdx} (值 = ${a[minIdx]})。`,
+                        formula: `minIdx = ${minIdx}, arr[minIdx] = ${a[minIdx]}`,
+                        codeLines: 8,
+                        arr: a.slice(),
+                        compare: [],
+                        minIdx: minIdx,
+                        target: i,
+                        swap: [],
+                        sorted: sortedIdx.slice(),
+                        minFound: false
+                    });
+                }
+            }
+
+            // 扫描结束：找到本轮最小值
+            result.push({
+                en: `Scan complete. The minimum in arr[${i}..${n - 1}] is arr[${minIdx}] = ${a[minIdx]}.`,
+                zh: `扫描结束。arr[${i}..${n - 1}] 中的最小值为 arr[${minIdx}] = ${a[minIdx]}。`,
+                formula: `本轮最小值: arr[${minIdx}] = ${a[minIdx]}`,
+                codeLines: 10,
+                arr: a.slice(),
+                compare: [],
+                minIdx: minIdx,
+                target: i,
+                swap: [],
+                sorted: sortedIdx.slice(),
+                minFound: true
+            });
+
+            // 交换步骤（若 minIdx != i）
+            if (minIdx !== i) {
+                const tmp = a[i];
+                a[i] = a[minIdx];
+                a[minIdx] = tmp;
+
+                result.push({
+                    en: `Swap arr[${i}] and arr[${minIdx}]. Now arr = [${a.join(', ')}].`,
+                    zh: `交换 arr[${i}] 与 arr[${minIdx}]，数组变为 [${a.join(', ')}]。`,
+                    formula: `swap(arr[${i}], arr[${minIdx}])`,
+                    codeLines: [11, 12, 13, 14],
+                    arr: a.slice(),
+                    compare: [],
+                    minIdx: null,
+                    target: null,
+                    swap: [i, minIdx],
+                    sorted: sortedIdx.slice(),
+                    minFound: false
+                });
+            } else {
+                result.push({
+                    en: `minIdx == i (${i}), the element is already in place. No swap needed.`,
+                    zh: `minIdx == i (均为 ${i})，元素已经在正确位置，无需交换。`,
+                    formula: `minIdx == i → 无需交换`,
+                    codeLines: 11,
+                    arr: a.slice(),
+                    compare: [],
+                    minIdx: null,
+                    target: null,
+                    swap: [],
+                    sorted: sortedIdx.slice(),
+                    minFound: false
+                });
+            }
+
+            // 第 i 轮结束：arr[0..i] 已排序
+            sortedIdx.push(i);
+            result.push({
+                en: `Round ${i + 1} finished. arr[0..${i}] is now sorted.`,
+                zh: `第 ${i + 1} 轮结束。arr[0..${i}] 已排序。`,
+                formula: `sorted: [${sortedIdx.join(', ')}]`,
+                codeLines: 16,
+                arr: a.slice(),
+                compare: [],
+                minIdx: null,
+                target: null,
+                swap: [],
+                sorted: sortedIdx.slice(),
+                minFound: false
+            });
+        }
+
+        // 最终步骤：全部已排序
+        const allSorted = [];
+        for (let i = 0; i < n; i++) allSorted.push(i);
+        result.push({
+            en: `Sorting complete. Final array: [${a.join(', ')}].`,
+            zh: `排序完成。最终数组：[${a.join(', ')}]。`,
+            formula: `✓ 已排序 · sorted`,
+            codeLines: 18,
+            arr: a.slice(),
+            compare: [],
+            minIdx: null,
+            target: null,
+            swap: [],
+            sorted: allSorted,
+            minFound: false
+        });
+
+        return result;
+    }
+
+    /* ---------- 应用 step 到 UI ---------- */
+    function applyStep(step, index) {
+        codePanel.highlight(step.codeLines);
+        renderBars(step.arr, step);
+        if (formulaTextEl) formulaTextEl.textContent = step.formula || '';
+    }
+
+    /* ---------- StepController 绑定 ---------- */
+    const controller = new StepController({
+        autoSpeed: 800,
+        onStep(step, index) {
+            applyStep(step, index);
+        },
+        onReset() {
+            codePanel.clearHighlight();
+            renderInitial();
+            if (formulaTextEl) formulaTextEl.textContent = `初始 arr = [${initialArray.join(', ')}]`;
+        }
+    });
+
+    /* ---------- 业务：生成 / 随机 / 重置 ---------- */
+    function generate() {
+        const arr = parseInput(arrayInput.value);
+        if (arr.length < 2) {
+            arrayInput.value = '5,2,9,1,7,3,8,4';
+            initialArray = [5, 2, 9, 1, 7, 3, 8, 4];
+        } else {
+            initialArray = arr;
+            arrayInput.value = arr.join(',');
+        }
+        steps = buildSteps(initialArray);
+        controller.setSteps(steps);
+        controller.reset();
+    }
+
+    function randomize() {
+        initialArray = randomArray();
+        arrayInput.value = initialArray.join(',');
+        steps = buildSteps(initialArray);
+        controller.setSteps(steps);
+        controller.reset();
+    }
+
+    function reset() {
+        codePanel.clearHighlight();
+        controller.reset();
+        renderInitial();
+        if (formulaTextEl) formulaTextEl.textContent = `初始 arr = [${initialArray.join(', ')}]`;
+    }
+
+    /* ---------- 绑定按钮事件 ---------- */
+    document.getElementById('btnRandom').addEventListener('click', randomize);
+
+    bindControls({
+        controller: controller,
+        onGenerate: generate,
+        onReset:    reset
+    });
+
+    /* ---------- 初始化 ---------- */
+    window.addEventListener('load', function () {
+        initialArray = parseInput(arrayInput.value);
+        if (initialArray.length < 2) {
+            initialArray = [5, 2, 9, 1, 7, 3, 8, 4];
+            arrayInput.value = initialArray.join(',');
+        }
+        steps = buildSteps(initialArray);
+        controller.setSteps(steps);
+        controller.reset();
+        renderInitial();
+    });
+})();
+</script>
+
+<div style="width:100%;text-align:center;padding:20px;color:#6b7280;font-size:13px;border-top:1px solid #e5e7eb;margin-top:auto;">© 2026 AlgoStep. Created by 赵博宇. All rights reserved.</div>
+
+</body>
+</html>
