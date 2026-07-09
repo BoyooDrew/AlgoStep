@@ -47,6 +47,33 @@
         border-color: #10b981;
         background: rgba(16, 185, 129, 0.18);
     }
+
+    /* 图例：洋红色系 */
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        padding: 10px 14px;
+        margin-top: 10px;
+        background: rgba(236, 72, 153, 0.06);
+        border: 1px dashed rgba(236, 72, 153, 0.3);
+        border-radius: 8px;
+        font-size: 12px;
+        color: #cbd5e1;
+    }
+    .legend .item { display: flex; align-items: center; gap: 6px; }
+    .dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        background: #6366f1;
+        display: inline-block;
+    }
+    .dot.player   { background: #f59e0b; }
+    .dot.highlight{ background: #fbbf24; }
+    .dot.from1    { background: #8b5cf6; }
+    .dot.from2    { background: #10b981; }
+    .dot.final    { background: #10b981; }
 </style>
 </head>
 <body>
@@ -133,6 +160,12 @@
 
         <!-- 左侧：阶梯 canvas -->
         <div class="canvas-container">
+            <div class="legend">
+                <span class="item"><span class="dot highlight"></span>正在计算的格子 dp[i]</span>
+                <span class="item"><span class="dot from1"></span>来源台阶 dp[i-1]（紫点）</span>
+                <span class="item"><span class="dot from2"></span>来源台阶 dp[i-2]（绿点）</span>
+                <span class="item"><span class="dot final"></span>最终答案 dp[n]</span>
+            </div>
             <canvas id="mainCanvas"></canvas>
         </div>
 
@@ -156,6 +189,12 @@
             </div>
 
             <div class="array-container" id="arrayContainer"></div>
+
+            <div class="legend">
+                <span class="item" style="color:#c4b5fd;font-weight:600;">
+                    💡 紫色高亮 = 当前正在执行的代码行
+                </span>
+            </div>
         </div>
     </section>
 </div>

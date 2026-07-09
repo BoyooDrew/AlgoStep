@@ -54,6 +54,119 @@
         min-height: 320px;
         flex: 1 1 auto;
     }
+
+    /* 网格单元格基础样式 */
+    .cell {
+        min-width: 40px;
+        height: 40px;
+        padding: 4px 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 13px;
+        font-weight: 600;
+        color: #cbd5e1;
+        background: #1e293b;
+        border-radius: 6px;
+        transition: transform .2s ease, background-color .2s ease,
+                    border-color .2s ease, box-shadow .2s ease;
+    }
+    .cell.header {
+        background: #1e293b;
+        color: #a78bfa;
+        font-weight: 700;
+    }
+    .cell.header.active-header {
+        background: rgba(99, 102, 241, 0.25);
+        color: #c4b5fd;
+    }
+    /* 基础行/列：i=0 或 j=0，灰度 */
+    .cell.dp-val[data-row="0"],
+    .cell.dp-val[data-col="0"] {
+        background: #334155;
+        color: #cbd5e1;
+        opacity: 0.75;
+    }
+    /* 当前正在计算的格子（focus）：金色系，与表格/字符串底色区分 */
+    .cell.processing {
+        background: rgba(251, 191, 36, 0.32);
+        color: #fffbeb;
+        box-shadow: 0 0 10px rgba(251, 191, 36, 0.55);
+    }
+    /* 字符匹配：绿色系 */
+    .cell.match {
+        background: rgba(16, 185, 129, 0.3);
+        color: #6ee7b7;
+    }
+    /* 字符不匹配：橙色系 */
+    .cell.mismatch {
+        background: rgba(245, 158, 11, 0.28);
+        color: #fdba74;
+    }
+    /* 已填完的格子 */
+    .cell.finished {
+        background: rgba(148, 163, 184, 0.18);
+        color: #e2e8f0;
+    }
+    /* 回溯路径：洋红系（与 pivot 主色呼应） */
+    .cell.path {
+        background: rgba(236, 72, 153, 0.32);
+        color: #f9a8d4;
+        border: 1px solid rgba(236, 72, 153, 0.55);
+    }
+    .cell.path.match {
+        background: rgba(236, 72, 153, 0.45);
+        color: #ffffff;
+        font-weight: 800;
+        box-shadow: 0 0 12px rgba(236, 72, 153, 0.55);
+    }
+
+    /* 状态条：当前数组快照（洋红系） */
+    .snapshot-bar {
+        margin-top: 10px;
+        padding: 10px 14px;
+        background: #0b1220;
+        border: 1px solid rgba(236, 72, 153, 0.28);
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 12px;
+        color: #cbd5e1;
+        line-height: 1.6;
+        word-break: break-all;
+    }
+    .snapshot-bar .label {
+        color: #f9a8d4;
+        font-weight: 700;
+        margin-right: 6px;
+    }
+
+    /* 图例：洋红色系（2 行布局） */
+    .legend {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 18px;
+        padding: 10px 14px;
+        margin-top: 10px;
+        background: rgba(236, 72, 153, 0.06);
+        border: 1px dashed rgba(236, 72, 153, 0.3);
+        border-radius: 8px;
+        font-size: 12px;
+        color: #cbd5e1;
+    }
+    .legend .item { display: flex; align-items: center; gap: 8px; }
+    .dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        display: inline-block;
+        flex: 0 0 auto;
+    }
+    .dot.current { background: #fbbf24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.7); }
+    .dot.match   { background: #10b981; }
+    .dot.mismatch{ background: #f59e0b; }
+    .dot.trace   { background: #ec4899; box-shadow: 0 0 8px rgba(236, 72, 153, 0.55); }
+    .dot.base    { background: #475569; }
 </style>
 </head>
 <body>
@@ -138,6 +251,12 @@
     <section class="visualization-section">
 
         <div class="canvas-container grid-section">
+            <div class="legend">
+                <span class="item"><span class="dot current"></span>当前正在计算的格子 (dp[i][j])</span>
+                <span class="item"><span class="dot trace"></span>回溯时高亮的 LCS 路径</span>
+                <span class="item"><span class="dot match"></span>字符匹配（dp[i][j] = 斜上方 + 1）</span>
+                <span class="item"><span class="dot mismatch"></span>字符不匹配（dp[i][j] = max(左, 上)）</span>
+            </div>
             <div class="grid-header">
                 <h2>动态规划表 (DP Table)</h2>
                 <div class="step-counter" id="gridStep">0</div>
@@ -164,6 +283,12 @@
             </div>
 
             <div class="array-container" id="arrayContainer"></div>
+
+            <div class="legend">
+                <span class="item" style="color:#c4b5fd;font-weight:600;">
+                    💡 紫色高亮 = 当前正在执行的代码行
+                </span>
+            </div>
         </div>
     </section>
 </div>
@@ -300,13 +425,16 @@
         clearCellClasses();
 
         if (step.row !== undefined && step.col !== undefined) {
-            // 行表头
-            gridEl.querySelectorAll(`.cell.header[data-row="${step.row}"]`).forEach(el => {
-                el.classList.add('active-header');
+            // 行标题高亮：所有带 data-row === step.row 的 header
+            gridEl.querySelectorAll('.cell.header').forEach(h => {
+                const r = h.getAttribute('data-row');
+                if (r !== null && String(r) === String(step.row)) {
+                    h.classList.add('active-header');
+                }
             });
-            // 列表头：第一行内的第 step.col 个 B 字符
+            // 列标题高亮：第一行中第 step.col 个字符（跳过前两个空/∅）
             const firstRowCells = Array.from(gridEl.children).slice(0, m + 2);
-            const colHeaderIdx = 1 + step.col; // 跳过 空 + 空串
+            const colHeaderIdx = 1 + step.col;
             if (firstRowCells[colHeaderIdx]) firstRowCells[colHeaderIdx].classList.add('active-header');
         }
 
@@ -316,36 +444,54 @@
             case 'setup':
                 for (let i = 0; i <= n; i++) if (cells[i] && cells[i][0]) cells[i][0].textContent = '0';
                 for (let j = 0; j <= m; j++) if (cells[0] && cells[0][j]) cells[0][j].textContent = '0';
+                // 整个第 0 行和第 0 列强调为 base
+                for (let i = 0; i <= n; i++) if (cells[i] && cells[i][0]) cells[i][0].classList.add('finished');
+                for (let j = 0; j <= m; j++) if (cells[0] && cells[0][j]) cells[0][j].classList.add('finished');
                 break;
             case 'focus':
                 setCellClass(step.row, step.col, 'processing');
+                if (cells[step.row] && cells[step.row][step.col]) {
+                    cells[step.row][step.col].style.transform = 'scale(1.18)';
+                    cells[step.row][step.col].style.boxShadow = '0 0 18px rgba(251, 191, 36, 0.9)';
+                    cells[step.row][step.col].textContent = '?'; // 待计算
+                    cells[step.row][step.col].style.fontWeight = '900';
+                }
                 break;
             case 'match':
                 setCellClass(step.row, step.col, 'match');
                 if (cells[step.row] && cells[step.row][step.col]) {
                     cells[step.row][step.col].textContent = step.value;
+                    cells[step.row][step.col].style.transform = 'scale(1.15)';
+                    cells[step.row][step.col].style.boxShadow = '0 0 14px rgba(16, 185, 129, 0.75)';
+                    cells[step.row][step.col].style.fontWeight = '800';
                 }
+                // 斜上方来源：弱标记
                 if (cells[step.row - 1] && cells[step.row - 1][step.col - 1]) {
-                    cells[step.row - 1][step.col - 1].style.transform = 'scale(1.1)';
-                    cells[step.row - 1][step.col - 1].style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.55)';
+                    cells[step.row - 1][step.col - 1].style.boxShadow = '0 0 0 2px rgba(16, 185, 129, 0.45)';
                 }
                 break;
             case 'mismatch':
                 setCellClass(step.row, step.col, 'mismatch');
                 if (cells[step.row] && cells[step.row][step.col]) {
                     cells[step.row][step.col].textContent = step.value;
+                    cells[step.row][step.col].style.transform = 'scale(1.1)';
+                    cells[step.row][step.col].style.boxShadow = '0 0 12px rgba(245, 158, 11, 0.65)';
                 }
+                // 上方来源
                 if (cells[step.row - 1] && cells[step.row - 1][step.col]) {
-                    cells[step.row - 1][step.col].style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.6)';
+                    cells[step.row - 1][step.col].style.boxShadow = '0 0 0 2px rgba(99, 102, 241, 0.55)';
                 }
+                // 左方来源
                 if (cells[step.row] && cells[step.row][step.col - 1]) {
-                    cells[step.row][step.col - 1].style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.6)';
+                    cells[step.row][step.col - 1].style.boxShadow = '0 0 0 2px rgba(99, 102, 241, 0.55)';
                 }
                 break;
             case 'finish':
                 setCellClass(step.row, step.col, 'finished');
                 if (cells[step.row] && cells[step.row][step.col]) {
                     cells[step.row][step.col].textContent = step.value;
+                    cells[step.row][step.col].style.transform = 'scale(1.12)';
+                    cells[step.row][step.col].style.boxShadow = '0 0 12px rgba(148, 163, 184, 0.55)';
                 }
                 break;
         }
@@ -434,7 +580,7 @@
     function tracePath() {
         if (!dp || !dp.length) return;
         gridEl.querySelectorAll('.cell.dp-val').forEach(c => {
-            c.classList.remove('processing', 'match', 'mismatch', 'finished');
+            c.classList.remove('processing', 'match', 'mismatch', 'finished', 'path');
             c.style.boxShadow = '';
             c.style.transform = '';
         });
@@ -445,8 +591,8 @@
             if (s1[i - 1] === s2[j - 1] && dp[i][j] === dp[i - 1][j - 1] + 1) {
                 if (cells[i] && cells[i][j]) {
                     cells[i][j].classList.add('path', 'match');
-                    cells[i][j].style.transform = 'scale(1.12)';
-                    cells[i][j].style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.55)';
+                    cells[i][j].style.transform = 'scale(1.15)';
+                    cells[i][j].style.boxShadow = '0 0 14px rgba(236, 72, 153, 0.75)';
                 }
                 path.push({ i, j, char: s1[i - 1] });
                 i--; j--;
