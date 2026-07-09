@@ -203,21 +203,21 @@
     }
 
     .difficulty.beginner {
-      background: rgba(16,185,129,0.15);
-      color: #6ee7b7;
-      border: 1px solid rgba(16,185,129,0.3);
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.55);
+      color: #86efac;
     }
 
     .difficulty.basic {
-      background: rgba(59,130,246,0.15);
-      color: #93c5fd;
-      border: 1px solid rgba(59,130,246,0.3);
+      background: rgba(249, 115, 22, 0.18);
+      border: 1px solid rgba(249, 115, 22, 0.6);
+      color: #fdba74;
     }
 
     .difficulty.advanced {
-      background: rgba(245,158,11,0.15);
-      color: #fde68a;
-      border: 1px solid rgba(245,158,11,0.3);
+      background: rgba(236, 72, 153, 0.22);
+      border: 1px solid rgba(236, 72, 153, 0.65);
+      color: #f9a8d4;
     }
 
     .complexity {
@@ -274,7 +274,7 @@
       <p class="tagline">CSP 算法可视化 · 让每一步清晰可见</p>
       <div class="stats">
         <div class="stat-item">
-          <div class="stat-num purple" id="stat-algos">4</div>
+          <div class="stat-num purple" id="stat-algos">7</div>
           <div class="stat-label">算法</div>
         </div>
         <div class="stat-item">
@@ -295,7 +295,7 @@
           <div class="card-name">爬楼梯 <small>Climb Stairs</small></div>
           <div class="card-desc">每次可上 1 或 2 级台阶，到达第 n 级有多少种走法。</div>
           <div class="card-meta">
-            <span class="difficulty beginner">入门</span>
+            <span class="difficulty beginner">入门 · Beginner</span>
             <span class="complexity">O(n)</span>
           </div>
         </a>
@@ -303,7 +303,7 @@
           <div class="card-name">最长公共子序列 <small>LCS</small></div>
           <div class="card-desc">求两个字符串的最长公共子序列长度，经典二维 DP 问题。</div>
           <div class="card-meta">
-            <span class="difficulty advanced">进阶</span>
+            <span class="difficulty advanced">进阶 · Advanced</span>
             <span class="complexity">O(mn)</span>
           </div>
         </a>
@@ -319,10 +319,34 @@
       <div class="card-grid">
         <a class="card" href="./algorithms/sort/bubble-sort.html">
           <div class="card-name">冒泡排序 <small>Bubble Sort</small></div>
-          <div class="card-desc">相邻元素两两比较交换，最大值逐步浮到末尾。</div>
+          <div class="card-desc">相邻元素两两比较交换，最大值逐步浮到末尾，排序经典。</div>
           <div class="card-meta">
-            <span class="difficulty beginner">入门</span>
+            <span class="difficulty beginner">入门 · Beginner</span>
             <span class="complexity">O(n²)</span>
+          </div>
+        </a>
+        <a class="card" href="./algorithms/sort/insertion-sort.html">
+          <div class="card-name">插入排序 <small>Insertion Sort</small></div>
+          <div class="card-desc">将元素依次插入已排序部分的正确位置，稳定且简单。</div>
+          <div class="card-meta">
+            <span class="difficulty beginner">入门 · Beginner</span>
+            <span class="complexity">O(n²)</span>
+          </div>
+        </a>
+        <a class="card" href="./algorithms/sort/selection-sort.html">
+          <div class="card-name">选择排序 <small>Selection Sort</small></div>
+          <div class="card-desc">每轮从未排序部分选出最小值，放到已排序部分末尾。</div>
+          <div class="card-meta">
+            <span class="difficulty beginner">入门 · Beginner</span>
+            <span class="complexity">O(n²)</span>
+          </div>
+        </a>
+        <a class="card" href="./algorithms/sort/quick-sort.html">
+          <div class="card-name">快速排序 <small>Quick Sort</small></div>
+          <div class="card-desc">选取基准值分区，递归排序左右两部分，分治经典。</div>
+          <div class="card-meta">
+            <span class="difficulty basic">基础 · Basic</span>
+            <span class="complexity">O(nlog n)</span>
           </div>
         </a>
       </div>
@@ -339,7 +363,7 @@
           <div class="card-name">二分查找 <small>Binary Search</small></div>
           <div class="card-desc">在有序数组中折半查找目标值，每次排除一半搜索空间。</div>
           <div class="card-meta">
-            <span class="difficulty beginner">入门</span>
+            <span class="difficulty beginner">入门 · Beginner</span>
             <span class="complexity">O(log n)</span>
           </div>
         </a>
@@ -357,7 +381,7 @@
           <div class="card-name">新算法模板 <small>Template</small></div>
           <div class="card-desc">复制一份并替换为你的算法代码，快速搭建新的可视化页面。</div>
           <div class="card-meta">
-            <span class="difficulty basic">模板</span>
+            <span class="difficulty basic">基础 · Basic</span>
             <span class="complexity">- -</span>
           </div>
         </a>
