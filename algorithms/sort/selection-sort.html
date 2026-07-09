@@ -109,12 +109,12 @@
         font-family: 'JetBrains Mono', Consolas, monospace;
     }
 
-    /* 状态条：当前数组快照 */
+    /* 状态条：当前数组快照（洋红系，与 pivot 主色呼应） */
     .snapshot-bar {
         margin-top: 34px;
         padding: 10px 14px;
         background: #0b1220;
-        border: 1px solid rgba(139, 92, 246, 0.25);
+        border: 1px solid rgba(236, 72, 153, 0.28);
         border-radius: 8px;
         font-family: 'JetBrains Mono', Consolas, monospace;
         font-size: 12px;
@@ -124,20 +124,20 @@
     }
 
     .snapshot-bar .label {
-        color: #c4b5fd;
+        color: #f9a8d4;
         font-weight: 700;
         margin-right: 6px;
     }
 
-    /* 图例 */
+    /* 图例：洋红色系，与 pivot 主色呼应 */
     .legend {
         display: flex;
         flex-wrap: wrap;
         gap: 14px;
         padding: 10px 14px;
         margin-top: 10px;
-        background: rgba(139, 92, 246, 0.06);
-        border: 1px dashed rgba(139, 92, 246, 0.3);
+        background: rgba(236, 72, 153, 0.06);
+        border: 1px dashed rgba(236, 72, 153, 0.3);
         border-radius: 8px;
         font-size: 12px;
         color: #cbd5e1;
@@ -155,6 +155,13 @@
     .dot.min { background: #10b981; }
     .dot.swap { background: #ef4444; }
     .dot.sorted { background: #10b981; }
+
+    /* 代码面板：扩大高度以展示完整代码，移除滚动条 */
+    .code-panel {
+        min-height: 380px;
+        max-height: none;
+        overflow-y: visible;
+    }
 
     /* 数组输入框稍微加宽 */
     #arrayInput { width: 320px; }
