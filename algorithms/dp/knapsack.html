@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>动态规划-0-1背包问题</title>
+
+<link rel="stylesheet" href="../../css/common.css">
+<link rel="stylesheet" href="../../css/layout.css">
+
+<style>
+    /* 左侧网格区：覆盖 canvas-container 的默认行为，限制高度避免溢出 */
+    .grid-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px;
+        max-height: 520px;
+        min-height: 420px;
+        overflow: hidden;
+    }
+
+    .grid-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 10px;
+    }
+
+    .grid-header h2 {
+        margin: 0;
+        font-size: 15px;
+        color: #a78bfa;
+        letter-spacing: 0.5px;
+    }
+
+    .current-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 12px;
+        background: rgba(251, 191, 36, 0.1);
+        border: 1px solid rgba(251, 191, 36, 0.35);
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 12.5px;
+        color: #cbd5e1;
+    }
+    .current-item .idx { color: #fbbf24; font-weight: 700; }
+    .current-item .w { color: #60a5fa; font-weight: 700; }
+    .current-item .v { color: #34d399; font-weight: 700; }
+
+    .grid-container {
+        display: grid;
+        justify-content: center;
+        gap: 4px;
+        padding: 10px;
+        background: #0f172a;
+        border-radius: 10px;
+        overflow: visible;
+        max-height: 360px;
+        flex: 1 1 auto;
+    }
+
+    /* 网格单元格基础样式 */
+    .cell {
+        min-width: 40px;
+        height: 40px;
+        padding: 4px 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 13px;
+        font-weight: 600;
+        color: #cbd5e1;
+        background: #1e293b;
+        border-radius: 6px;
+        transition: transform .2s ease, background-color .2s ease,
+                    border-color .2s ease, box-shadow .2s ease;
+    }
+    .cell.header {
+        background: #1e293b;
+        color: #a78bfa;
+        font-weight: 700;
+    }
+    .cell.header.active-header {
+        background: rgba(99, 102, 241, 0.25);
+        color: #c4b5fd;
+    }
+    /* 基础行/列：i=0 或 j=0，灰度 */
+    .cell.dp-val[data-row="0"],
+    .cell.dp-val[data-col="0"] {
+        background: #334155;
+        color: #cbd5e1;
+        opacity: 0.75;
+    }
+    /* 当前正在计算的格子（focus）：金色系 */
+    .cell.processing {
+        background: rgba(251, 191, 36, 0.32);
+        color: #fffbeb;
+        box-shadow: 0 0 10px rgba(251, 191, 36, 0.55);
+    }
+    /* 不选来源：蓝色边框 + 半透明蓝色背景（dp[i-1][j]） */
+    .cell.ref-skip {
+        background: rgba(59, 130, 246, 0.18);
+        border: 2px solid #3b82f6;
+        color: #93c5fd;
+        box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    }
+    /* 选来源：绿色边框 + 半透明绿色背景（dp[i-1][j-w]） */
+    .cell.ref-take {
+        background: rgba(16, 185, 129, 0.18);
+        border: 2px solid #10b981;
+        color: #6ee7b7;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+    }
+    /* 已填完的格子 */
+    .cell.finished {
+        background: rgba(148, 163, 184, 0.18);
+        color: #e2e8f0;
+    }
+    /* 回溯路径：洋红系（弱边框表示方向） */
+    .cell.path {
+        background: rgba(236, 72, 153, 0.18) !important;
+        color: #f9a8d4;
+        border: 1px dashed rgba(236, 72, 153, 0.55);
+    }
+    /* 回溯路径中"真正选择物品"的决策格：绿色强高亮，优先级最高 */
+    .cell.path-take {
+        background: rgba(16, 185, 129, 0.45) !important;
+        color: #ecfdf5 !important;
+        font-weight: 800 !important;
+        border: 2px solid #10b981 !important;
+        box-shadow: 0 0 14px rgba(16, 185, 129, 0.75) !important;
+    }
+
+    /* 图例：2 行布局 */
+    .legend {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 18px;
+        padding: 10px 14px;
+        margin-top: 10px;
+        background: rgba(99, 102, 241, 0.06);
+        border: 1px dashed rgba(99, 102, 241, 0.3);
+        border-radius: 8px;
+        font-size: 12px;
+        color: #cbd5e1;
+    }
+    .legend .item { display: flex; align-items: center; gap: 8px; }
+    .dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        background: #6366f1;
+        display: inline-block;
+        flex: 0 0 auto;
+    }
+    .dot.current { background: #fbbf24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.7); }
+    .dot.skip    { background: #3b82f6; }
+    .dot.take    { background: #10b981; }
+    .dot.trace   { background: #ec4899; box-shadow: 0 0 8px rgba(236, 72, 153, 0.55); }
+    .dot.base    { background: #475569; }
+
+    /* 代码面板：高度自适应，无滚动 */
+    .code-panel {
+        min-height: 440px;
+        max-height: none;
+        overflow-y: visible;
+    }
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+    <!-- 区块 1：标题区 -->
+    <header>
+        <div>
+            <h1>0-1 背包问题 · 0-1 Knapsack Problem</h1>
+            <div class="subtitle">
+                动态规划可视化：dp[i][j] = max( dp[i-1][j], dp[i-1][j-w[i]] + v[i] )
+            </div>
+        </div>
+        <span class="difficulty basic">基础 · Basic</span>
+    </header>
+
+    <!-- 区块 2：控制区 -->
+    <section class="control-panel">
+        <h3 class="panel-title">· Controls · 控制面板</h3>
+
+        <div class="control-row">
+            <div class="control-group">
+                <span class="control-label">物品数量 N:</span>
+                <input type="number" class="input-number" id="itemCount"
+                       value="4" min="2" max="4">
+            </div>
+            <div class="control-group">
+                <span class="control-label">背包容量 W:</span>
+                <input type="number" class="input-number" id="capacity"
+                       value="8" min="1" max="8">
+            </div>
+            <div class="control-group">
+                <span class="control-label">重量 w[]:</span>
+                <input type="text" class="input-number" id="weights"
+                       value="2,3,4,5">
+            </div>
+            <div class="control-group">
+                <span class="control-label">价值 v[]:</span>
+                <input type="text" class="input-number" id="values"
+                       value="3,4,5,8">
+            </div>
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnGenerate">生成场景</button>
+                <button class="btn btn-danger" id="btnReset">重置</button>
+                <button class="btn btn-accent" id="btnTrace">回溯路径</button>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnStart">▶ 开始</button>
+                <button class="btn btn-secondary" id="btnPause">⏸ 暂停</button>
+                <button class="btn btn-accent" id="btnPrev">◀ 上一步</button>
+                <button class="btn btn-accent" id="btnNext">下一步 ▶</button>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">速度：</span>
+                <input type="range" class="slider" id="speed-slider"
+                       min="100" max="2000" step="50" value="800">
+                <span class="slider-value" id="speed-value">800ms</span>
+                <span class="slider-value" id="speed-label" style="color:#f59e0b;">中等</span>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <span class="control-label">进度：</span>
+            <input type="range" class="slider" id="progress-slider"
+                   min="1" max="1" step="1" value="1">
+            <span class="slider-value" id="progress-text">0 / 0</span>
+        </div>
+    </section>
+
+    <!-- 区块 3：步骤解释区 -->
+    <section class="explanation-panel">
+        <div class="formula-box">
+            <span class="formula-text" id="formula-text">等待开始...</span>
+            <span id="current-result">最大价值: <span id="result-value">0</span></span>
+        </div>
+
+        <div class="step-info">
+            <span class="step-counter" id="step-counter">0</span>
+            <div class="step-description">
+                <div class="step-en" id="step-en">Click "Generate" to start visualization.</div>
+                <div class="step-zh" id="step-zh">点击上方"生成场景"以开始演示。</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 区块 4：演示区 + 代码区 -->
+    <section class="visualization-section">
+
+        <div class="canvas-container grid-section">
+            <div class="legend">
+                <span class="item"><span class="dot current"></span>当前正在计算的格子 (dp[i][j])</span>
+                <span class="item"><span class="dot base"></span>已计算完成的格子</span>
+                <span class="item"><span class="dot skip"></span>不选第 i 个物品：取上方 dp[i-1][j]</span>
+                <span class="item"><span class="dot take"></span>选第 i 个物品：取 dp[i-1][j-w[i]] + v[i]</span>
+                <span class="item"><span class="dot trace"></span>回溯路径（选中的物品高亮绿色）</span>
+            </div>
+            <div class="grid-header">
+                <h2>动态规划表 (DP Table)</h2>
+                <div class="current-item" id="currentItem">
+                    <span class="idx">i = -</span>
+                    <span class="w">w = -</span>
+                    <span class="v">v = -</span>
+                </div>
+            </div>
+            <div class="grid-container" id="grid"></div>
+        </div>
+
+        <div class="info-panel">
+            <div class="code-panel" id="codePanel">
+                <div class="code-line" id="line-0">// 0-1背包问题 - 0-1 Knapsack Problem</div>
+                <div class="code-line" id="line-1">// dp[i][j]: 前i个物品、背包容量为j时的最大价值</div>
+                <div class="code-line" id="line-2">// 状态转移方程: dp[i][j] = max(dp[i-1][j], dp[i-1][j-w[i]] + v[i])</div>
+                <div class="code-line" id="line-3">int dp[105][10005];</div>
+                <div class="code-line" id="line-4">int w[105];           // 重量 weight</div>
+                <div class="code-line" id="line-5">int v[105];           // 价值 value</div>
+                <div class="code-line" id="line-6"></div>
+                <div class="code-line" id="line-7">int knapsack(int n, int W) {</div>
+                <div class="code-line" id="line-8">    for (int i = 0; i <= n; i++)</div>
+                <div class="code-line" id="line-9">        dp[i][0] = 0;</div>
+                <div class="code-line" id="line-10">    for (int j = 0; j <= W; j++)</div>
+                <div class="code-line" id="line-11">        dp[0][j] = 0;</div>
+                <div class="code-line" id="line-12"></div>
+                <div class="code-line" id="line-13">    for (int i = 1; i <= n; i++) {</div>
+                <div class="code-line" id="line-14">        for (int j = 1; j <= W; j++) {</div>
+                <div class="code-line" id="line-15">            if (j >= w[i]) {</div>
+                <div class="code-line" id="line-16">                dp[i][j] = dp[i-1][j];</div>
+                <div class="code-line" id="line-17">                if (dp[i-1][j-w[i]] + v[i] > dp[i][j])</div>
+                <div class="code-line" id="line-18">                    dp[i][j] = dp[i-1][j-w[i]] + v[i];</div>
+                <div class="code-line" id="line-19">            } else {</div>
+                <div class="code-line" id="line-20">                dp[i][j] = dp[i-1][j];</div>
+                <div class="code-line" id="line-21">            }</div>
+                <div class="code-line" id="line-22">        }</div>
+                <div class="code-line" id="line-23">    }</div>
+                <div class="code-line" id="line-24">    return dp[n][W];</div>
+                <div class="code-line" id="line-25">}</div>
+            </div>
+
+            <div class="array-container" id="arrayContainer"></div>
+
+            <div class="legend">
+                <span class="item" style="color:#c4b5fd;font-weight:600;">
+                    💡 紫色高亮 = 当前正在执行的代码行
+                </span>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="../../js/common.js"></script>
+<script src="../../js/code-panel.js"></script>
+<script src="../../js/controls.js"></script>
+
+<script>
+(function () {
+    const codePanel = new CodePanel('#codePanel');
+
+    const itemCountInput = document.getElementById('itemCount');
+    const capacityInput  = document.getElementById('capacity');
+    const weightsInput   = document.getElementById('weights');
+    const valuesInput    = document.getElementById('values');
+    const gridEl         = document.getElementById('grid');
+    const formulaText    = document.getElementById('formula-text');
+    const resultValue    = document.getElementById('result-value');
+    const stepCounterEl  = document.getElementById('step-counter');
+    const stepEnEl       = document.getElementById('step-en');
+    const stepZhEl       = document.getElementById('step-zh');
+    const arrayContainer = document.getElementById('arrayContainer');
+    const currentItemEl  = document.getElementById('currentItem');
+
+    let n = 4, W = 8;
+    let weightArr = [2, 3, 4, 5];
+    let valueArr  = [3, 4, 5, 8];
+    let dp = [];       // 展示用 DP：只有已计算的格子有值
+    let fullDp = [];   // 完整 DP 结果：供 tracePath 使用
+    let cells = [];
+    let isTraceMode = false;   // 当前是否处于"回溯路径"视觉状态
+
+    /* ========= 控制器 ========= */
+    const controller = new StepController({
+        onStep: function (step, index) {
+            if (!step) return;
+
+            if (step.codeLines && step.codeLines.length) {
+                codePanel.highlight(step.codeLines);
+            } else if (step.codeLine !== undefined) {
+                codePanel.highlight(step.codeLine);
+            }
+
+            stepCounterEl.textContent = index + 1;
+            stepEnEl.textContent = step.en || '';
+            stepZhEl.textContent = step.zh || '';
+            formulaText.textContent = step.formula || '';
+            if (resultValue && step.value !== undefined) resultValue.textContent = step.value;
+
+            renderStepVisual(step);
+        }
+    });
+
+    /* ========= 网格构建 ========= */
+    function clearCellClasses() {
+        const all = gridEl.querySelectorAll('.cell.dp-val');
+        all.forEach(c => {
+            c.classList.remove('processing', 'finished', 'path', 'path-take',
+                               'ref-skip', 'ref-take', 'selected');
+            c.style.transform = '';
+            c.style.boxShadow = '';
+            c.style.border = '';
+            c.style.fontWeight = '';
+            c.style.position = '';
+        });
+        const headers = gridEl.querySelectorAll('.cell.header');
+        headers.forEach(c => {
+            c.classList.remove('active-header');
+            c.style.color = '';
+            c.style.background = '';
+            c.style.boxShadow = '';
+        });
+    }
+
+    function setCellClass(row, col, cls) {
+        if (cells[row] && cells[row][col]) cells[row][col].classList.add(cls);
+    }
+
+    function createGrid() {
+        gridEl.innerHTML = '';
+        cells = [];
+        // 列: 空 + "i\j" + 0..W  （共 W+2 列）
+        gridEl.style.gridTemplateColumns = `repeat(${W + 2}, auto)`;
+
+        // 第一行：空 + "i\j" + 容量 0..W
+        appendCell('', 'header');
+        appendCell('i\\j', 'header');
+        for (let j = 0; j <= W; j++) appendCell(String(j), 'header', -1, j);
+
+        // 第 0 行：物品 "∅" + 0
+        appendCell('\u2205', 'header');
+        for (let j = 0; j <= W; j++) appendCell('0', 'dp-val', 0, j);
+
+        // 物品 i=1..n：每行以物品编号开头
+        for (let i = 1; i <= n; i++) {
+            appendCell(String(i), 'header', i, -1);
+            appendCell('0', 'dp-val', i, 0);
+            for (let j = 1; j <= W; j++) appendCell('', 'dp-val', i, j);
+        }
+    }
+
+    function appendCell(text, className, row, col) {
+        const cell = document.createElement('div');
+        cell.className = 'cell ' + className;
+        cell.textContent = text;
+        if (row !== undefined && col !== undefined) {
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+            if (row >= 0 && col >= 0) {
+                if (!cells[row]) cells[row] = [];
+                cells[row][col] = cell;
+            }
+        }
+        gridEl.appendChild(cell);
+        return cell;
+    }
+
+    /* ========= 当前物品卡片 ========= */
+    function updateCurrentItem(row) {
+        if (row === undefined || row <= 0 || row > n) {
+            currentItemEl.innerHTML =
+                '<span class="idx">i = -</span>' +
+                '<span class="w">w = -</span>' +
+                '<span class="v">v = -</span>';
+            return;
+        }
+        const idx = row - 1; // 数组索引
+        currentItemEl.innerHTML =
+            `<span class="idx">i = ${row}</span>` +
+            `<span class="w">w[${row}] = ${weightArr[idx]}</span>` +
+            `<span class="v">v[${row}] = ${valueArr[idx]}</span>`;
+    }
+
+    /* ========= 数组卡片展示 ========= */
+    function renderArrayInfo(step) {
+        arrayContainer.innerHTML = '';
+        if (!step) return;
+
+        const items = [];
+        if (step.row !== undefined && step.row > 0 && step.row <= n) {
+            items.push({ label: 'i', value: step.row });
+            items.push({ label: 'w[i]', value: weightArr[step.row - 1] });
+            items.push({ label: 'v[i]', value: valueArr[step.row - 1] });
+        }
+        if (step.col !== undefined) {
+            items.push({ label: 'j', value: step.col });
+        }
+
+        // 把"不选"和"选"合并成一张"compare"卡片，两行显示
+        if (step.skipVal !== undefined && step.takeVal !== undefined) {
+            items.push({
+                compare: true,
+                skipVal: step.skipVal,
+                takeVal: step.takeVal
+            });
+        } else if (step.skipVal !== undefined) {
+            items.push({ label: '不选', value: step.skipVal, color: '#60a5fa' });
+        }
+
+        if (step.value !== undefined && step.type !== 'focus') {
+            items.push({ label: 'dp[i][j]', value: step.value, color: '#fbbf24' });
+        }
+
+        items.forEach(it => {
+            const cell = document.createElement('div');
+            cell.className = 'array-cell';
+            if (it.compare) {
+                cell.innerHTML =
+                    `<span class="cell-index">比较</span>
+                     <span class="cell-value" style="color:#60a5fa;">不选 = ${it.skipVal}</span>
+                     <span class="cell-value" style="color:#34d399;">选 = ${it.takeVal}</span>`;
+                cell.style.flexDirection = 'column';
+                cell.style.justifyContent = 'center';
+                cell.style.minHeight = '56px';
+                cell.style.gap = '2px';
+            } else {
+                const valColor = it.color ? `style="color:${it.color}"` : '';
+                cell.innerHTML =
+                    `<span class="cell-index">${it.label}</span>` +
+                    `<span class="cell-value" ${valColor}>${it.value}</span>`;
+            }
+            arrayContainer.appendChild(cell);
+        });
+    }
+
+    /* ========= 每步可视化 ========= */
+    function renderStepVisual(step) {
+        // 若上一步是回溯路径，现在回到普通步骤：清除 trace 视觉标记
+        if (isTraceMode) isTraceMode = false;
+
+        clearCellClasses();
+
+        // 恢复已计算的格子数字 + finished 样式，
+        // 对"当前正在处理的格子"保留它的专属样式（不写 finished）。
+        const curRow = (step && step.row !== undefined) ? step.row : -1;
+        const curCol = (step && step.col !== undefined) ? step.col : -1;
+
+        if (dp && dp.length) {
+            for (let i = 0; i <= n; i++) {
+                for (let j = 0; j <= W; j++) {
+                    if (cells[i] && cells[i][j] && dp[i][j] !== undefined) {
+                        cells[i][j].textContent = String(dp[i][j]);
+                        if (!(i === curRow && j === curCol)) {
+                            cells[i][j].classList.add('finished');
+                        }
+                    }
+                }
+            }
+        }
+
+        // 当前物品
+        if (step.row !== undefined) updateCurrentItem(step.row);
+        else updateCurrentItem(-1);
+
+        // 行标题高亮
+        if (step.row !== undefined && step.row > 0) {
+            const rowH = gridEl.querySelectorAll('.cell.header');
+            rowH.forEach(h => {
+                const r = h.getAttribute('data-row');
+                if (r !== null && Number(r) === step.row) {
+                    h.classList.add('active-header');
+                }
+            });
+        }
+        // 列标题高亮：第一行中的容量列
+        if (step.col !== undefined && step.col >= 0) {
+            const firstRow = Array.from(gridEl.children).slice(0, W + 2);
+            // 第一行前两个是空和"i\j"，之后索引 2..W+2 对应容量 0..W
+            const colIdx = 2 + step.col;
+            if (firstRow[colIdx]) firstRow[colIdx].classList.add('active-header');
+        }
+
+        switch (step.type) {
+            case 'init':
+                // 边界已经在 createGrid 时渲染为 0；额外标记 finished
+                for (let i = 0; i <= n; i++) if (cells[i] && cells[i][0]) cells[i][0].classList.add('finished');
+                for (let j = 0; j <= W; j++) if (cells[0] && cells[0][j]) cells[0][j].classList.add('finished');
+                break;
+
+            case 'focus':
+                if (cells[step.row] && cells[step.row][step.col]) {
+                    const c = cells[step.row][step.col];
+                    c.classList.add('processing');
+                    c.textContent = '?';
+                    c.style.transform = 'scale(1.18)';
+                    c.style.boxShadow = '0 0 18px rgba(251, 191, 36, 0.9)';
+                    c.style.fontWeight = '900';
+                }
+                break;
+
+            case 'compare': {
+                // 高亮当前格（processing） + 两个来源格
+                const cur = cells[step.row] && cells[step.row][step.col];
+                if (cur) {
+                    cur.classList.add('processing');
+                    cur.textContent = '?';
+                    cur.style.transform = 'scale(1.15)';
+                    cur.style.boxShadow = '0 0 14px rgba(251, 191, 36, 0.7)';
+                    cur.style.fontWeight = '900';
+                }
+                // 不选来源：dp[i-1][j]（蓝色）
+                const skipRow = step.row - 1, skipCol = step.col;
+                if (cells[skipRow] && cells[skipRow][skipCol]) {
+                    cells[skipRow][skipCol].classList.add('ref-skip');
+                }
+                // 选来源：dp[i-1][j-w]（绿色，若 j>=w）
+                if (step.takeRow !== undefined && step.takeCol !== undefined) {
+                    const tr = step.takeRow, tc = step.takeCol;
+                    if (cells[tr] && cells[tr][tc]) {
+                        cells[tr][tc].classList.add('ref-take');
+                    }
+                }
+                break;
+            }
+
+            case 'decide': {
+                // 写入当前格数值，并同步到展示 dp 数组（后续步骤恢复时才能显示出来）
+                const cur = cells[step.row] && cells[step.row][step.col];
+                if (cur) {
+                    dp[step.row][step.col] = step.value;
+                    cur.textContent = String(step.value);
+                    cur.classList.remove('processing');
+                    cur.classList.add('finished');
+                    cur.style.transform = 'scale(1.12)';
+                    cur.style.boxShadow = '0 0 14px rgba(148, 163, 184, 0.6)';
+                }
+                // 保留"选"的来源格为绿色提示（若选择了 take）
+                if (step.chose === 'take' && step.takeRow !== undefined) {
+                    if (cells[step.takeRow] && cells[step.takeRow][step.takeCol]) {
+                        cells[step.takeRow][step.takeCol].classList.add('ref-take');
+                    }
+                } else if (step.chose === 'skip') {
+                    if (cells[step.row - 1] && cells[step.row - 1][step.col]) {
+                        cells[step.row - 1][step.col].classList.add('ref-skip');
+                    }
+                }
+                break;
+            }
+
+            case 'finish':
+                if (cells[n] && cells[n][W]) {
+                    cells[n][W].style.transform = 'scale(1.15)';
+                    cells[n][W].style.boxShadow = '0 0 16px rgba(16,185,129,0.8)';
+                    cells[n][W].classList.remove('finished');
+                    cells[n][W].classList.add('path', 'selected');
+                }
+                break;
+        }
+
+        renderArrayInfo(step);
+    }
+
+    /* ========= 步骤生成 ========= */
+    function generateSteps() {
+        const steps = [];
+        // 计算用 DP：所有计算都在这个本地数组里做，避免全局 dp 提前被填满
+        const calcDp = Array(n + 1).fill().map(() => Array(W + 1).fill(0));
+        // 展示用 DP：内部格子为 undefined（不显示），仅边界在 init 步骤时写 0
+        dp = Array(n + 1).fill().map(() => Array(W + 1).fill(undefined));
+        for (let i = 0; i <= n; i++) dp[i][0] = 0;
+        for (let j = 0; j <= W; j++) dp[0][j] = 0;
+
+        // 1) 初始化 intro + 边界
+        steps.push({
+            type: 'intro',
+            en: `Solving 0-1 Knapsack: n=${n}, W=${W}, w=[${weightArr}], v=[${valueArr}]`,
+            zh: `求解 0-1 背包：n=${n}, 容量 W=${W}, 重量 w=[${weightArr}], 价值 v=[${valueArr}]`,
+            formula: `目标: dp[n][W] = 最大价值`,
+            codeLines: [0, 1, 2, 3, 4, 5, 7],
+            value: 0,
+            row: 0, col: 0
+        });
+
+        steps.push({
+            type: 'init',
+            en: `Initialize: dp[i][0] = 0 (no capacity), dp[0][j] = 0 (no items)`,
+            zh: `初始化边界：dp[i][0] = 0（容量为 0）, dp[0][j] = 0（无物品）`,
+            formula: `边界: dp[i][0] = 0, dp[0][j] = 0`,
+            codeLines: [8, 9, 10, 11],
+            value: 0,
+            row: 0, col: 0
+        });
+
+        // 2) 逐格计算
+        for (let i = 1; i <= n; i++) {
+            const wi = weightArr[i - 1];
+            const vi = valueArr[i - 1];
+
+            for (let j = 1; j <= W; j++) {
+                // focus 步骤：聚焦当前格子
+                steps.push({
+                    type: 'focus',
+                    en: `Processing dp[${i}][${j}] — item i=${i} (w=${wi}, v=${vi}), capacity j=${j}`,
+                    zh: `计算 dp[${i}][${j}] — 第 ${i} 个物品 (w=${wi}, v=${vi}), 容量 j=${j}`,
+                    formula: `dp[${i}][${j}] = ?`,
+                    row: i, col: j,
+                    codeLines: [13, 14]
+                });
+
+                // 计算两个候选值（用 calcDp，不要污染展示 dp）
+                const skipVal = calcDp[i - 1][j];
+                let takeVal = -1;
+                let takeRow = -1, takeCol = -1;
+                if (j >= wi) {
+                    takeRow = i - 1;
+                    takeCol = j - wi;
+                    takeVal = calcDp[i - 1][j - wi] + vi;
+                }
+
+                // compare 步骤：对比"选"与"不选"
+                if (j >= wi) {
+                    steps.push({
+                        type: 'compare',
+                        en: `Compare: skip (dp[${i-1}][${j}] = ${skipVal}) vs take (dp[${i-1}][${j-wi}] + ${vi} = ${takeVal})`,
+                        zh: `比较：不选（dp[${i-1}][${j}] = ${skipVal}） vs 选（dp[${i-1}][${j-wi}] + ${vi} = ${takeVal}）`,
+                        formula: `max(${skipVal}, ${takeVal}) = ${Math.max(skipVal, takeVal)}`,
+                        row: i, col: j,
+                        takeRow: takeRow, takeCol: takeCol,
+                        skipVal: skipVal, takeVal: takeVal,
+                        value: Math.max(skipVal, takeVal),
+                        codeLines: [15, 17]
+                    });
+                } else {
+                    steps.push({
+                        type: 'compare',
+                        en: `j (${j}) < w[i] (${wi}), only option: skip (dp[${i-1}][${j}] = ${skipVal})`,
+                        zh: `容量 j=${j} 不足以装入 w[i]=${wi}, 只能不选：dp[${i-1}][${j}] = ${skipVal}`,
+                        formula: `dp[${i}][${j}] = dp[${i-1}][${j}] = ${skipVal}`,
+                        row: i, col: j,
+                        takeRow: undefined, takeCol: undefined,
+                        skipVal: skipVal, takeVal: undefined,
+                        value: skipVal,
+                        codeLines: [15, 19, 20]
+                    });
+                }
+
+                // decide 步骤：写入值（只更新 calcDp，展示 dp 交给渲染时同步）
+                const decidedValue = (j >= wi) ? Math.max(skipVal, takeVal) : skipVal;
+                const chose = (j >= wi && takeVal > skipVal) ? 'take' : 'skip';
+                calcDp[i][j] = decidedValue;
+
+                const decideFormula = (chose === 'take')
+                    ? `dp[${i}][${j}] = dp[${i-1}][${j-wi}] + ${vi} = ${decidedValue}（选）`
+                    : `dp[${i}][${j}] = dp[${i-1}][${j}] = ${decidedValue}（不选）`;
+                const decideCode = (chose === 'take')
+                    ? [17, 18]
+                    : (j >= wi ? [16] : [20]);
+
+                steps.push({
+                    type: 'decide',
+                    en: (chose === 'take')
+                        ? `Take item ${i}: dp[${i}][${j}] = ${decidedValue}`
+                        : `Skip item ${i}: dp[${i}][${j}] = ${decidedValue}`,
+                    zh: (chose === 'take')
+                        ? `装入第 ${i} 个物品：dp[${i}][${j}] = ${decidedValue}`
+                        : `不装第 ${i} 个物品：dp[${i}][${j}] = ${decidedValue}`,
+                    formula: decideFormula,
+                    row: i, col: j,
+                    takeRow: takeRow, takeCol: takeCol,
+                    chose: chose,
+                    value: decidedValue,
+                    skipVal: skipVal, takeVal: (j >= wi ? takeVal : undefined),
+                    codeLines: decideCode
+                });
+            }
+        }
+
+        // 3) finish 步骤：从 calcDp 读最终值，并保存为 fullDp 供回溯
+        fullDp = calcDp;
+        steps.push({
+            type: 'finish',
+            en: `Done! Maximum value = dp[${n}][${W}] = ${calcDp[n][W]}`,
+            zh: `完成！最大价值 = dp[${n}][${W}] = ${calcDp[n][W]}`,
+            formula: `答案: dp[${n}][${W}] = ${calcDp[n][W]}`,
+            row: n, col: W,
+            value: calcDp[n][W],
+            codeLines: [24]
+        });
+
+        return steps;
+    }
+
+    /* ========= 路径回溯 ========= */
+    function tracePath() {
+        if (!fullDp || !fullDp.length) return;
+        controller.pause();
+
+        // 标记"当前处于回溯路径"状态
+        isTraceMode = true;
+
+        // 先还原已填好的格子（基于完整 DP 结果 fullDp 渲染）
+        clearCellClasses();
+        for (let i = 0; i <= n; i++) {
+            for (let j = 0; j <= W; j++) {
+                if (cells[i] && cells[i][j]) {
+                    cells[i][j].textContent = String(fullDp[i][j]);
+                    cells[i][j].classList.add('finished');
+                }
+            }
+        }
+
+        // 从 (n, W) 回溯：只在"真正选择该物品"的 (i, j) 做绿色高亮，
+        // 其余向上移动的路径（没选物品）不做特殊标记，以降低视觉干扰。
+        let i = n, j = W;
+        const pathPoints = [];     // 所有路径格（用于细线条路径）
+        const selectedItems = [];  // 被选中的物品索引 i
+        const takeCells = [];      // 选择物品时的决策格 (i, j)
+
+        while (i > 0 && j > 0) {
+            pathPoints.push({ i, j });
+            const wi = weightArr[i - 1];
+            const vi = valueArr[i - 1];
+            const takeVal = (j >= wi) ? fullDp[i - 1][j - wi] + vi : -Infinity;
+            const skipVal = fullDp[i - 1][j];
+
+            if (j >= wi && takeVal > skipVal) {
+                // 第 i 个物品确实被装入：记录决策格
+                takeCells.push({ i, j });
+                selectedItems.push(i);
+                j = j - wi;
+                i = i - 1;
+            } else {
+                // 未选：沿上一行走
+                i = i - 1;
+            }
+        }
+
+        // 1) 所有路径格用"洋红细边框"作为弱路径提示
+        pathPoints.forEach(p => {
+            if (cells[p.i] && cells[p.i][p.j]) {
+                cells[p.i][p.j].classList.remove('finished');
+                cells[p.i][p.j].classList.add('path');
+            }
+        });
+
+        // 2) "选"物品的决策格使用强绿色高亮，优先级最高
+        takeCells.forEach(p => {
+            if (cells[p.i] && cells[p.i][p.j]) {
+                cells[p.i][p.j].classList.remove('path');
+                cells[p.i][p.j].classList.add('path-take');
+            }
+        });
+
+        // 3) 在物品列 (row header) 上高亮被选中的物品
+        const allHeaders = gridEl.querySelectorAll('.cell.header');
+        allHeaders.forEach(h => {
+            const r = Number(h.dataset.row);
+            if (selectedItems.includes(r)) {
+                h.classList.add('active-header');
+                h.style.color = '#34d399';
+                h.style.background = 'rgba(16,185,129,0.25)';
+                h.style.boxShadow = '0 0 10px rgba(16,185,129,0.5)';
+            }
+        });
+
+        // 4) 最终答案格额外加强高亮
+        if (cells[n] && cells[n][W]) {
+            cells[n][W].classList.remove('path');
+            cells[n][W].classList.add('path-take');
+            cells[n][W].style.boxShadow = '0 0 18px rgba(16,185,129,0.9)';
+        }
+
+        const sortedItems = selectedItems.slice().sort((a, b) => a - b);
+        const totalW = sortedItems.reduce((s, x) => s + weightArr[x - 1], 0);
+        const totalV = sortedItems.reduce((s, x) => s + valueArr[x - 1], 0);
+
+        stepEnEl.textContent = `Selected items: [${sortedItems}] (total weight=${totalW}, value=${totalV})`;
+        stepZhEl.textContent = `选中物品: [${sortedItems}]（总重量=${totalW}, 总价值=${totalV}）`;
+        formulaText.textContent = `回溯: 选中物品 ${sortedItems.join(', ')} → 总价值 ${totalV}`;
+
+        arrayContainer.innerHTML = '';
+        sortedItems.forEach(it => {
+            const cell = document.createElement('div');
+            cell.className = 'array-cell';
+            cell.innerHTML =
+                `<span class="cell-index">物品 ${it}</span>` +
+                `<span class="cell-value" style="color:#34d399;">w=${weightArr[it-1]}, v=${valueArr[it-1]}</span>`;
+            arrayContainer.appendChild(cell);
+        });
+
+        // 把 controller 定位到最后一步（finish），
+        // 这样用户点击"上一步"会自然从 finish 向前走。
+        // 注意：直接设置 index，不触发 onStep，避免立即覆盖回溯视觉。
+        if (controller && controller.steps && controller.steps.length > 0) {
+            controller.index = controller.steps.length - 1;
+            if (typeof controller.updateProgress === 'function') controller.updateProgress();
+        }
+    }
+
+    /* ========= 生成 / 重置 ========= */
+    function parseInput() {
+        const nVal = Math.max(2, Math.min(4, Number(itemCountInput.value) || 4));
+        const wVal = Math.max(1, Math.min(8, Number(capacityInput.value)  || 8));
+        itemCountInput.value = nVal;
+        capacityInput.value  = wVal;
+
+        const parseArr = (text, len, fallback) => {
+            const parts = String(text).split(',').map(s => parseInt(s.trim(), 10));
+            const out = [];
+            for (let i = 0; i < len; i++) {
+                out.push(Number.isFinite(parts[i]) && parts[i] > 0 ? parts[i] : fallback[i % fallback.length]);
+            }
+            return out;
+        };
+        const wArr = parseArr(weightsInput.value, nVal, [2, 3, 4, 5]);
+        const vArr = parseArr(valuesInput.value,  nVal, [3, 4, 5, 8]);
+        weightsInput.value = wArr.join(',');
+        valuesInput.value  = vArr.join(',');
+
+        n = nVal; W = wVal;
+        weightArr = wArr;
+        valueArr  = vArr;
+    }
+
+    function generate() {
+        parseInput();
+        isTraceMode = false;
+        createGrid();
+        const newSteps = generateSteps();
+        controller.setSteps(newSteps);
+        controller.reset();
+
+        codePanel.clearHighlight();
+        formulaText.textContent = '等待开始...';
+        if (resultValue) resultValue.textContent = '0';
+        stepCounterEl.textContent = '0';
+        stepEnEl.textContent = 'Click "Generate" to start visualization.';
+        stepZhEl.textContent = '点击上方"生成场景"以开始演示。';
+        arrayContainer.innerHTML = '';
+        updateCurrentItem(-1);
+    }
+
+    function reset() {
+        codePanel.clearHighlight();
+        isTraceMode = false;
+        fullDp = [];
+        // 重置展示 dp：边界为 0，其他格子为 undefined（不展示）
+        if (n > 0 && W > 0) {
+            dp = Array(n + 1).fill().map(() => Array(W + 1).fill(undefined));
+            for (let i = 0; i <= n; i++) dp[i][0] = 0;
+            for (let j = 0; j <= W; j++) dp[0][j] = 0;
+        }
+        controller.reset();
+        stepCounterEl.textContent = '0';
+        stepEnEl.textContent = 'Click "Generate" to start visualization.';
+        stepZhEl.textContent = '点击上方"生成场景"以开始演示。';
+        formulaText.textContent = '等待开始...';
+        if (resultValue) resultValue.textContent = '0';
+        arrayContainer.innerHTML = '';
+        updateCurrentItem(-1);
+
+        clearCellClasses();
+        const allDpCells = gridEl.querySelectorAll('.cell.dp-val');
+        allDpCells.forEach(cell => {
+            const row = Number(cell.dataset.row);
+            const col = Number(cell.dataset.col);
+            if (row === 0 || col === 0) cell.textContent = '0';
+            else cell.textContent = '';
+        });
+    }
+
+    /* ========= 绑定 ========= */
+    bindControls({
+        controller: controller,
+        onGenerate: generate,
+        onReset: reset,
+        onReplay: function () { reset(); generate(); controller.play(); }
+    });
+
+    document.getElementById('btnTrace').addEventListener('click', function () {
+        tracePath();
+    });
+
+    window.addEventListener('load', function () { generate(); });
+})();
+</script>
+    <div style="width:100%;text-align:center;padding:20px;color:#6b7280;font-size:13px;border-top:1px solid #e5e7eb;margin-top:auto;">© 2026 AlgoStep. Created by 赵博宇. All rights reserved.</div>
+</body>
+</html>
