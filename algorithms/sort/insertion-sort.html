@@ -104,14 +104,6 @@
         box-shadow: 0 4px 20px rgba(239, 68, 68, 0.55) !important;
     }
 
-    /* 被移动后留下的空位（原 j 位置），降低高度+半透明，以便视觉上不与 key 冲突 */
-    .bar.empty {
-        background: linear-gradient(180deg, #475569 0%, #1e293b 100%);
-        color: rgba(203, 213, 225, 0.6);
-        opacity: 0.45;
-        box-shadow: none;
-    }
-
     /* 已排序部分 */
     .bar.sorted {
         background: linear-gradient(180deg, #10b981 0%, #065f46 100%);
@@ -132,7 +124,7 @@
         font-family: 'JetBrains Mono', Consolas, monospace;
     }
 
-    /* 状态条：当前数组快照（洋红系，与 pivot 主色呼应） */
+    /* 状态条：当前数组快照（洋红系，与插入操作主色呼应） */
     .snapshot-bar {
         margin-top: 34px;
         padding: 10px 14px;
@@ -152,7 +144,7 @@
         margin-right: 6px;
     }
 
-    /* 图例：洋红色系，与 pivot 主色呼应 */
+    /* 图例：洋红色系，与插入高亮主色呼应 */
     .legend {
         display: flex;
         flex-wrap: wrap;
@@ -373,14 +365,12 @@
          keyValue      : key 的值（用于底部浮标显示，保证 key 永远可见）
          compare       : 当前被比较的索引（橙色）
          shift         : 刚被向右移动的索引（红色）
-         empty         : 当前视觉上空位（灰色半透明，高度降低）
          sorted        : 已排序位置数组（绿色）
          sortedCount   : 已排序部分的元素个数（用于绘制浅色背景）
     -------------------------------------------------------- */
     function renderBars(arr, step) {
         const compare = step.compare || [];
         const shift = step.shift || [];
-        const empty = step.empty || [];
         const sorted = step.sorted || [];
         const keyPos = step.keyPos !== undefined && step.keyPos !== null ? [step.keyPos] : [];
         const keyValue = step.keyValue;
@@ -411,20 +401,12 @@
             const isOverwritten = (step.keyOverwritten || []).indexOf(idx) !== -1;
             if (isKeyPos && !isOverwritten) bar.classList.add('key');
             if (shift.indexOf(idx) !== -1) bar.classList.add('shift');
-            if (empty.indexOf(idx) !== -1) bar.classList.add('empty');
             // compare 放到最后，保证类名在最后（CSS 也使用 !important）
             if (compare.indexOf(idx) !== -1) bar.classList.add('compare');
 
-            const isEmpty = empty.indexOf(idx) !== -1;
             const val = arr[idx];
-            let relH;
-            if (isEmpty) {
-                relH = 16;
-                bar.textContent = '·';
-            } else {
-                relH = Math.max(10, Math.round((val / max) * 340));
-                bar.textContent = String(val);
-            }
+            let relH = Math.max(10, Math.round((val / max) * 340));
+            bar.textContent = String(val);
             bar.style.height = relH + 'px';
 
             // 在"取出key"后的所有步骤中（直到key真正插入），
@@ -483,7 +465,6 @@
             showKeyLabel: false,
             compare: [],
             shift: [],
-            empty: [],
             sorted: [0],
             sortedCount: 1
         });
@@ -522,7 +503,6 @@
             keyOverwritten: [],
             compare: [],
             shift: [],
-            empty: [],
             sorted: [0],
             sortedCount: 1
         });
@@ -543,8 +523,7 @@
                 showKeyLabel: true,   // 在 key 柱子上方叠加显示 "key↓"
                 compare: [],
                 shift: [],
-                empty: [],
-                sorted: range(0, i),
+                    sorted: range(0, i),
                 sortedCount: i
             });
 
@@ -570,8 +549,7 @@
                     // 当前正在比较的 arr[j] 橙色；之前所有腾出空间的位置保持红色
                     compare: [j],
                     shift: shiftedPositions.slice(),
-                    empty: [],
-                    sorted: range(0, i),
+                            sorted: range(0, i),
                     sortedCount: i
                 });
 
@@ -596,8 +574,7 @@
                     keyOverwritten: [prevKeySlot],
                     compare: [],
                     shift: shiftedPositions.slice(),  // 累积红色标记
-                    empty: [],
-                    sorted: range(0, i),
+                            sorted: range(0, i),
                     sortedCount: i
                 });
 
@@ -620,8 +597,7 @@
                     keyOverwritten: [],
                     compare: [j],
                     shift: shiftedPositions.slice(),
-                    empty: [],
-                    sorted: range(0, i),
+                            sorted: range(0, i),
                     sortedCount: i
                 });
             } else {
@@ -636,8 +612,7 @@
                     keyOverwritten: [],
                     compare: [],
                     shift: shiftedPositions.slice(),
-                    empty: [],
-                    sorted: range(0, i),
+                            sorted: range(0, i),
                     sortedCount: i
                 });
             }
@@ -657,8 +632,7 @@
                 keyOverwritten: [],
                 compare: [],
                 shift: [],
-                empty: [],
-                sorted: range(0, i + 1),
+                    sorted: range(0, i + 1),
                 sortedCount: i + 1
             });
 
@@ -674,8 +648,7 @@
                 keyOverwritten: [],
                 compare: [],
                 shift: [],
-                empty: [],
-                sorted: range(0, i + 1),
+                    sorted: range(0, i + 1),
                 sortedCount: i + 1
             });
         }
@@ -693,7 +666,6 @@
             keyOverwritten: [],
             compare: [],
             shift: [],
-            empty: [],
             sorted: allSorted,
             sortedCount: n
         });

@@ -50,9 +50,9 @@
 }
 
 /* ---- 工具类：快速应用动画 ---- */
-.anim-pop-in    { animation: popIn 0.4s ease-out; }
-.anim-fade-in   { animation: fadeIn 0.4s ease-out; }
-.anim-slide-up  { animation: slideUp 0.4s ease-out; }
+.anim-pop-in    { animation: popIn 0.4s ease-out forwards; }
+.anim-fade-in   { animation: fadeIn 0.4s ease-out forwards; }
+.anim-slide-up  { animation: slideUp 0.4s ease-out forwards; }
 .anim-blink     { animation: blink 0.8s ease-in-out infinite; }
 .anim-scale-bounce { animation: scaleBounce 0.4s ease-out; }
 .anim-glow      { animation: glow 1.8s ease-in-out infinite; }
