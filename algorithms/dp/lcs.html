@@ -649,6 +649,20 @@
         if (resultValue) resultValue.textContent = '0';
         if (gridStepEl) gridStepEl.textContent = '0';
         arrayContainer.innerHTML = '';
+
+        // 清空网格高亮类（processing/match/mismatch/finished/path 以及 header.active-header）
+        clearCellClasses();
+        // 将 dp-val 单元格内容重置为初始状态：第 0 行/列恢复为 '0'，其余清空
+        const allDpCells = gridEl.querySelectorAll('.cell.dp-val');
+        allDpCells.forEach(cell => {
+            const row = Number(cell.dataset.row);
+            const col = Number(cell.dataset.col);
+            if (row === 0 || col === 0) {
+                cell.textContent = '0';
+            } else {
+                cell.textContent = '';
+            }
+        });
     }
 
     /* ========= 绑定 ========= */
