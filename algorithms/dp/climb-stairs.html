@@ -177,7 +177,7 @@
                 <div class="code-line" id="line-2">    if (n <= 2) return n;</div>
                 <div class="code-line" id="line-3"></div>
                 <div class="code-line" id="line-4">    int dp[n+1];</div>
-                <div class="code-line" id="line-5">    dp[0] = 0;  // 没有台阶</div>
+                <div class="code-line" id="line-5">    dp[0] = 1;  // 0级台阶有1种走法（不走）</div>
                 <div class="code-line" id="line-6">    dp[1] = 1;  // 只有1个台阶</div>
                 <div class="code-line" id="line-7">    dp[2] = 2;  // 2个台阶</div>
                 <div class="code-line" id="line-8"></div>
@@ -238,6 +238,14 @@
         canvas.height = height * dpr;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         initStairs();
+
+        // 重建阶梯后，按 player.step 重新定位玩家，避免停在旧像素坐标
+        if (player._hasInit && stairs[player.step]) {
+            const target = stairs[player.step];
+            player.x = target.x + target.w / 2;
+            player.y = target.y;
+        }
+
         drawCanvas();
     }
     window.addEventListener('resize', resizeCanvas);
@@ -404,25 +412,38 @@
         const result = [];
         const dpArr = new Array(n + 1).fill(null);
 
+        // n <= 2 时与代码实际执行路径一致：直接返回 n，不使用 dp 数组
+        if (n <= 2) {
+            result.push({
+                dp: dpArr.slice(),
+                highlight: -1,
+                codeLines: [1, 2],
+                formula: `n = ${n} <= 2`,
+                en: `n = ${n} <= 2, the function directly returns ${n} without using the dp array.`,
+                zh: `n = ${n} <= 2，函数直接返回 ${n}，无需使用 dp 数组。`
+            });
+            return result;
+        }
+
         // 初始化步骤：说明边界情况
         result.push({
             dp: dpArr.slice(),
             highlight: -1,
             codeLines: [1, 2],
-            formula: `边界: dp[0]=0, dp[1]=1, dp[2]=2`,
+            formula: `边界: dp[0]=1, dp[1]=1, dp[2]=2`,
             en: `Initialize: n=${n}. If n<=2 return n.`,
             zh: `初始化: n=${n}。如果 n<=2 直接返回 n。`
         });
 
         // 边界：dp[0]
-        dpArr[0] = 0;
+        dpArr[0] = 1;
         result.push({
             dp: dpArr.slice(),
             highlight: 0,
             codeLines: [5],
-            formula: `dp[0] = 0`,
-            en: `dp[0] = 0 (no steps - only 1 way to "stay" at 0; we count 0 here for convenience).`,
-            zh: `dp[0] = 0（没有台阶，视为 0 种方法，仅用于递推起点）。`
+            formula: `dp[0] = 1`,
+            en: `dp[0] = 1 (0 steps: there is exactly 1 way — do nothing).`,
+            zh: `dp[0] = 1（0 级台阶：只有 1 种走法——不走）。`
         });
 
         // 边界：dp[1]
@@ -548,6 +569,8 @@
     }
 
     function reset() {
+        codePanel.clearHighlight();
+        controller.reset();
         dp = new Array(stepCount + 1).fill(null);
         state = { dp: dp, highlight: -1 };
         player.step = 0;
@@ -556,7 +579,6 @@
             player.y = stairs[0].y;
         }
         ghosts = [];
-        codePanel.clearHighlight();
         stepCounterEl.textContent = '0';
         stepEnEl.textContent = 'Click "Generate" to start, then press "Start".';
         stepZhEl.textContent = '点击"生成场景"后，按"播放"开始可视化。';

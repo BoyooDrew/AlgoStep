@@ -381,7 +381,7 @@
             bar.className = 'bar';
             if (sorted.indexOf(i) !== -1) bar.classList.add('sorted');
             if (minIdx.indexOf(i) !== -1) {
-                bar.classList.add(minFound ? 'min-found' : 'compare');
+                bar.classList.add('min-found');
             }
             if (compare.indexOf(i) !== -1 && minIdx.indexOf(i) === -1) {
                 bar.classList.add('compare');
