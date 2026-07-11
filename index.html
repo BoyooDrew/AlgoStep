@@ -263,6 +263,9 @@
       .stat-num { font-size: 22px; }
       .card-grid { grid-template-columns: 1fr; }
     }
+    /* -- 全局防御：确保 #stage 在 body(flex) 下始终撑满宽度 -- */
+    body { display: flex !important; }
+    #stage { width: 100% !important; }
   </style>
 </head>
 <body>

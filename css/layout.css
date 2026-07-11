@@ -23,6 +23,7 @@ body {
 }
 
 #stage {
+    width: 100%;
     max-width: 1360px;
     margin: 0 auto;
     display: flex;
