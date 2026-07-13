@@ -22,7 +22,7 @@ AlgoStep 是一个基于 Web 的算法可视化平台，专为信息学奥赛（
 ```bash
 # 克隆仓库
 git clone <your-repo-url>
-cd algostep
+cd algo-step
 
 # 用浏览器打开首页
 open index.html
