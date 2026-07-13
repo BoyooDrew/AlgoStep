@@ -8,15 +8,15 @@
 <link rel="stylesheet" href="../../css/layout.css">
 
 <style>
-    /* 左侧网格区：覆盖 canvas-container 的默认行为，允许网格自然撑开 */
+    /* 左侧网格区：覆盖 canvas-container 的默认行为，限制高度避免溢出 */
     .grid-section {
         display: flex;
         flex-direction: column;
         gap: 10px;
         padding: 12px;
-        max-height: 560px;
+        max-height: 520px;
         min-height: 420px;
-        overflow: visible;
+        overflow: hidden;
     }
 
     .grid-header {
@@ -52,7 +52,7 @@
     .grid-container {
         display: grid;
         justify-content: center;
-        gap: 3px;
+        gap: 4px;
         padding: 10px;
         background: #0f172a;
         border-radius: 10px;
@@ -63,14 +63,14 @@
 
     /* 网格单元格基础样式 */
     .cell {
-        min-width: 36px;
-        height: 36px;
-        padding: 3px 6px;
+        min-width: 40px;
+        height: 40px;
+        padding: 4px 8px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-family: 'JetBrains Mono', Consolas, monospace;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 600;
         color: #cbd5e1;
         background: #1e293b;
@@ -267,7 +267,7 @@
                 <span class="item"><span class="dot base"></span>已计算完成的格子</span>
                 <span class="item"><span class="dot skip"></span>不选第 i 个物品：取上方 dp[i-1][j]</span>
                 <span class="item"><span class="dot take"></span>选第 i 个物品：取 dp[i-1][j-w[i]] + v[i]</span>
-                <span class="item"><span class="dot trace"></span>回溯：选中物品时的决策格（绿色高亮）</span>
+                <span class="item"><span class="dot trace"></span>回溯路径（选中的物品高亮绿色）</span>
             </div>
             <div class="grid-header">
                 <h2>动态规划表 (DP Table)</h2>
@@ -399,22 +399,20 @@
     function createGrid() {
         gridEl.innerHTML = '';
         cells = [];
-        // 列: 空 + "i\j" + 0..W  （共 W+3 列）
-        gridEl.style.gridTemplateColumns = `repeat(${W + 3}, auto)`;
+        // 列: 空 + "i\j" + 0..W  （共 W+2 列）
+        gridEl.style.gridTemplateColumns = `repeat(${W + 2}, auto)`;
 
-        // 第一行（列头）：空 + "i\j" + 容量 0..W
+        // 第一行：空 + "i\j" + 容量 0..W
         appendCell('', 'header');
         appendCell('i\\j', 'header');
         for (let j = 0; j <= W; j++) appendCell(String(j), 'header', -1, j);
 
-        // 第 0 行：空占位 + "∅" + 0..W
-        appendCell('', 'header');
+        // 第 0 行：物品 "∅" + 0
         appendCell('\u2205', 'header');
         for (let j = 0; j <= W; j++) appendCell('0', 'dp-val', 0, j);
 
-        // 物品 i=1..n：空占位 + i + 0..W
+        // 物品 i=1..n：每行以物品编号开头
         for (let i = 1; i <= n; i++) {
-            appendCell('', 'header');
             appendCell(String(i), 'header', i, -1);
             appendCell('0', 'dp-val', i, 0);
             for (let j = 1; j <= W; j++) appendCell('', 'dp-val', i, j);
@@ -488,14 +486,12 @@
             cell.className = 'array-cell';
             if (it.compare) {
                 cell.innerHTML =
-                    `<span class="cell-index" style="font-size:11px;">比较</span>
-                     <span class="cell-value" style="color:#60a5fa;font-size:12px;">不选 = ${it.skipVal}</span>
-                     <span class="cell-value" style="color:#34d399;font-size:12px;">选 = ${it.takeVal}</span>`;
+                    `<span class="cell-index">比较</span>
+                     <span class="cell-value" style="color:#60a5fa;">不选 = ${it.skipVal}</span>
+                     <span class="cell-value" style="color:#34d399;">选 = ${it.takeVal}</span>`;
                 cell.style.flexDirection = 'column';
                 cell.style.justifyContent = 'center';
-                cell.style.minHeight = '48px';
-                cell.style.minWidth = '48px';
-                cell.style.padding = '4px 6px';
+                cell.style.minHeight = '56px';
                 cell.style.gap = '2px';
             } else {
                 const valColor = it.color ? `style="color:${it.color}"` : '';
@@ -784,12 +780,14 @@
         }
 
         // 从 (n, W) 回溯：只在"真正选择该物品"的 (i, j) 做绿色高亮，
-        // 其余路径点不做任何视觉标记，避免造成视觉困惑。
+        // 其余向上移动的路径（没选物品）不做特殊标记，以降低视觉干扰。
         let i = n, j = W;
+        const pathPoints = [];     // 所有路径格（用于细线条路径）
         const selectedItems = [];  // 被选中的物品索引 i
         const takeCells = [];      // 选择物品时的决策格 (i, j)
 
         while (i > 0 && j > 0) {
+            pathPoints.push({ i, j });
             const wi = weightArr[i - 1];
             const vi = valueArr[i - 1];
             const takeVal = (j >= wi) ? fullDp[i - 1][j - wi] + vi : -Infinity;
@@ -802,15 +800,23 @@
                 j = j - wi;
                 i = i - 1;
             } else {
-                // 未选：沿上一行走（不做任何视觉标记）
+                // 未选：沿上一行走
                 i = i - 1;
             }
         }
 
-        // 只在"选"物品的决策格做绿色高亮（从 finished 直接变 path-take）
-        takeCells.forEach(p => {
+        // 1) 所有路径格用"洋红细边框"作为弱路径提示
+        pathPoints.forEach(p => {
             if (cells[p.i] && cells[p.i][p.j]) {
                 cells[p.i][p.j].classList.remove('finished');
+                cells[p.i][p.j].classList.add('path');
+            }
+        });
+
+        // 2) "选"物品的决策格使用强绿色高亮，优先级最高
+        takeCells.forEach(p => {
+            if (cells[p.i] && cells[p.i][p.j]) {
+                cells[p.i][p.j].classList.remove('path');
                 cells[p.i][p.j].classList.add('path-take');
             }
         });
@@ -948,6 +954,6 @@
     window.addEventListener('load', function () { generate(); });
 })();
 </script>
-    <div style="width:100%;text-align:center;padding:20px;color:#6b7280;font-size:13px;border-top:1px solid #e5e7eb;margin-top:auto;">© 2026 AlgoStep. Created by 赵博宇. All rights reserved.</div>
+    <div style="width:100%;text-align:center;padding:20px;color:#6b7280;font-size:13px;border-top:1px solid #e5e7eb;margin-top:auto;">© 2026 boyooDrew. AlgoStep 网站设计保留所有权利，源代码以 MIT 许可证开源。</div>
 </body>
 </html>

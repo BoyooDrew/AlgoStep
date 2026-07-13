@@ -15,7 +15,7 @@ AlgoStep 是一个基于 Web 的算法可视化平台，专为信息学奥赛（
 
 ## 在线访问
 
-[https://algo-step.surge.sh](https://algo-step.surge.sh)
+[https://algostep.surge.sh](https://algostep.surge.sh)
 
 ## 本地使用
 
