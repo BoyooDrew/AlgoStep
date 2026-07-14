@@ -10,7 +10,7 @@
   <meta property="og:title" content="AlgoStep · CSP算法可视化">
   <meta property="og:description" content="由 boyooDrew 开发的免费算法可视化教学工具">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://algostep.surge.sh">
+  <meta property="og:url" content="https://algo-step.surge.sh">
   <meta property="og:site_name" content="AlgoStep">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="AlgoStep · CSP算法可视化">
@@ -267,10 +267,16 @@
       color: #475569;
     }
 
-    .author-badge {
+    .header-actions {
       position: absolute;
       top: 16px;
       right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .author-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -337,22 +343,21 @@
     }
 
     .about-link {
-      position: absolute;
-      top: 16px;
-      right: 250px;
+      display: inline-flex;
+      align-items: center;
       padding: 4px 12px;
-      background: rgba(139, 92, 246, 0.12);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 8px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 20px;
       color: #c4b5fd;
       font-size: 12px;
       font-weight: 600;
       text-decoration: none;
-      transition: all .2s ease;
+      transition: all .25s ease;
     }
     .about-link:hover {
-      background: rgba(139, 92, 246, 0.25);
-      border-color: rgba(139, 92, 246, 0.5);
+      background: rgba(99, 102, 241, 0.2);
+      border-color: rgba(99, 102, 241, 0.5);
     }
 
     /* -- 响应式 -- */
@@ -376,17 +381,19 @@
 
     <!-- Hero -->
     <div class="hero">
-      <div class="author-badge">
-        <span class="author-icon">DB</span>
-        <span class="author-name">boyooDrew</span>
-        <div class="author-links">
-          <a href="about.html">关于</a>
-          <a href="https://space.bilibili.com/18149888" target="_blank" rel="noopener">Bilibili</a>
-          <a href="https://gitee.com/boyoo/algo-step" target="_blank" rel="noopener">Gitee</a>
-          <a href="https://github.com/BoyooDrew/AlgoStep" target="_blank" rel="noopener">GitHub</a>
+      <div class="header-actions">
+        <a href="about.html" class="about-link">关于 About</a>
+        <div class="author-badge">
+          <span class="author-icon">DB</span>
+          <span class="author-name">boyooDrew</span>
+          <div class="author-links">
+            <a href="about.html">关于</a>
+            <a href="https://space.bilibili.com/18149888" target="_blank" rel="noopener">Bilibili</a>
+            <a href="https://gitee.com/boyoo/algo-step" target="_blank" rel="noopener">Gitee</a>
+            <a href="https://github.com/BoyooDrew/AlgoStep" target="_blank" rel="noopener">GitHub</a>
+          </div>
         </div>
       </div>
-      <a href="about.html" class="about-link">关于 About</a>
       <h1><span>AlgoStep</span></h1>
       <p class="tagline">CSP 算法可视化 · 让每一步清晰可见</p>
       <div class="stats">
