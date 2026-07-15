@@ -134,13 +134,13 @@
         background: rgba(148, 163, 184, 0.18);
         color: #e2e8f0;
     }
-    /* 回溯路径中"真正选择物品"的决策格：绿色强高亮 */
+    /* 回溯路径中"真正选择物品"的决策格：洋红强高亮 */
     .cell.path-take {
-        background: rgba(16, 185, 129, 0.45) !important;
-        color: #ecfdf5 !important;
+        background: rgba(236, 72, 153, 0.45) !important;
+        color: #fdf2f8 !important;
         font-weight: 800 !important;
-        border: 2px solid #10b981 !important;
-        box-shadow: 0 0 14px rgba(16, 185, 129, 0.75) !important;
+        border: 2px solid #ec4899 !important;
+        box-shadow: 0 0 14px rgba(236, 72, 153, 0.75) !important;
     }
 
     /* 图例：2 行布局 */
@@ -168,13 +168,23 @@
     .dot.current { background: #fbbf24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.7); }
     .dot.skip    { background: #3b82f6; }
     .dot.take    { background: #ef4444; }
-    .dot.trace   { background: #10b981; }
+    .dot.trace   { background: #ec4899; box-shadow: 0 0 8px rgba(236, 72, 153, 0.55); }
 
     /* 代码面板：高度自适应，无滚动 */
     .code-panel {
         min-height: 500px;
         max-height: none;
         overflow-y: visible;
+    }
+
+    #btnTrace {
+        background: linear-gradient(135deg, #ec4899, #db2777);
+        border-color: #db2777;
+        color: #fff;
+    }
+    #btnTrace:hover {
+        background: linear-gradient(135deg, #f472b6, #ec4899);
+        border-color: #ec4899;
     }
 </style>
 </head>
@@ -274,7 +284,7 @@
                 <span class="item"><span class="dot current"></span>当前正在计算的格子 (dp[i][j])</span>
                 <span class="item"><span class="dot skip"></span>不选第 i 个物品：取上方 dp[i-1][j]</span>
                 <span class="item"><span class="dot take"></span>选第 i 个物品：取 dp[i][j-w[i]] + v[i]（同一行）</span>
-                <span class="item"><span class="dot trace"></span>回溯路径（选中的物品高亮绿色）</span>
+                <span class="item"><span class="dot trace"></span>回溯路径（选中的物品高亮洋红）</span>
             </div>
 
             <div class="grid-header">
