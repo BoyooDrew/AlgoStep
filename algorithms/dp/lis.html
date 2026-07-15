@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>动态规划-最长递增子序列</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%236366f1'/><text x='16' y='22' font-size='14' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>DB</text></svg>">
+
+<link rel="stylesheet" href="../../css/common.css">
+<link rel="stylesheet" href="../../css/layout.css">
+
+<style>
+    .lis-section {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 12px;
+        max-height: 560px;
+        min-height: 420px;
+        overflow: visible;
+    }
+
+    .sequence-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px;
+        background: #0f172a;
+        border-radius: 10px;
+        border: 1px solid rgba(139, 92, 246, 0.25);
+    }
+
+    .seq-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .seq-row-label {
+        font-size: 12px;
+        color: #94a3b8;
+        font-weight: 600;
+        margin-right: 8px;
+        min-width: 60px;
+        text-align: right;
+    }
+
+    .seq-card {
+        min-width: 52px;
+        height: 52px;
+        padding: 4px 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        background: #1e293b;
+        border: 2px solid #475569;
+        border-radius: 8px;
+        transition: all .25s ease;
+        position: relative;
+    }
+    .seq-card .card-idx { font-size: 11px; color: #64748b; margin-bottom: 2px; }
+    .seq-card .card-val { font-size: 18px; font-weight: 700; color: #f1f5f9; }
+
+    .seq-card.processing {
+        border-color: #f59e0b;
+        background: rgba(245, 158, 11, 0.25);
+        transform: scale(1.12);
+        box-shadow: 0 0 16px rgba(245, 158, 11, 0.6);
+    }
+
+    .seq-card.focus-j {
+        border-color: #3b82f6;
+        background: rgba(59, 130, 246, 0.2);
+        transform: scale(1.08);
+        box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .seq-card.valid {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.25);
+        box-shadow: 0 0 14px rgba(16, 185, 129, 0.5);
+    }
+
+    .seq-card.invalid {
+        border-color: #64748b;
+        background: rgba(100, 116, 139, 0.2);
+        opacity: 0.6;
+    }
+
+    .seq-card.backtrack {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.4);
+        box-shadow: 0 0 18px rgba(16, 185, 129, 0.7);
+        transform: scale(1.1);
+    }
+
+    .seq-card.finished {
+        border-color: #6366f1;
+        background: rgba(99, 102, 241, 0.15);
+    }
+
+    .connection-line {
+        position: absolute;
+        height: 2px;
+        top: -6px;
+        border-radius: 1px;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .connection-line.valid {
+        background: #10b981;
+        box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+    }
+
+    .connection-line.invalid {
+        background: #64748b;
+    }
+
+    .arrow-head {
+        position: absolute;
+        width: 0;
+        height: 0;
+        right: -6px;
+        top: -4px;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        pointer-events: none;
+    }
+
+    .arrow-head.valid { border-left: 6px solid #10b981; }
+    .arrow-head.invalid { border-left: 6px solid #64748b; }
+
+    .ans-display {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        padding: 12px;
+        background: rgba(99, 102, 241, 0.08);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+    }
+    .ans-label { font-size: 13px; color: #94a3b8; }
+    .ans-value { font-size: 24px; font-weight: 800; color: #fbbf24; }
+
+    .legend {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 18px;
+        padding: 10px 14px;
+        margin-top: 10px;
+        background: rgba(99, 102, 241, 0.06);
+        border: 1px dashed rgba(99, 102, 241, 0.3);
+        border-radius: 8px;
+        font-size: 12px;
+        color: #cbd5e1;
+    }
+    .legend .item { display: flex; align-items: center; gap: 8px; }
+    .dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        background: #6366f1;
+        display: inline-block;
+        flex: 0 0 auto;
+    }
+    .dot.current { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.7); }
+    .dot.j { background: #3b82f6; }
+    .dot.valid { background: #10b981; }
+    .dot.invalid { background: #64748b; }
+    .dot.backtrack { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.7); }
+
+    .code-panel {
+        min-height: 420px;
+        max-height: none;
+        overflow-y: visible;
+    }
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+    <header>
+        <div>
+            <h1>最长递增子序列 · Longest Increasing Subsequence</h1>
+            <div class="subtitle">
+                动态规划可视化：dp[i] = max(dp[j] + 1), j &lt; i 且 arr[j] &lt; arr[i]
+            </div>
+        </div>
+        <span class="difficulty basic">基础 · Basic</span>
+    </header>
+
+    <section class="control-panel">
+        <h3 class="panel-title">· Controls · 控制面板</h3>
+
+        <div class="control-row">
+            <div class="control-group">
+                <span class="control-label">序列 arr[]:</span>
+                <input type="text" class="input-number" id="seqInput"
+                       value="10, 9, 2, 5, 3, 7, 101, 18">
+            </div>
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnGenerate">生成场景</button>
+                <button class="btn btn-danger" id="btnReset">重置</button>
+                <button class="btn btn-accent" id="btnTrace">回溯路径</button>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnStart">▶ 开始</button>
+                <button class="btn btn-secondary" id="btnPause">⏸ 暂停</button>
+                <button class="btn btn-accent" id="btnPrev">◀ 上一步</button>
+                <button class="btn btn-accent" id="btnNext">下一步 ▶</button>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">速度：</span>
+                <input type="range" class="slider" id="speed-slider"
+                       min="100" max="2000" step="50" value="800">
+                <span class="slider-value" id="speed-value">800ms</span>
+                <span class="slider-value" id="speed-label" style="color:#f59e0b;">中等</span>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <span class="control-label">进度：</span>
+            <input type="range" class="slider" id="progress-slider"
+                   min="1" max="1" step="1" value="1">
+            <span class="slider-value" id="progress-text">0 / 0</span>
+        </div>
+    </section>
+
+    <section class="explanation-panel">
+        <div class="formula-box">
+            <span class="formula-text" id="formula-text">等待开始...</span>
+            <span id="current-result">LIS 长度: <span id="result-value">0</span></span>
+        </div>
+
+        <div class="step-info">
+            <span class="step-counter" id="step-counter">0</span>
+            <div class="step-description">
+                <div class="step-en" id="step-en">Click "Generate" to start visualization.</div>
+                <div class="step-zh" id="step-zh">点击上方"生成场景"以开始演示。</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="visualization-section">
+
+        <div class="canvas-container lis-section">
+            <div class="legend">
+                <span class="item"><span class="dot current"></span>当前计算位置 i</span>
+                <span class="item"><span class="dot j"></span>正在比较的位置 j</span>
+                <span class="item"><span class="dot valid"></span>arr[j] &lt; arr[i]，可更新 dp[i]</span>
+                <span class="item"><span class="dot invalid"></span>arr[j] &gt;= arr[i]，不满足递增</span>
+                <span class="item"><span class="dot backtrack"></span>回溯：LIS 序列中的元素</span>
+            </div>
+
+            <div class="ans-display">
+                <span class="ans-label">当前最优 ans =</span>
+                <span class="ans-value" id="ansDisplay">0</span>
+            </div>
+
+            <div class="sequence-container">
+                <div class="seq-row" id="arrRow">
+                    <span class="seq-row-label">arr[]</span>
+                </div>
+                <div class="seq-row" id="dpRow">
+                    <span class="seq-row-label">dp[]</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <div class="code-panel" id="codePanel">
+                <div class="code-line" id="line-0">// 最长递增子序列 - Longest Increasing Subsequence</div>
+                <div class="code-line" id="line-1">// dp[i]: 以 arr[i] 结尾的最长递增子序列长度</div>
+                <div class="code-line" id="line-2">// 状态转移方程: dp[i] = max(dp[j] + 1), j &lt; i 且 arr[j] &lt; arr[i]</div>
+                <div class="code-line" id="line-3">int lis(int arr[], int n) {</div>
+                <div class="code-line" id="line-4">    int dp[105];</div>
+                <div class="code-line" id="line-5">    int ans = 1;</div>
+                <div class="code-line" id="line-6"></div>
+                <div class="code-line" id="line-7">    for (int i = 0; i &lt; n; i++) {</div>
+                <div class="code-line" id="line-8">        dp[i] = 1;</div>
+                <div class="code-line" id="line-9">        for (int j = 0; j &lt; i; j++) {</div>
+                <div class="code-line" id="line-10">            if (arr[j] &lt; arr[i]) {</div>
+                <div class="code-line" id="line-11">                if (dp[j] + 1 &gt; dp[i])</div>
+                <div class="code-line" id="line-12">                    dp[i] = dp[j] + 1;</div>
+                <div class="code-line" id="line-13">            }</div>
+                <div class="code-line" id="line-14">        }</div>
+                <div class="code-line" id="line-15">        if (dp[i] &gt; ans) ans = dp[i];</div>
+                <div class="code-line" id="line-16">    }</div>
+                <div class="code-line" id="line-17">    return ans;</div>
+                <div class="code-line" id="line-18">}</div>
+            </div>
+
+            <div class="array-container" id="arrayContainer"></div>
+
+            <div class="legend">
+                <span class="item" style="color:#c4b5fd;font-weight:600;">
+                    💡 紫色高亮 = 当前正在执行的代码行
+                </span>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="../../js/common.js"></script>
+<script src="../../js/code-panel.js"></script>
+<script src="../../js/controls.js"></script>
+
+<script>
+(function () {
+    const codePanel = new CodePanel('#codePanel');
+
+    const seqInput       = document.getElementById('seqInput');
+    const arrRow         = document.getElementById('arrRow');
+    const dpRow          = document.getElementById('dpRow');
+    const formulaText    = document.getElementById('formula-text');
+    const resultValue    = document.getElementById('result-value');
+    const ansDisplay     = document.getElementById('ansDisplay');
+    const stepCounterEl  = document.getElementById('step-counter');
+    const stepEnEl       = document.getElementById('step-en');
+    const stepZhEl       = document.getElementById('step-zh');
+    const arrayContainer = document.getElementById('arrayContainer');
+
+    let arr = [10, 9, 2, 5, 3, 7, 101, 18];
+    let n = arr.length;
+    let dp = [];
+    let fullDp = [];
+    let arrCards = [];
+    let dpCards = [];
+    let isTraceMode = false;
+
+    const controller = new StepController({
+        onStep: function (step, index) {
+            if (!step) return;
+
+            if (step.codeLines && step.codeLines.length) {
+                codePanel.highlight(step.codeLines);
+            } else if (step.codeLine !== undefined) {
+                codePanel.highlight(step.codeLine);
+            }
+
+            stepCounterEl.textContent = index + 1;
+            stepEnEl.textContent = step.en || '';
+            stepZhEl.textContent = step.zh || '';
+            formulaText.textContent = step.formula || '';
+            if (resultValue && step.value !== undefined) resultValue.textContent = step.value;
+            if (step.ans !== undefined) ansDisplay.textContent = step.ans;
+
+            renderStepVisual(step);
+        }
+    });
+
+    function clearCardClasses() {
+        arrCards.forEach(c => {
+            c.classList.remove('processing', 'focus-j', 'valid', 'invalid', 'backtrack', 'finished');
+            c.style.transform = '';
+            c.style.boxShadow = '';
+        });
+        dpCards.forEach(c => {
+            c.classList.remove('processing', 'focus-j', 'valid', 'invalid', 'backtrack', 'finished');
+            c.style.transform = '';
+            c.style.boxShadow = '';
+        });
+        const lines = arrRow.querySelectorAll('.connection-line');
+        lines.forEach(l => l.remove());
+    }
+
+    function createCards() {
+        arrRow.innerHTML = '<span class="seq-row-label">arr[]</span>';
+        dpRow.innerHTML = '<span class="seq-row-label">dp[]</span>';
+        arrCards = [];
+        dpCards = [];
+
+        arr.forEach((val, idx) => {
+            const arrCard = document.createElement('div');
+            arrCard.className = 'seq-card';
+            arrCard.innerHTML = `<span class="card-idx">[${idx}]</span><span class="card-val">${val}</span>`;
+            arrCard.dataset.index = idx;
+            arrRow.appendChild(arrCard);
+            arrCards.push(arrCard);
+
+            const dpCard = document.createElement('div');
+            dpCard.className = 'seq-card';
+            dpCard.innerHTML = `<span class="card-idx">dp[${idx}]</span><span class="card-val">?</span>`;
+            dpCard.dataset.index = idx;
+            dpRow.appendChild(dpCard);
+            dpCards.push(dpCard);
+        });
+    }
+
+    function renderArrayInfo(step) {
+        arrayContainer.innerHTML = '';
+        if (!step) return;
+
+        const items = [];
+        if (step.i !== undefined) {
+            items.push({ label: 'i', value: step.i });
+            items.push({ label: 'arr[i]', value: arr[step.i] });
+        }
+        if (step.j !== undefined) {
+            items.push({ label: 'j', value: step.j });
+            items.push({ label: 'arr[j]', value: arr[step.j] });
+        }
+        if (step.dp_i !== undefined) {
+            items.push({ label: 'dp[i]', value: step.dp_i, color: '#fbbf24' });
+        }
+        if (step.dp_j !== undefined) {
+            items.push({ label: 'dp[j]', value: step.dp_j, color: '#3b82f6' });
+        }
+
+        items.forEach(it => {
+            const cell = document.createElement('div');
+            cell.className = 'array-cell';
+            const valColor = it.color ? `style="color:${it.color}"` : '';
+            cell.innerHTML =
+                `<span class="cell-index">${it.label}</span>` +
+                `<span class="cell-value" ${valColor}>${it.value}</span>`;
+            arrayContainer.appendChild(cell);
+        });
+    }
+
+    function drawConnection(jIdx, iIdx, isValid) {
+        const jCard = arrCards[jIdx];
+        const iCard = arrCards[iIdx];
+        if (!jCard || !iCard) return;
+
+        const jRect = jCard.getBoundingClientRect();
+        const iRect = iCard.getBoundingClientRect();
+        const containerRect = arrRow.getBoundingClientRect();
+
+        const line = document.createElement('div');
+        line.className = `connection-line ${isValid ? 'valid' : 'invalid'}`;
+        line.style.left = (jRect.right - containerRect.left + 4) + 'px';
+        line.style.width = (iRect.left - jRect.right - 8) + 'px';
+
+        const arrow = document.createElement('div');
+        arrow.className = `arrow-head ${isValid ? 'valid' : 'invalid'}`;
+        line.appendChild(arrow);
+
+        arrRow.appendChild(line);
+    }
+
+    function renderStepVisual(step) {
+        if (isTraceMode) isTraceMode = false;
+
+        clearCardClasses();
+
+        const curI = (step && step.i !== undefined) ? step.i : -1;
+        const curJ = (step && step.j !== undefined) ? step.j : -1;
+
+        for (let k = 0; k < n; k++) {
+            if (dp[k] !== undefined) {
+                dpCards[k].textContent = '';
+                dpCards[k].innerHTML = `<span class="card-idx">dp[${k}]</span><span class="card-val">${dp[k]}</span>`;
+                if (!(k === curI)) {
+                    dpCards[k].classList.add('finished');
+                }
+            }
+        }
+
+        switch (step.type) {
+            case 'init':
+                for (let k = 0; k < n; k++) {
+                    dpCards[k].innerHTML = `<span class="card-idx">dp[${k}]</span><span class="card-val">1</span>`;
+                    dpCards[k].classList.add('finished');
+                }
+                break;
+
+            case 'focus_i':
+                arrCards[step.i].classList.add('processing');
+                dpCards[step.i].classList.add('processing');
+                break;
+
+            case 'compare_j':
+                arrCards[step.i].classList.add('processing');
+                dpCards[step.i].classList.add('processing');
+                arrCards[step.j].classList.add('focus-j');
+                dpCards[step.j].classList.add('focus-j');
+                drawConnection(step.j, step.i, step.valid);
+                if (step.valid) {
+                    arrCards[step.j].classList.add('valid');
+                    dpCards[step.j].classList.add('valid');
+                } else {
+                    arrCards[step.j].classList.add('invalid');
+                    dpCards[step.j].classList.add('invalid');
+                }
+                break;
+
+            case 'update_dp':
+                arrCards[step.i].classList.add('processing');
+                dpCards[step.i].classList.add('processing');
+                if (step.j !== undefined) {
+                    arrCards[step.j].classList.add('valid');
+                    dpCards[step.j].classList.add('valid');
+                    drawConnection(step.j, step.i, true);
+                }
+                dp[step.i] = step.newVal;
+                dpCards[step.i].innerHTML = `<span class="card-idx">dp[${step.i}]</span><span class="card-val">${step.newVal}</span>`;
+                dpCards[step.i].classList.add('finished');
+                break;
+
+            case 'update_ans':
+                arrCards[step.i].classList.add('finished');
+                dpCards[step.i].classList.add('finished');
+                break;
+
+            case 'finish':
+                arrCards.forEach(c => c.classList.add('finished'));
+                dpCards.forEach(c => c.classList.add('finished'));
+                break;
+        }
+
+        renderArrayInfo(step);
+    }
+
+    function generateSteps() {
+        const steps = [];
+        const calcDp = Array(n).fill(1);
+        dp = Array(n).fill(undefined);
+        let ans = 1;
+
+        steps.push({
+            type: 'intro',
+            en: `LIS: arr = [${arr.join(', ')}], n = ${n}`,
+            zh: `最长递增子序列：arr = [${arr.join(', ')}], n = ${n}`,
+            formula: `目标: 找到最长的严格递增子序列`,
+            codeLines: [0, 1, 2, 3, 4, 5],
+            row: 0, col: 0
+        });
+
+        steps.push({
+            type: 'init',
+            en: `Initialize dp[i] = 1 for all i (each element itself is a subsequence of length 1)`,
+            zh: `初始化：所有 dp[i] = 1（每个元素本身就是一个长度为1的子序列）`,
+            formula: `dp[i] = 1, for all i`,
+            codeLines: [7, 8],
+            ans: 1
+        });
+
+        for (let i = 0; i < n; i++) {
+            dp[i] = 1;
+            calcDp[i] = 1;
+
+            steps.push({
+                type: 'focus_i',
+                en: `Processing dp[${i}] (arr[${i}] = ${arr[i]})`,
+                zh: `计算 dp[${i}]（arr[${i}] = ${arr[i]}）`,
+                formula: `dp[${i}] = 1（初始值）`,
+                i: i,
+                dp_i: 1,
+                codeLines: [7, 8]
+            });
+
+            for (let j = 0; j < i; j++) {
+                const isValid = arr[j] < arr[i];
+
+                steps.push({
+                    type: 'compare_j',
+                    en: `Compare arr[${j}]=${arr[j]} vs arr[${i}]=${arr[i]} → ${isValid ? 'valid' : 'invalid'}`,
+                    zh: `比较 arr[${j}]=${arr[j]} 和 arr[${i}]=${arr[i]} → ${isValid ? '满足递增' : '不满足'}`,
+                    formula: isValid
+                        ? `arr[${j}]=${arr[j]} < arr[${i}]=${arr[i]}, dp[${j}]+1 = ${calcDp[j]+1}`
+                        : `arr[${j}]=${arr[j]} >= arr[${i}]=${arr[i]}, 跳过`,
+                    i: i, j: j,
+                    valid: isValid,
+                    dp_i: calcDp[i],
+                    dp_j: calcDp[j],
+                    codeLines: [9, 10]
+                });
+
+                if (isValid && calcDp[j] + 1 > calcDp[i]) {
+                    calcDp[i] = calcDp[j] + 1;
+
+                    steps.push({
+                        type: 'update_dp',
+                        en: `Update dp[${i}] from ${calcDp[i]-1} to ${calcDp[i]} (dp[${j}]+1 = ${calcDp[j]}+1 = ${calcDp[i]})`,
+                        zh: `更新 dp[${i}]：${calcDp[i]-1} → ${calcDp[i]}（dp[${j}]+1 = ${calcDp[j]}+1 = ${calcDp[i]}）`,
+                        formula: `dp[${i}] = dp[${j}] + 1 = ${calcDp[j]} + 1 = ${calcDp[i]}`,
+                        i: i, j: j,
+                        newVal: calcDp[i],
+                        dp_i: calcDp[i],
+                        dp_j: calcDp[j],
+                        codeLines: [11, 12]
+                    });
+                }
+            }
+
+            if (calcDp[i] > ans) {
+                ans = calcDp[i];
+
+                steps.push({
+                    type: 'update_ans',
+                    en: `Update ans from ${ans-1} to ${ans} (dp[${i}] = ${calcDp[i]} is new maximum)`,
+                    zh: `更新最优解 ans：${ans-1} → ${ans}（dp[${i}] = ${calcDp[i]} 是新的最大值）`,
+                    formula: `ans = max(ans, dp[${i}]) = ${ans}`,
+                    i: i,
+                    ans: ans,
+                    codeLines: [15]
+                });
+            }
+        }
+
+        fullDp = calcDp;
+        steps.push({
+            type: 'finish',
+            en: `Done! LIS length = ${ans}`,
+            zh: `完成！最长递增子序列长度 = ${ans}`,
+            formula: `答案: LIS = ${ans}`,
+            value: ans,
+            ans: ans,
+            codeLines: [17]
+        });
+
+        return steps;
+    }
+
+    function tracePath() {
+        if (!fullDp || !fullDp.length) return;
+        controller.pause();
+        isTraceMode = true;
+
+        clearCardClasses();
+
+        for (let k = 0; k < n; k++) {
+            dpCards[k].innerHTML = `<span class="card-idx">dp[${k}]</span><span class="card-val">${fullDp[k]}</span>`;
+            arrCards[k].classList.add('finished');
+            dpCards[k].classList.add('finished');
+        }
+
+        let maxLen = Math.max(...fullDp);
+        let curLen = maxLen;
+        const lisIndices = [];
+
+        for (let i = n - 1; i >= 0; i--) {
+            if (fullDp[i] === curLen) {
+                lisIndices.unshift(i);
+                curLen--;
+            }
+        }
+
+        for (let k = 0; k < lisIndices.length - 1; k++) {
+            const j = lisIndices[k];
+            const i = lisIndices[k + 1];
+            drawConnection(j, i, true);
+        }
+
+        lisIndices.forEach(idx => {
+            arrCards[idx].classList.remove('finished');
+            arrCards[idx].classList.add('backtrack');
+            dpCards[idx].classList.remove('finished');
+            dpCards[idx].classList.add('backtrack');
+        });
+
+        const lisValues = lisIndices.map(idx => arr[idx]);
+
+        stepEnEl.textContent = `LIS: [${lisValues.join(', ')}] (length = ${maxLen})`;
+        stepZhEl.textContent = `最长递增子序列：[${lisValues.join(', ')}]（长度 = ${maxLen}）`;
+        formulaText.textContent = `LIS = [${lisValues.join(', ')}]，长度 ${maxLen}`;
+        resultValue.textContent = maxLen;
+        ansDisplay.textContent = maxLen;
+
+        arrayContainer.innerHTML = '';
+        lisIndices.forEach(idx => {
+            const cell = document.createElement('div');
+            cell.className = 'array-cell';
+            cell.innerHTML =
+                `<span class="cell-index">arr[${idx}]</span>` +
+                `<span class="cell-value" style="color:#10b981;">${arr[idx]}</span>`;
+            arrayContainer.appendChild(cell);
+        });
+
+        if (controller && controller.steps && controller.steps.length > 0) {
+            controller.index = controller.steps.length - 1;
+            if (typeof controller.updateProgress === 'function') controller.updateProgress();
+        }
+    }
+
+    function parseInput() {
+        const parts = String(seqInput.value).split(',').map(s => parseInt(s.trim(), 10));
+        const validParts = parts.filter(v => Number.isFinite(v));
+        if (validParts.length < 2) {
+            seqInput.value = '10, 9, 2, 5, 3, 7, 101, 18';
+            arr = [10, 9, 2, 5, 3, 7, 101, 18];
+        } else {
+            arr = validParts;
+            seqInput.value = arr.join(', ');
+        }
+        n = arr.length;
+    }
+
+    function generate() {
+        parseInput();
+        isTraceMode = false;
+        createCards();
+        const newSteps = generateSteps();
+        controller.setSteps(newSteps);
+        controller.reset();
+
+        codePanel.clearHighlight();
+        formulaText.textContent = '等待开始...';
+        if (resultValue) resultValue.textContent = '0';
+        ansDisplay.textContent = '0';
+        stepCounterEl.textContent = '0';
+        stepEnEl.textContent = 'Click "Generate" to start visualization.';
+        stepZhEl.textContent = '点击上方"生成场景"以开始演示。';
+        arrayContainer.innerHTML = '';
+    }
+
+    function reset() {
+        codePanel.clearHighlight();
+        isTraceMode = false;
+        fullDp = [];
+        dp = [];
+        controller.reset();
+        stepCounterEl.textContent = '0';
+        stepEnEl.textContent = 'Click "Generate" to start visualization.';
+        stepZhEl.textContent = '点击上方"生成场景"以开始演示。';
+        formulaText.textContent = '等待开始...';
+        if (resultValue) resultValue.textContent = '0';
+        ansDisplay.textContent = '0';
+        arrayContainer.innerHTML = '';
+
+        clearCardClasses();
+        arrCards.forEach((c, idx) => {
+            c.innerHTML = `<span class="card-idx">[${idx}]</span><span class="card-val">${arr[idx]}</span>`;
+        });
+        dpCards.forEach((c, idx) => {
+            c.innerHTML = `<span class="card-idx">dp[${idx}]</span><span class="card-val">?</span>`;
+        });
+    }
+
+    bindControls({
+        controller: controller,
+        onGenerate: generate,
+        onReset: reset,
+        onReplay: function () { reset(); generate(); controller.play(); }
+    });
+
+    document.getElementById('btnTrace').addEventListener('click', function () {
+        tracePath();
+    });
+
+    window.addEventListener('load', function () { generate(); });
+})();
+</script>
+    <div style="width:100%;text-align:center;padding:20px;color:#6b7280;font-size:13px;border-top:1px solid #e5e7eb;margin-top:auto;">© 2026 boyooDrew. AlgoStep 网站设计保留所有权利，源代码以 MIT 许可证开源。</div>
+</body>
+</html>
