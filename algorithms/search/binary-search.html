@@ -72,9 +72,16 @@
         opacity: 0.35;
     }
 
-    .pointer-arrow {
+    .pointer-group {
         position: absolute;
         top: -28px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .pointer-arrow {
         font-size: 24px;
         animation: pulse-arrow 1s ease-in-out infinite;
     }
@@ -87,9 +94,11 @@
         color: #ec4899;
     }
 
+    .pointer-arrow.mid-arrow {
+        color: #f59e0b;
+    }
+
     .pointer-label {
-        position: absolute;
-        top: -48px;
         font-size: 12px;
         font-weight: 700;
         padding: 2px 8px;
@@ -113,7 +122,6 @@
         background: rgba(245, 158, 11, 0.25);
         color: #fbbf24;
         border: 1px solid rgba(245, 158, 11, 0.5);
-        top: -52px;
     }
 
     @keyframes pulse-arrow {
@@ -126,8 +134,8 @@
         align-items: flex-end;
         justify-content: center;
         gap: 8px;
-        min-height: 320px;
-        padding: 60px 20px 20px;
+        min-height: 360px;
+        padding: 80px 20px 20px;
     }
 
     .comparison-result {
@@ -404,14 +412,16 @@
     }
 
     function renderVisual(step) {
-        if (!step) {
-            searchBarContainer.innerHTML = '';
-            comparisonResult.textContent = '';
-            comparisonResult.className = 'comparison-result';
-            return;
+        let left = -1, right = -1, mid = -1, found = false, failed = false, compareText = '';
+        if (step) {
+            left = step.left;
+            right = step.right;
+            mid = step.mid;
+            found = step.found;
+            failed = step.failed;
+            compareText = step.compareText || '';
         }
 
-        const { left, right, mid, found, failed } = step;
         let html = '';
 
         for (let i = 0; i < arr.length; i++) {
@@ -429,24 +439,28 @@
             if (i === mid && mid >= 0) cls += ' mid';
             if (found && i === mid) cls += ' found';
 
+            const isLeft = i === left && left >= 0;
+            const isRight = i === right && right >= 0;
+            const isMid = i === mid && mid >= 0;
+
             let pointerHtml = '';
-            if (i === left && i === right && left >= 0) {
-                pointerHtml += '<span class="pointer-arrow left-arrow" style="margin-left:-12px;">▲</span>';
-                pointerHtml += '<span class="pointer-arrow right-arrow" style="margin-left:12px;">▲</span>';
-                pointerHtml += '<span class="pointer-label left-label" style="left:-20px;">left</span>';
-                pointerHtml += '<span class="pointer-label right-label" style="left:20px;">right</span>';
-            } else {
-                if (i === left && left >= 0) {
+            if (isLeft || isRight || isMid) {
+                pointerHtml = '<div class="pointer-group">';
+
+                if (isLeft) {
                     pointerHtml += '<span class="pointer-arrow left-arrow">▲</span>';
                     pointerHtml += '<span class="pointer-label left-label">left</span>';
                 }
-                if (i === right && right >= 0) {
+                if (isRight) {
                     pointerHtml += '<span class="pointer-arrow right-arrow">▲</span>';
                     pointerHtml += '<span class="pointer-label right-label">right</span>';
                 }
-            }
-            if (i === mid && mid >= 0) {
-                pointerHtml += '<span class="pointer-label mid-label">mid</span>';
+                if (isMid) {
+                    pointerHtml += '<span class="pointer-arrow mid-arrow">▲</span>';
+                    pointerHtml += '<span class="pointer-label mid-label">mid</span>';
+                }
+
+                pointerHtml += '</div>';
             }
 
             const maxVal = Math.max(...arr);
@@ -461,7 +475,7 @@
 
         searchBarContainer.innerHTML = html;
 
-        comparisonResult.textContent = step.compareText || '';
+        comparisonResult.textContent = compareText;
         comparisonResult.className = 'comparison-result';
         if (found) comparisonResult.classList.add('found');
         if (failed) comparisonResult.classList.add('not-found');
@@ -484,8 +498,8 @@
         targetInput.value = target;
         steps = buildSteps(target);
         controller.setSteps(steps);
-        renderVisual(null);
         controller.reset();
+        renderVisual({ left: -1, right: -1, mid: -1, found: false, failed: false, compareText: '' });
     }
 
     function reset() {
@@ -495,7 +509,7 @@
         document.getElementById('step-en').textContent = 'Click "Generate" to start the visualization.';
         document.getElementById('step-zh').textContent = '点击上方 "生成场景" 以开始演示。';
         document.getElementById('current-result').textContent = '[left, right] = [0, n-1]';
-        renderVisual(null);
+        renderVisual({ left: -1, right: -1, mid: -1, found: false, failed: false, compareText: '' });
     }
 
     bindControls({
