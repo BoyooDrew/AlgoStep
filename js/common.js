@@ -266,6 +266,6 @@ if (typeof window !== 'undefined') {
   var s = document.createElement('script');
   s.setAttribute('data-goatcounter', 'https://algo-step.goatcounter.com/count');
   s.setAttribute('async', '');
-  s.src = '//gc.zgo.at/count.js';
+  s.src = '/js/goatcounter.js';
   document.body.appendChild(s);
 })();
