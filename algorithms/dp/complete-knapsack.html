@@ -173,7 +173,7 @@
 
     /* 代码面板：高度自适应，无滚动 */
     .code-panel {
-        min-height: 460px;
+        min-height: 500px;
         max-height: none;
         overflow-y: visible;
     }
@@ -275,15 +275,8 @@
                 <span class="item"><span class="dot current"></span>当前正在计算的格子 (dp[i][j])</span>
                 <span class="item"><span class="dot base"></span>已计算完成的格子</span>
                 <span class="item"><span class="dot skip"></span>不选第 i 个物品：取上方 dp[i-1][j]</span>
-                <span class="item"><span class="dot take"></span>选第 i 个物品：取 <b>dp[i][j-w[i]] + v[i]</b>（同一行！）</span>
+                <span class="item"><span class="dot take"></span>选第 i 个物品：取 <b>dp[i][j-w[i]] + v[i]</b></span>
                 <span class="item"><span class="dot trace"></span>回溯：选中物品时的决策格（绿色高亮）</span>
-            </div>
-
-            <div class="diff-banner">
-                与 0-1 背包对比：<br>
-                · 0-1 背包：选来源为 <b>dp[i-1][j-w[i]]</b>（上一行），每个物品最多用 1 次；<br>
-                · 完全背包：选来源为 <b>dp[i][j-w[i]]</b>（同一行），每个物品可重复选取。<br>
-                <span class="ok">可视化中"选"来源使用红色标记以突出这一区别。</span>
             </div>
 
             <div class="grid-header">
@@ -295,6 +288,13 @@
                 </div>
             </div>
             <div class="grid-container" id="grid"></div>
+
+            <div class="diff-banner">
+                与 0-1 背包对比：<br>
+                · 0-1 背包：选来源为 <b>dp[i-1][j-w[i]]</b>（上一行），每个物品最多用 1 次；<br>
+                · 完全背包：选来源为 <b>dp[i][j-w[i]]</b>（同一行），每个物品可重复选取。<br>
+                <span class="ok">可视化中"选"来源使用红色标记以突出这一区别。</span>
+            </div>
         </div>
 
         <div class="info-panel">
@@ -656,7 +656,6 @@
             zh: `完全背包：物品数 n=${n}, 容量 W=${W}, 重量 w=[${weightArr}], 价值 v=[${valueArr}]（每个物品可重复选取）`,
             formula: `目标: dp[n][W] = 最大价值`,
             codeLines: [0, 1, 2, 3, 4, 5, 6, 8],
-            value: 0,
             row: 0, col: 0
         });
 
@@ -705,7 +704,7 @@
                         takeRow: takeRow, takeCol: takeCol,
                         skipVal: skipVal, takeVal: takeVal,
                         value: Math.max(skipVal, takeVal),
-                        codeLines: [16, 17, 18]
+                        codeLines: [16, 18]
                     });
                 } else {
                     steps.push({
