@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>广度优先搜索 · Breadth First Search</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%236366f1'/><text x='16' y='22' font-size='14' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>DB</text></svg>">
+<link rel="stylesheet" href="../../css/common.css" />
+<link rel="stylesheet" href="../../css/layout.css" />
+
+<style>
+    .graph-svg {
+        width: 100%;
+        height: 100%;
+        min-height: 380px;
+        display: block;
+    }
+
+    .graph-node {
+        transition: all .3s ease;
+        cursor: pointer;
+    }
+
+    .graph-node .node-circle {
+        stroke-width: 3;
+        transition: all .3s ease;
+    }
+
+    .graph-node .node-label {
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 16px;
+        font-weight: 700;
+        fill: #fff;
+    }
+
+    .graph-node.unvisited .node-circle {
+        fill: #374151;
+        stroke: #6b7280;
+    }
+
+    .graph-node.in-queue .node-circle {
+        fill: #f59e0b;
+        stroke: #fbbf24;
+        filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6));
+        animation: node-pulse 1s ease-in-out infinite;
+    }
+
+    .graph-node.visited .node-circle {
+        fill: #10b981;
+        stroke: #34d399;
+        filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.4));
+    }
+
+    .graph-node.neighbor .node-circle {
+        fill: #374151;
+        stroke: #f59e0b;
+        stroke-dasharray: 8, 4;
+        animation: dash 1.5s linear infinite;
+    }
+
+    .graph-node.current .node-circle {
+        transform: scale(1.15);
+        filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.8));
+    }
+
+    .graph-node.layer-0 { opacity: 1; }
+    .graph-node.layer-1 { opacity: 1; }
+    .graph-node.layer-2 { opacity: 1; }
+
+    @keyframes node-pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    @keyframes dash {
+        to { stroke-dashoffset: -24; }
+    }
+
+    .graph-edge {
+        stroke: #4b5563;
+        stroke-width: 2;
+        fill: none;
+        transition: all .3s ease;
+    }
+
+    .graph-edge.path {
+        stroke: #f59e0b;
+        stroke-width: 4;
+        stroke-linecap: round;
+        filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.5));
+    }
+
+    .graph-edge.active {
+        stroke: #f59e0b;
+        stroke-width: 3;
+        animation: edge-pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes edge-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .bfs-queue {
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        padding: 12px;
+        background: #0f172a;
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        border-radius: 8px;
+        overflow-x: auto;
+        min-height: 56px;
+        align-items: center;
+    }
+
+    .bfs-queue-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #94a3b8;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .queue-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 48px;
+        height: 36px;
+        padding: 0 10px;
+        background: #1f2937;
+        border-radius: 6px;
+        border: 2px solid #6b7280;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 14px;
+        font-weight: 600;
+        color: #e5e7eb;
+        transition: all .2s ease;
+        flex-shrink: 0;
+    }
+
+    .queue-item.head {
+        background: rgba(245, 158, 11, 0.2);
+        border-color: #f59e0b;
+        color: #fbbf24;
+        transform: scale(1.08);
+    }
+
+    .queue-item.tail {
+        background: rgba(59, 130, 246, 0.2);
+        border-color: #3b82f6;
+        color: #93c5fd;
+    }
+
+    .queue-item.visited {
+        background: rgba(16, 185, 129, 0.15);
+        border-color: #10b981;
+        color: #a7f3d0;
+    }
+
+    .queue-indicator {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: #6b7280;
+        padding: 0 4px;
+        margin-top: 4px;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+    }
+
+    .adjacency-matrix {
+        display: grid;
+        gap: 2px;
+        padding: 10px;
+        background: #0f172a;
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        border-radius: 8px;
+        justify-content: center;
+    }
+
+    .matrix-cell {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #1f2937;
+        border: 1px solid #4b5563;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7280;
+        transition: all .2s ease;
+    }
+
+    .matrix-cell.header {
+        background: transparent;
+        border-color: transparent;
+        color: #a78bfa;
+        font-size: 11px;
+    }
+
+    .matrix-cell.has-edge {
+        color: #3b82f6;
+    }
+
+    .matrix-cell.current-row {
+        background: rgba(245, 158, 11, 0.2);
+        border-color: #f59e0b;
+    }
+
+    .matrix-cell.current-col {
+        background: rgba(245, 158, 11, 0.2);
+        border-color: #f59e0b;
+    }
+
+    .matrix-cell.selected {
+        background: rgba(245, 158, 11, 0.25);
+        border-color: #f59e0b;
+        color: #fbbf24;
+        transform: scale(1.1);
+    }
+
+    .layer-indicator {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 8px 12px;
+        background: rgba(139, 92, 246, 0.08);
+        border-radius: 6px;
+        font-size: 12px;
+        color: #94a3b8;
+        margin-bottom: 8px;
+    }
+
+    .layer-indicator .layer {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .layer-indicator .layer-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .layer-indicator .layer-1-color { background: rgba(59, 130, 246, 0.6); }
+    .layer-indicator .layer-2-color { background: rgba(139, 92, 246, 0.6); }
+    .layer-indicator .layer-3-color { background: rgba(236, 72, 153, 0.6); }
+
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 12px 16px;
+        margin-top: 12px;
+        background: rgba(139, 92, 246, 0.06);
+        border: 1px dashed rgba(139, 92, 246, 0.3);
+        border-radius: 8px;
+        font-size: 12px;
+        color: #cbd5e1;
+    }
+
+    .legend .item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .legend .dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .legend .dot.unvisited { background: #374151; border: 2px solid #6b7280; }
+    .legend .dot.in-queue { background: #f59e0b; border: 2px solid #fbbf24; box-shadow: 0 0 6px rgba(245, 158, 11, 0.5); }
+    .legend .dot.visited { background: #10b981; border: 2px solid #34d399; }
+    .legend .dot.neighbor { background: #374151; border: 2px dashed #f59e0b; }
+    .legend .line {
+        width: 24px;
+        height: 3px;
+        border-radius: 2px;
+        display: inline-block;
+    }
+    .legend .line.path { background: #f59e0b; }
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+    <header>
+        <div>
+            <h1>广度优先搜索 · Breadth First Search</h1>
+            <div class="subtitle">
+                借助队列逐层扩展，先访问离起点近的所有节点，再访问更远的节点。时间复杂度 O(V+E)。
+            </div>
+        </div>
+        <span class="difficulty basic">基础 / Basic</span>
+    </header>
+
+    <section class="control-panel">
+        <h3 class="panel-title">· Controls · 控制面板</h3>
+
+        <div class="control-row">
+            <div class="control-group">
+                <span class="control-label">起始节点：</span>
+                <select class="input-number" id="startNodeInput" style="width:100px;">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnGenerate">生成场景</button>
+                <button class="btn btn-danger"  id="btnReset">重置</button>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnStart">▶ 播放</button>
+                <button class="btn btn-secondary" id="btnPause">⏸ 暂停</button>
+                <button class="btn btn-accent" id="btnPrev">◀ 上一步</button>
+                <button class="btn btn-accent" id="btnNext">下一步 ▶</button>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">速度：</span>
+                <input type="range" class="slider" id="speed-slider"
+                       min="100" max="2000" step="50" value="800" />
+                <span class="slider-value" id="speed-value">800ms</span>
+                <span class="slider-value" id="speed-label"
+                      style="color:#f59e0b;">中等</span>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <span class="control-label">进度：</span>
+            <input type="range" class="slider" id="progress-slider"
+                   min="1" max="1" step="1" value="1" />
+            <span class="slider-value" id="progress-text">0 / 0</span>
+        </div>
+    </section>
+
+    <section class="explanation-panel">
+        <div class="formula-box">
+            <span class="formula-text">当前状态</span>
+            <span id="current-result">
+                起始节点: 0
+            </span>
+        </div>
+
+        <div class="step-info">
+            <span class="step-counter" id="step-counter">0</span>
+            <div class="step-description">
+                <div class="step-en" id="step-en">
+                    Click "Generate" to start the visualization.
+                </div>
+                <div class="step-zh" id="step-zh">
+                    点击上方"生成场景"以开始演示。
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="visualization-section">
+        <div class="canvas-container grid-section">
+            <svg class="graph-svg" id="graphSvg" viewBox="0 0 500 340">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#4b5563" />
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+
+        <div class="info-panel">
+            <div class="code-panel" id="codePanel">
+                <div class="code-line" id="line-0">// 广度优先搜索 - Breadth First Search</div>
+                <div class="code-line" id="line-1">// 使用邻接矩阵 + 队列实现</div>
+                <div class="code-line" id="line-2">int adj[10][10];</div>
+                <div class="code-line" id="line-3">int visited[10];</div>
+                <div class="code-line" id="line-4">int queue[100];</div>
+                <div class="code-line" id="line-5">int head = 0, tail = 0;</div>
+                <div class="code-line" id="line-6"></div>
+                <div class="code-line" id="line-7">void bfs(int start, int n) {</div>
+                <div class="code-line" id="line-8">    visited[start] = 1;</div>
+                <div class="code-line" id="line-9">    queue[tail++] = start;</div>
+                <div class="code-line" id="line-10"></div>
+                <div class="code-line" id="line-11">    while (head &lt; tail) {</div>
+                <div class="code-line" id="line-12">        int cur = queue[head++];</div>
+                <div class="code-line" id="line-13"></div>
+                <div class="code-line" id="line-14">        for (int i = 0; i &lt; n; i++) {</div>
+                <div class="code-line" id="line-15">            if (adj[cur][i] == 1 &amp;&amp; !visited[i]) {</div>
+                <div class="code-line" id="line-16">                visited[i] = 1;</div>
+                <div class="code-line" id="line-17">                queue[tail++] = i;</div>
+                <div class="code-line" id="line-18">            }</div>
+                <div class="code-line" id="line-19">        }</div>
+                <div class="code-line" id="line-20">    }</div>
+                <div class="code-line" id="line-21">}</div>
+            </div>
+
+            <div class="layer-indicator" id="layerIndicator"></div>
+
+            <div>
+                <div class="bfs-queue-title">队列 (Queue)</div>
+                <div class="bfs-queue" id="bfsQueue"></div>
+                <div class="queue-indicator">
+                    <span>head →</span>
+                    <span>← tail</span>
+                </div>
+            </div>
+
+            <div class="adjacency-matrix" id="adjacencyMatrix"></div>
+
+            <div class="legend">
+                <span class="item"><span class="dot unvisited"></span><span>未访问</span></span>
+                <span class="item"><span class="dot in-queue"></span><span>在队列中</span></span>
+                <span class="item"><span class="dot visited"></span><span>已出队/已访问</span></span>
+                <span class="item"><span class="dot neighbor"></span><span>邻居（待入队）</span></span>
+                <span class="item"><span class="line path"></span><span>当前路径</span></span>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="../../js/common.js"></script>
+<script src="../../js/code-panel.js"></script>
+<script src="../../js/controls.js"></script>
+
+<script>
+(function () {
+    const N = 6;
+    const adj = [
+        [0, 1, 1, 0, 0, 0],
+        [1, 0, 0, 1, 1, 0],
+        [1, 0, 0, 0, 0, 1],
+        [0, 1, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 1],
+        [0, 0, 1, 0, 1, 0]
+    ];
+
+    const nodePositions = [
+        { x: 250, y: 60 },
+        { x: 120, y: 160 },
+        { x: 380, y: 160 },
+        { x: 60, y: 280 },
+        { x: 180, y: 280 },
+        { x: 420, y: 280 }
+    ];
+
+    const codePanel = new CodePanel('#codePanel');
+    const graphSvg = document.getElementById('graphSvg');
+    const bfsQueue = document.getElementById('bfsQueue');
+    const adjacencyMatrix = document.getElementById('adjacencyMatrix');
+    const layerIndicator = document.getElementById('layerIndicator');
+    const startNodeInput = document.getElementById('startNodeInput');
+
+    let steps = [];
+    let state = null;
+
+    function initGraph() {
+        let svgContent = '<g id="edges">';
+        for (let i = 0; i < N; i++) {
+            for (let j = i + 1; j < N; j++) {
+                if (adj[i][j] === 1) {
+                    const p1 = nodePositions[i];
+                    const p2 = nodePositions[j];
+                    svgContent += `<line class="graph-edge" id="edge-${i}-${j}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" />`;
+                }
+            }
+        }
+        svgContent += '</g><g id="nodes">';
+        for (let i = 0; i < N; i++) {
+            const p = nodePositions[i];
+            svgContent += `<g class="graph-node unvisited" id="node-${i}" transform="translate(${p.x}, ${p.y})">` +
+                '<circle class="node-circle" r="28" />' +
+                '<text class="node-label" text-anchor="middle" dominant-baseline="middle">' + i + '</text>' +
+                '</g>';
+        }
+        svgContent += '</g>';
+        graphSvg.innerHTML = svgContent;
+    }
+
+    function buildSteps(startNode) {
+        const result = [];
+        const visited = new Array(N).fill(0);
+        const queue = [];
+        const levels = new Array(N).fill(-1);
+
+        result.push({
+            type: 'init',
+            en: 'Start BFS from node ' + startNode,
+            zh: '从节点 ' + startNode + ' 开始广度优先搜索',
+            formula: 'startNode = ' + startNode,
+            codeLines: [7],
+            visited: visited.slice(),
+            queue: [],
+            currentNode: -1,
+            currentNeighbor: -1,
+            neighbors: [],
+            head: 0,
+            tail: 0,
+            levels: levels.slice()
+        });
+
+        visited[startNode] = 1;
+        levels[startNode] = 0;
+        queue.push(startNode);
+
+        result.push({
+            type: 'mark-start',
+            en: 'Mark node ' + startNode + ' as visited',
+            zh: '标记节点 ' + startNode + ' 为已访问',
+            formula: 'visited[' + startNode + '] = 1',
+            codeLines: [8],
+            visited: visited.slice(),
+            queue: queue.slice(),
+            currentNode: startNode,
+            currentNeighbor: -1,
+            neighbors: [],
+            head: 0,
+            tail: 1,
+            levels: levels.slice()
+        });
+
+        result.push({
+            type: 'enqueue-start',
+            en: 'Enqueue node ' + startNode,
+            zh: '将节点 ' + startNode + ' 入队',
+            formula: 'queue[tail++] = ' + startNode,
+            codeLines: [9],
+            visited: visited.slice(),
+            queue: queue.slice(),
+            currentNode: startNode,
+            currentNeighbor: -1,
+            neighbors: [],
+            head: 0,
+            tail: 1,
+            levels: levels.slice()
+        });
+
+        while (queue.length > 0) {
+            const cur = queue.shift();
+            const headIdx = queue.length;
+
+            result.push({
+                type: 'dequeue',
+                en: 'Dequeue node ' + cur,
+                zh: '将节点 ' + cur + ' 出队',
+                formula: 'cur = queue[head++] = ' + cur,
+                codeLines: [12],
+                visited: visited.slice(),
+                queue: queue.slice(),
+                currentNode: cur,
+                currentNeighbor: -1,
+                neighbors: [],
+                head: headIdx,
+                tail: queue.length + headIdx,
+                levels: levels.slice()
+            });
+
+            const neighbors = [];
+            for (let i = 0; i < N; i++) {
+                if (adj[cur][i] === 1 && !visited[i]) {
+                    neighbors.push(i);
+                }
+            }
+
+            result.push({
+                type: 'find-neighbors',
+                en: 'Find unvisited neighbors of node ' + cur + ': [' + neighbors.join(', ') + ']',
+                zh: '找到节点 ' + cur + ' 的未访问邻居：[' + neighbors.join(', ') + ']',
+                formula: 'neighbors(' + cur + ') = [' + neighbors.join(', ') + ']',
+                codeLines: [14],
+                visited: visited.slice(),
+                queue: queue.slice(),
+                currentNode: cur,
+                currentNeighbor: -1,
+                neighbors: neighbors.slice(),
+                head: headIdx,
+                tail: queue.length + headIdx,
+                levels: levels.slice()
+            });
+
+            for (const neighbor of neighbors) {
+                result.push({
+                    type: 'select-neighbor',
+                    en: 'Select neighbor ' + neighbor + ' of node ' + cur,
+                    zh: '选择节点 ' + cur + ' 的邻居 ' + neighbor,
+                    formula: 'adj[' + cur + '][' + neighbor + '] = 1',
+                    codeLines: [15],
+                    visited: visited.slice(),
+                    queue: queue.slice(),
+                    currentNode: cur,
+                    currentNeighbor: neighbor,
+                    neighbors: neighbors.slice(),
+                    head: headIdx,
+                    tail: queue.length + headIdx,
+                    levels: levels.slice()
+                });
+
+                visited[neighbor] = 1;
+                levels[neighbor] = levels[cur] + 1;
+
+                result.push({
+                    type: 'mark-neighbor',
+                    en: 'Mark node ' + neighbor + ' as visited',
+                    zh: '标记节点 ' + neighbor + ' 为已访问',
+                    formula: 'visited[' + neighbor + '] = 1',
+                    codeLines: [16],
+                    visited: visited.slice(),
+                    queue: queue.slice(),
+                    currentNode: cur,
+                    currentNeighbor: neighbor,
+                    neighbors: neighbors.slice(),
+                    head: headIdx,
+                    tail: queue.length + headIdx,
+                    levels: levels.slice()
+                });
+
+                queue.push(neighbor);
+
+                result.push({
+                    type: 'enqueue-neighbor',
+                    en: 'Enqueue node ' + neighbor,
+                    zh: '将节点 ' + neighbor + ' 入队',
+                    formula: 'queue[tail++] = ' + neighbor,
+                    codeLines: [17],
+                    visited: visited.slice(),
+                    queue: queue.slice(),
+                    currentNode: cur,
+                    currentNeighbor: neighbor,
+                    neighbors: neighbors.slice(),
+                    head: headIdx,
+                    tail: queue.length + headIdx,
+                    levels: levels.slice()
+                });
+            }
+        }
+
+        result.push({
+            type: 'finish',
+            en: 'BFS completed. All reachable nodes visited.',
+            zh: 'BFS 完成。所有可达节点已访问。',
+            formula: 'visited[] = [' + visited.join(', ') + ']',
+            codeLines: [21],
+            visited: visited.slice(),
+            queue: [],
+            currentNode: -1,
+            currentNeighbor: -1,
+            neighbors: [],
+            head: 0,
+            tail: 0,
+            levels: levels.slice()
+        });
+
+        return result;
+    }
+
+    function renderVisual(step) {
+        if (!step) {
+            for (let i = 0; i < N; i++) {
+                const node = document.getElementById('node-' + i);
+                if (node) {
+                    node.className = 'graph-node unvisited';
+                }
+            }
+            for (let i = 0; i < N; i++) {
+                for (let j = i + 1; j < N; j++) {
+                    if (adj[i][j] === 1) {
+                        const edge = document.getElementById('edge-' + i + '-' + j);
+                        if (edge) edge.className = 'graph-edge';
+                    }
+                }
+            }
+            bfsQueue.innerHTML = '';
+            adjacencyMatrix.innerHTML = '';
+            layerIndicator.innerHTML = '';
+            renderAdjacencyMatrix(-1, -1, []);
+            return;
+        }
+
+        const { visited, queue, currentNode, currentNeighbor, neighbors, levels } = step;
+
+        for (let i = 0; i < N; i++) {
+            const node = document.getElementById('node-' + i);
+            if (!node) continue;
+            node.className = 'graph-node';
+
+            if (visited[i]) {
+                const inQueue = queue.includes(i);
+                if (inQueue) {
+                    node.classList.add('in-queue');
+                } else {
+                    node.classList.add('visited');
+                }
+            } else {
+                node.classList.add('unvisited');
+            }
+
+            if (i === currentNode) {
+                node.classList.add('current');
+            }
+
+            if (neighbors.includes(i)) {
+                node.classList.add('neighbor');
+            }
+
+            if (levels[i] >= 0) {
+                node.classList.add('layer-' + levels[i]);
+            }
+        }
+
+        for (let i = 0; i < N; i++) {
+            for (let j = i + 1; j < N; j++) {
+                if (adj[i][j] === 1) {
+                    const edge = document.getElementById('edge-' + i + '-' + j);
+                    if (!edge) continue;
+                    edge.className = 'graph-edge';
+
+                    if ((currentNode === i && currentNeighbor === j) ||
+                        (currentNode === j && currentNeighbor === i)) {
+                        edge.classList.add('active');
+                    }
+                }
+            }
+        }
+
+        let queueHtml = '';
+        queue.forEach((item, idx) => {
+            let cls = 'queue-item';
+            if (idx === 0) cls += ' head';
+            if (idx === queue.length - 1) cls += ' tail';
+            if (!visited[item]) cls += ' visited';
+            queueHtml += '<div class="' + cls + '">' + item + '</div>';
+        });
+        bfsQueue.innerHTML = queueHtml;
+
+        const maxLevel = Math.max(...levels);
+        let layerHtml = '';
+        for (let l = 0; l <= maxLevel; l++) {
+            const nodesInLayer = [];
+            for (let i = 0; i < N; i++) {
+                if (levels[i] === l) nodesInLayer.push(i);
+            }
+            if (nodesInLayer.length > 0) {
+                layerHtml += '<div class="layer"><span class="layer-color layer-' + (l + 1) + '-color"></span>第' + l + '层: [' + nodesInLayer.join(', ') + ']</div>';
+            }
+        }
+        layerIndicator.innerHTML = layerHtml;
+
+        renderAdjacencyMatrix(currentNode, currentNeighbor, neighbors);
+    }
+
+    function renderAdjacencyMatrix(currentNode, currentNeighbor, neighbors) {
+        let html = '';
+        html += '<div class="matrix-cell header"></div>';
+        for (let j = 0; j < N; j++) {
+            html += '<div class="matrix-cell header">' + j + '</div>';
+        }
+        for (let i = 0; i < N; i++) {
+            html += '<div class="matrix-cell header">' + i + '</div>';
+            for (let j = 0; j < N; j++) {
+                let cls = 'matrix-cell';
+                if (adj[i][j] === 1) cls += ' has-edge';
+                if (i === currentNode) cls += ' current-row';
+                if (j === currentNode) cls += ' current-col';
+                if ((i === currentNode && j === currentNeighbor) ||
+                    (i === currentNeighbor && j === currentNode)) {
+                    cls += ' selected';
+                }
+                html += '<div class="' + cls + '">' + adj[i][j] + '</div>';
+            }
+        }
+        adjacencyMatrix.innerHTML = html;
+    }
+
+    const controller = new StepController({
+        onStep(step, index) {
+            state = step;
+            codePanel.highlight(step.codeLines);
+            document.getElementById('step-counter').textContent = (index + 1);
+            document.getElementById('step-en').textContent = step.en;
+            document.getElementById('step-zh').textContent = step.zh;
+            document.getElementById('current-result').textContent = step.formula;
+            renderVisual(step);
+        }
+    });
+
+    function generate() {
+        const startNode = parseInt(startNodeInput.value || '0', 10);
+        steps = buildSteps(startNode);
+        controller.setSteps(steps);
+        renderVisual({
+            visited: new Array(N).fill(0),
+            queue: [],
+            currentNode: -1,
+            currentNeighbor: -1,
+            neighbors: [],
+            head: 0,
+            tail: 0,
+            levels: new Array(N).fill(-1)
+        });
+    }
+
+    function reset() {
+        state = null;
+        codePanel.clearHighlight();
+        document.getElementById('step-counter').textContent = '0';
+        document.getElementById('step-en').textContent = 'Click "Generate" to start the visualization.';
+        document.getElementById('step-zh').textContent = '点击上方 "生成场景" 以开始演示。';
+        document.getElementById('current-result').textContent = '起始节点: 0';
+        renderVisual({
+            visited: new Array(N).fill(0),
+            queue: [],
+            currentNode: -1,
+            currentNeighbor: -1,
+            neighbors: [],
+            head: 0,
+            tail: 0,
+            levels: new Array(N).fill(-1)
+        });
+    }
+
+    bindControls({
+        controller: controller,
+        onGenerate: generate,
+        onReset:    reset,
+        onReplay:   function () { reset(); generate(); controller.play(); }
+    });
+
+    window.addEventListener('load', function () {
+        initGraph();
+        renderVisual({
+            visited: new Array(N).fill(0),
+            queue: [],
+            currentNode: -1,
+            currentNeighbor: -1,
+            neighbors: [],
+            head: 0,
+            tail: 0,
+            levels: new Array(N).fill(-1)
+        });
+    });
+})();
+</script>
+
+    <div style="width:100%;text-align:center;padding:20px;color:#6b7280;font-size:13px;border-top:1px solid #e5e7eb;margin-top:auto;">© 2026 AlgoStep · 赵博宇</div>
+  <div style="width:100%;text-align:center;padding:0 20px 20px;color:#6b7280;font-size:12px;display:flex;justify-content:center;gap:18px;flex-wrap:wrap;">
+    <a href="https://gitee.com/boyoo/algo-step" target="_blank" rel="noopener" style="color:#9ca3af;text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#c4b5fd'" onmouseout="this.style.color='#9ca3af'">Gitee</a>
+    <a href="https://github.com/BoyooDrew/AlgoStep" target="_blank" rel="noopener" style="color:#9ca3af;text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#c4b5fd'" onmouseout="this.style.color='#9ca3af'">GitHub</a>
+  </div>
+
+</body>
+</html>
