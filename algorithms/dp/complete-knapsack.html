@@ -169,7 +169,6 @@
     .dot.skip    { background: #3b82f6; }
     .dot.take    { background: #ef4444; }
     .dot.trace   { background: #10b981; }
-    .dot.base    { background: #475569; }
 
     /* 代码面板：高度自适应，无滚动 */
     .code-panel {
@@ -273,10 +272,9 @@
         <div class="canvas-container grid-section">
             <div class="legend">
                 <span class="item"><span class="dot current"></span>当前正在计算的格子 (dp[i][j])</span>
-                <span class="item"><span class="dot base"></span>已计算完成的格子</span>
                 <span class="item"><span class="dot skip"></span>不选第 i 个物品：取上方 dp[i-1][j]</span>
-                <span class="item"><span class="dot take"></span>选第 i 个物品：取 <b>dp[i][j-w[i]] + v[i]</b></span>
-                <span class="item"><span class="dot trace"></span>回溯：选中物品时的决策格（绿色高亮）</span>
+                <span class="item"><span class="dot take"></span>选第 i 个物品：取 dp[i][j-w[i]] + v[i]（同一行）</span>
+                <span class="item"><span class="dot trace"></span>回溯路径（选中的物品高亮绿色）</span>
             </div>
 
             <div class="grid-header">

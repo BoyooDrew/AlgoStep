@@ -161,7 +161,6 @@
     .dot.skip    { background: #3b82f6; }
     .dot.take    { background: #10b981; }
     .dot.trace   { background: #ec4899; box-shadow: 0 0 8px rgba(236, 72, 153, 0.55); }
-    .dot.base    { background: #475569; }
 
     /* 代码面板：高度自适应，无滚动 */
     .code-panel {
@@ -265,7 +264,6 @@
         <div class="canvas-container grid-section">
             <div class="legend">
                 <span class="item"><span class="dot current"></span>当前正在计算的格子 (dp[i][j])</span>
-                <span class="item"><span class="dot base"></span>已计算完成的格子</span>
                 <span class="item"><span class="dot skip"></span>不选第 i 个物品：取上方 dp[i-1][j]</span>
                 <span class="item"><span class="dot take"></span>选第 i 个物品：取 dp[i-1][j-w[i]] + v[i]</span>
                 <span class="item"><span class="dot trace"></span>回溯路径（选中的物品高亮绿色）</span>
@@ -400,20 +398,22 @@
     function createGrid() {
         gridEl.innerHTML = '';
         cells = [];
-        // 列: 空 + "i\j" + 0..W  （共 W+2 列）
-        gridEl.style.gridTemplateColumns = `repeat(${W + 2}, auto)`;
+        // 列: 空 + "i\j" + 0..W  （共 W+3 列）
+        gridEl.style.gridTemplateColumns = `repeat(${W + 3}, auto)`;
 
-        // 第一行：空 + "i\j" + 容量 0..W
+        // 第一行（列头）：空 + "i\j" + 容量 0..W
         appendCell('', 'header');
         appendCell('i\\j', 'header');
         for (let j = 0; j <= W; j++) appendCell(String(j), 'header', -1, j);
 
-        // 第 0 行：物品 "∅" + 0
+        // 第 0 行：空占位 + "∅" + 0..W
+        appendCell('', 'header');
         appendCell('\u2205', 'header');
         for (let j = 0; j <= W; j++) appendCell('0', 'dp-val', 0, j);
 
-        // 物品 i=1..n：每行以物品编号开头
+        // 物品 i=1..n：空占位 + i + 0..W
         for (let i = 1; i <= n; i++) {
+            appendCell('', 'header');
             appendCell(String(i), 'header', i, -1);
             appendCell('0', 'dp-val', i, 0);
             for (let j = 1; j <= W; j++) appendCell('', 'dp-val', i, j);
