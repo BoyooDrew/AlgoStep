@@ -91,15 +91,15 @@
     }
 
     .seq-card.backtrack {
-        border-color: #10b981;
-        background: rgba(16, 185, 129, 0.4);
-        box-shadow: 0 0 18px rgba(16, 185, 129, 0.7);
+        border-color: #ec4899;
+        background: rgba(236, 72, 153, 0.35);
+        box-shadow: 0 0 18px rgba(236, 72, 153, 0.65);
         transform: scale(1.1);
     }
 
     .seq-card.finished {
-        border-color: #6366f1;
-        background: rgba(99, 102, 241, 0.15);
+        border-color: #475569;
+        background: rgba(148, 163, 184, 0.12);
     }
 
     .connection-line {
@@ -173,7 +173,7 @@
     .dot.j { background: #3b82f6; }
     .dot.valid { background: #10b981; }
     .dot.invalid { background: #64748b; }
-    .dot.backtrack { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.7); }
+    .dot.backtrack { background: #ec4899; box-shadow: 0 0 8px rgba(236, 72, 153, 0.7); }
 
     .code-panel {
         min-height: 420px;
@@ -260,7 +260,7 @@
                 <span class="item"><span class="dot j"></span>正在比较的位置 j</span>
                 <span class="item"><span class="dot valid"></span>arr[j] &lt; arr[i]，可更新 dp[i]</span>
                 <span class="item"><span class="dot invalid"></span>arr[j] &gt;= arr[i]，不满足递增</span>
-                <span class="item"><span class="dot backtrack"></span>回溯：LIS 序列中的元素</span>
+                <span class="item"><span class="dot backtrack"></span>回溯：LIS 序列中的元素（洋红）</span>
             </div>
 
             <div class="ans-display">
@@ -675,7 +675,7 @@
             cell.className = 'array-cell';
             cell.innerHTML =
                 `<span class="cell-index">arr[${idx}]</span>` +
-                `<span class="cell-value" style="color:#10b981;">${arr[idx]}</span>`;
+                `<span class="cell-value" style="color:#ec4899;">${arr[idx]}</span>`;
             arrayContainer.appendChild(cell);
         });
 
