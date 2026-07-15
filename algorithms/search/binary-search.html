@@ -430,13 +430,20 @@
             if (found && i === mid) cls += ' found';
 
             let pointerHtml = '';
-            if (i === left && left >= 0) {
-                pointerHtml += '<span class="pointer-arrow left-arrow">▲</span>';
-                pointerHtml += '<span class="pointer-label left-label">left</span>';
-            }
-            if (i === right && right >= 0) {
-                pointerHtml += '<span class="pointer-arrow right-arrow">▲</span>';
-                pointerHtml += '<span class="pointer-label right-label">right</span>';
+            if (i === left && i === right && left >= 0) {
+                pointerHtml += '<span class="pointer-arrow left-arrow" style="margin-left:-12px;">▲</span>';
+                pointerHtml += '<span class="pointer-arrow right-arrow" style="margin-left:12px;">▲</span>';
+                pointerHtml += '<span class="pointer-label left-label" style="left:-20px;">left</span>';
+                pointerHtml += '<span class="pointer-label right-label" style="left:20px;">right</span>';
+            } else {
+                if (i === left && left >= 0) {
+                    pointerHtml += '<span class="pointer-arrow left-arrow">▲</span>';
+                    pointerHtml += '<span class="pointer-label left-label">left</span>';
+                }
+                if (i === right && right >= 0) {
+                    pointerHtml += '<span class="pointer-arrow right-arrow">▲</span>';
+                    pointerHtml += '<span class="pointer-label right-label">right</span>';
+                }
             }
             if (i === mid && mid >= 0) {
                 pointerHtml += '<span class="pointer-label mid-label">mid</span>';
@@ -477,6 +484,7 @@
         targetInput.value = target;
         steps = buildSteps(target);
         controller.setSteps(steps);
+        renderVisual(null);
         controller.reset();
     }
 
