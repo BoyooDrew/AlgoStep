@@ -5,6 +5,10 @@
 <link rel="canonical" href="https://algo-step.surge.sh/algorithms/search/binary-search.html">
 <title>二分查找 · Binary Search</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%236366f1'/><text x='16' y='22' font-size='14' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>DB</text></svg>">
+<!-- =======================================================
+     CSS：先通用，后布局（如页面有专属动画，再在下面补）
+     相对路径：当前页在 /algorithms/search/，CSS/JS 在根目录
+     ======================================================= -->
 <link rel="stylesheet" href="../../css/common.css" />
 <link rel="stylesheet" href="../../css/layout.css" />
 
@@ -16,6 +20,7 @@
         width: 56px;
         transition: all .3s ease;
         position: relative;
+        z-index: 1;
     }
 
     .binary-search-bar .bar-body {
@@ -75,16 +80,21 @@
 
     .pointer-group {
         position: absolute;
-        top: -28px;
+        top: -85px;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 2px;
+        z-index: 10;
     }
 
     .pointer-arrow {
-        font-size: 24px;
+        font-size: 18px;
         animation: pulse-arrow 1s ease-in-out infinite;
+    }
+
+    .pointer-arrow.hidden {
+        display: none;
     }
 
     .pointer-arrow.left-arrow {
@@ -135,36 +145,28 @@
         align-items: flex-end;
         justify-content: center;
         gap: 8px;
-        min-height: 360px;
-        padding: 80px 20px 20px;
+        min-height: 380px;
+        padding: 120px 20px 20px;
     }
 
-    .comparison-result {
-        text-align: center;
-        padding: 12px 16px;
-        margin-top: 12px;
-        background: rgba(245, 158, 11, 0.12);
+    .snapshot-bar {
+        margin-top: 20px;
+        padding: 10px 14px;
+        background: #0b1220;
+        border: 1px solid rgba(236, 72, 153, 0.28);
         border-radius: 8px;
-        border: 1px solid rgba(245, 158, 11, 0.35);
         font-family: 'JetBrains Mono', Consolas, monospace;
-        font-size: 14px;
-        color: #fbbf24;
+        font-size: 12px;
+        color: #cbd5e1;
+        line-height: 1.6;
+        word-break: break-all;
+        text-align: center;
     }
 
-    .comparison-result.found {
-        background: rgba(16, 185, 129, 0.15);
-        border-color: rgba(16, 185, 129, 0.4);
-        color: #34d399;
-        font-size: 16px;
+    .snapshot-bar .label {
+        color: #f9a8d4;
         font-weight: 700;
-    }
-
-    .comparison-result.not-found {
-        background: rgba(239, 68, 68, 0.15);
-        border-color: rgba(239, 68, 68, 0.4);
-        color: #f87171;
-        font-size: 16px;
-        font-weight: 700;
+        margin-right: 6px;
     }
 
     .legend {
@@ -199,6 +201,15 @@
     .legend .dot.found { background: linear-gradient(180deg, #10b981, #047857); }
     .legend .dot.left { background: #3b82f6; }
     .legend .dot.right { background: #ec4899; }
+
+    .info-panel {
+        min-height: 480px;
+        overflow: visible;
+    }
+
+    .code-panel {
+        min-height: 400px;
+    }
 </style>
 </head>
 <body>
@@ -278,8 +289,18 @@
 
     <section class="visualization-section">
         <div class="canvas-container grid-section">
+            <div class="legend">
+                <span class="item"><span class="dot search-range"></span><span>搜索范围 [left, right]</span></span>
+                <span class="item"><span class="dot discarded"></span><span>已排除元素</span></span>
+                <span class="item"><span class="dot mid"></span><span>中间位置 mid</span></span>
+                <span class="item"><span class="dot found"></span><span>找到目标</span></span>
+                <span class="item"><span class="dot left"></span><span>左指针 left</span></span>
+                <span class="item"><span class="dot right"></span><span>右指针 right</span></span>
+            </div>
             <div class="search-bar-container" id="searchBarContainer"></div>
-            <div class="comparison-result" id="comparisonResult"></div>
+            <div class="snapshot-bar" id="snapshotBar">
+                <span class="label">arr =</span><span id="snapshotText">[]</span>
+            </div>
         </div>
 
         <div class="info-panel">
@@ -304,12 +325,9 @@
             </div>
 
             <div class="legend">
-                <span class="item"><span class="dot search-range"></span><span>搜索范围 [left, right]</span></span>
-                <span class="item"><span class="dot discarded"></span><span>已排除元素</span></span>
-                <span class="item"><span class="dot mid"></span><span>中间位置 mid</span></span>
-                <span class="item"><span class="dot found"></span><span>找到目标</span></span>
-                <span class="item"><span class="dot left"></span><span>左指针 left</span></span>
-                <span class="item"><span class="dot right"></span><span>右指针 right</span></span>
+                <span class="item" style="color:#c4b5fd;font-weight:600;">
+                    💡 紫色高亮 = 当前正在执行的代码行
+                </span>
             </div>
         </div>
     </section>
@@ -321,15 +339,22 @@
 
 <script>
 (function () {
+    // =======================================================
+    // 数据与DOM元素
+    // =======================================================
     const arr = [2, 5, 8, 12, 13, 16, 23, 38, 56, 72, 91];
     const codePanel = new CodePanel('#codePanel');
     const searchBarContainer = document.getElementById('searchBarContainer');
-    const comparisonResult = document.getElementById('comparisonResult');
+    const snapshotBar = document.getElementById('snapshotBar');
+    const snapshotText = document.getElementById('snapshotText');
     const targetInput = document.getElementById('targetInput');
 
     let steps = [];
     let state = null;
 
+    // =======================================================
+    // 步骤生成器：生成每一步的状态快照（供控制器播放）
+    // =======================================================
     function buildSteps(target) {
         const result = [];
         let left = 0, right = arr.length - 1;
@@ -341,8 +366,7 @@
             formula: '[left, right] = [0, ' + (arr.length - 1) + ']',
             codeLines: [4],
             left: 0, right: arr.length - 1, mid: -1,
-            found: false, failed: false,
-            compareText: ''
+            found: false, failed: false
         });
 
         while (left <= right) {
@@ -355,8 +379,7 @@
                 formula: 'mid = left + (right - left) / 2 = ' + mid,
                 codeLines: [6],
                 left, right, mid,
-                found: false, failed: false,
-                compareText: 'arr[' + mid + '] = ' + arr[mid]
+                found: false, failed: false
             });
 
             if (arr[mid] === target) {
@@ -367,8 +390,7 @@
                     formula: 'arr[' + mid + '] == target',
                     codeLines: [7, 8],
                     left, right, mid,
-                    found: true, failed: false,
-                    compareText: 'arr[' + mid + '] == ' + target + ' ✓ 找到！'
+                    found: true, failed: false
                 });
                 return result;
             } else if (arr[mid] < target) {
@@ -379,8 +401,7 @@
                     formula: 'arr[mid] < target → left = mid + 1 = ' + (mid + 1),
                     codeLines: [9, 10],
                     left: mid + 1, right, mid,
-                    found: false, failed: false,
-                    compareText: 'arr[' + mid + '] = ' + arr[mid] + ' < ' + target + ' → 搜索右半部分'
+                    found: false, failed: false
                 });
                 left = mid + 1;
             } else {
@@ -391,8 +412,7 @@
                     formula: 'arr[mid] > target → right = mid - 1 = ' + (mid - 1),
                     codeLines: [11, 12],
                     left, right: mid - 1, mid,
-                    found: false, failed: false,
-                    compareText: 'arr[' + mid + '] = ' + arr[mid] + ' > ' + target + ' → 搜索左半部分'
+                    found: false, failed: false
                 });
                 right = mid - 1;
             }
@@ -405,22 +425,23 @@
             formula: 'left > right → return -1',
             codeLines: [15],
             left, right, mid: -1,
-            found: false, failed: true,
-            compareText: '搜索范围为空，未找到 ' + target
+            found: false, failed: true
         });
 
         return result;
     }
 
+    // =======================================================
+    // 可视化渲染器：根据步骤状态，渲染柱状图、指针、arr快照
+    // =======================================================
     function renderVisual(step) {
-        let left = -1, right = -1, mid = -1, found = false, failed = false, compareText = '';
+        let left = -1, right = -1, mid = -1, found = false, failed = false;
         if (step) {
             left = step.left;
             right = step.right;
             mid = step.mid;
             found = step.found;
             failed = step.failed;
-            compareText = step.compareText || '';
         }
 
         let html = '';
@@ -444,20 +465,23 @@
             const isRight = i === right && right >= 0;
             const isMid = i === mid && mid >= 0;
 
+            const pointerCount = [isLeft, isRight, isMid].filter(Boolean).length;
+            const showArrows = pointerCount === 1;
+
             let pointerHtml = '';
             if (isLeft || isRight || isMid) {
                 pointerHtml = '<div class="pointer-group">';
 
                 if (isLeft) {
-                    pointerHtml += '<span class="pointer-arrow left-arrow">▲</span>';
+                    pointerHtml += '<span class="pointer-arrow left-arrow' + (showArrows ? '' : ' hidden') + '">▲</span>';
                     pointerHtml += '<span class="pointer-label left-label">left</span>';
                 }
                 if (isRight) {
-                    pointerHtml += '<span class="pointer-arrow right-arrow">▲</span>';
+                    pointerHtml += '<span class="pointer-arrow right-arrow' + (showArrows ? '' : ' hidden') + '">▲</span>';
                     pointerHtml += '<span class="pointer-label right-label">right</span>';
                 }
                 if (isMid) {
-                    pointerHtml += '<span class="pointer-arrow mid-arrow">▲</span>';
+                    pointerHtml += '<span class="pointer-arrow mid-arrow' + (showArrows ? '' : ' hidden') + '">▲</span>';
                     pointerHtml += '<span class="pointer-label mid-label">mid</span>';
                 }
 
@@ -476,12 +500,12 @@
 
         searchBarContainer.innerHTML = html;
 
-        comparisonResult.textContent = compareText;
-        comparisonResult.className = 'comparison-result';
-        if (found) comparisonResult.classList.add('found');
-        if (failed) comparisonResult.classList.add('not-found');
+        snapshotText.textContent = '[' + arr.join(', ') + ']';
     }
 
+    // =======================================================
+    // StepController：管理步骤播放、进度追踪、速度控制
+    // =======================================================
     const controller = new StepController({
         onStep(step, index) {
             state = step;
@@ -494,13 +518,16 @@
         }
     });
 
+    // =======================================================
+    // 按钮事件处理：生成场景 / 重置 / 重放
+    // =======================================================
     function generate() {
         const target = parseInt(targetInput.value || '13', 10);
         targetInput.value = target;
         steps = buildSteps(target);
         controller.setSteps(steps);
         controller.reset();
-        renderVisual({ left: -1, right: -1, mid: -1, found: false, failed: false, compareText: '' });
+        renderVisual({ left: -1, right: -1, mid: -1, found: false, failed: false });
     }
 
     function reset() {
@@ -510,9 +537,12 @@
         document.getElementById('step-en').textContent = 'Click "Generate" to start the visualization.';
         document.getElementById('step-zh').textContent = '点击上方 "生成场景" 以开始演示。';
         document.getElementById('current-result').textContent = '[left, right] = [0, n-1]';
-        renderVisual({ left: -1, right: -1, mid: -1, found: false, failed: false, compareText: '' });
+        renderVisual({ left: -1, right: -1, mid: -1, found: false, failed: false });
     }
 
+    // =======================================================
+    // 绑定控制面板事件：播放/暂停/上一步/下一步/速度/进度
+    // =======================================================
     bindControls({
         controller: controller,
         onGenerate: generate,
@@ -520,6 +550,9 @@
         onReplay:   function () { reset(); generate(); controller.play(); }
     });
 
+    // =======================================================
+    // 页面加载完成后，自动生成场景
+    // =======================================================
     window.addEventListener('load', function () {
         generate();
     });
