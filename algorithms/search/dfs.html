@@ -9,233 +9,220 @@
 <link rel="stylesheet" href="../../css/layout.css" />
 
 <style>
-    .graph-svg {
-        width: 100%;
-        height: 100%;
-        min-height: 380px;
-        display: block;
+    /* 覆盖公共布局：取消所有内部滚动条，顶部对齐 */
+    .visualization-section {
+        align-items: flex-start !important;
+    }
+    .canvas-container {
+        overflow: visible !important;
+        min-height: auto !important;
+        height: auto !important;
+    }
+    .info-panel {
+        overflow: visible !important;
+        min-height: auto !important;
+        height: auto !important;
+    }
+    .code-panel {
+        max-height: none !important;
+        overflow-y: visible !important;
+        overflow: visible !important;
+        height: auto !important;
     }
 
-    .graph-node {
-        transition: all .3s ease;
-        cursor: pointer;
-    }
-
-    .graph-node .node-circle {
-        stroke-width: 3;
-        transition: all .3s ease;
-    }
-
-    .graph-node .node-label {
-        font-family: 'JetBrains Mono', Consolas, monospace;
-        font-size: 16px;
-        font-weight: 700;
-        fill: #fff;
-    }
-
-    .graph-node.unvisited .node-circle {
-        fill: #374151;
-        stroke: #6b7280;
-    }
-
-    .graph-node.visiting .node-circle {
-        fill: #3b82f6;
-        stroke: #60a5fa;
-        filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
-        animation: node-pulse 1s ease-in-out infinite;
-    }
-
-    .graph-node.visited .node-circle {
-        fill: #10b981;
-        stroke: #34d399;
-        filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.4));
-    }
-
-    .graph-node.neighbor .node-circle {
-        fill: #374151;
-        stroke: #f59e0b;
-        stroke-dasharray: 8, 4;
-        animation: dash 1.5s linear infinite;
-    }
-
-    .graph-node.current .node-circle {
-        transform: scale(1.15);
-        filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.8));
-    }
-
-    @keyframes node-pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-    }
-
-    @keyframes dash {
-        to { stroke-dashoffset: -24; }
-    }
-
-    .graph-edge {
-        stroke: #4b5563;
-        stroke-width: 2;
-        fill: none;
-        transition: all .3s ease;
-    }
-
-    .graph-edge.path {
-        stroke: #3b82f6;
-        stroke-width: 4;
-        stroke-linecap: round;
-        filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.5));
-    }
-
-    .graph-edge.active {
-        stroke: #f59e0b;
-        stroke-width: 3;
-        animation: edge-pulse 1s ease-in-out infinite;
-    }
-
-    @keyframes edge-pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-
-    .dfs-stack {
+    /* ===== 左侧：图 + 栈 + 矩阵 ===== */
+    .canvas-container {
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        padding: 12px;
-        background: #0f172a;
-        border: 1px solid rgba(139, 92, 246, 0.25);
-        border-radius: 8px;
-        max-height: 160px;
-        overflow-y: auto;
+        gap: 12px;
     }
 
-    .dfs-stack-title {
-        font-size: 12px;
-        font-weight: 600;
-        color: #94a3b8;
-        margin-bottom: 4px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .stack-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 12px;
-        background: #1f2937;
-        border-radius: 6px;
-        border-left: 3px solid #6b7280;
-        font-family: 'JetBrains Mono', Consolas, monospace;
-        font-size: 13px;
-        color: #e5e7eb;
-        transition: all .2s ease;
-    }
-
-    .stack-item.current {
-        background: rgba(59, 130, 246, 0.2);
-        border-left-color: #3b82f6;
-        color: #93c5fd;
-        font-weight: 600;
-    }
-
-    .stack-item.visited {
-        background: rgba(16, 185, 129, 0.15);
-        border-left-color: #10b981;
-        color: #a7f3d0;
-    }
-
-    .adjacency-matrix {
-        display: grid;
-        gap: 2px;
-        padding: 10px;
-        background: #0f172a;
-        border: 1px solid rgba(139, 92, 246, 0.25);
-        border-radius: 8px;
-        justify-content: center;
-    }
-
-    .matrix-cell {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #1f2937;
-        border: 1px solid #4b5563;
-        border-radius: 4px;
-        font-family: 'JetBrains Mono', Consolas, monospace;
-        font-size: 12px;
-        font-weight: 600;
-        color: #6b7280;
-        transition: all .2s ease;
-    }
-
-    .matrix-cell.header {
-        background: transparent;
-        border-color: transparent;
-        color: #a78bfa;
-        font-size: 11px;
-    }
-
-    .matrix-cell.has-edge {
-        color: #3b82f6;
-    }
-
-    .matrix-cell.current-row {
-        background: rgba(59, 130, 246, 0.2);
-        border-color: #3b82f6;
-    }
-
-    .matrix-cell.current-col {
-        background: rgba(59, 130, 246, 0.2);
-        border-color: #3b82f6;
-    }
-
-    .matrix-cell.selected {
-        background: rgba(245, 158, 11, 0.25);
-        border-color: #f59e0b;
-        color: #fbbf24;
-        transform: scale(1.1);
-    }
-
+    /* 图例：放在图上方，更紧凑 */
     .legend {
         display: flex;
         flex-wrap: wrap;
-        gap: 16px;
-        padding: 12px 16px;
-        margin-top: 12px;
+        gap: 10px;
+        padding: 8px 10px;
         background: rgba(139, 92, 246, 0.06);
         border: 1px dashed rgba(139, 92, 246, 0.3);
         border-radius: 8px;
-        font-size: 12px;
+        font-size: 11px;
         color: #cbd5e1;
+        order: -1;
     }
-
     .legend .item {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 5px;
     }
-
     .legend .dot {
-        width: 16px;
-        height: 16px;
+        width: 12px; height: 12px;
         border-radius: 50%;
         display: inline-block;
     }
-
     .legend .dot.unvisited { background: #374151; border: 2px solid #6b7280; }
-    .legend .dot.visiting { background: #3b82f6; border: 2px solid #60a5fa; box-shadow: 0 0 6px rgba(59, 130, 246, 0.5); }
+    .legend .dot.visiting { background: #3b82f6; border: 2px solid #60a5fa; box-shadow: 0 0 6px rgba(59,130,246,0.5); }
     .legend .dot.visited { background: #10b981; border: 2px solid #34d399; }
     .legend .dot.neighbor { background: #374151; border: 2px dashed #f59e0b; }
     .legend .line {
-        width: 24px;
-        height: 3px;
+        width: 20px; height: 3px;
         border-radius: 2px;
         display: inline-block;
     }
     .legend .line.path { background: #3b82f6; }
+
+    /* 图 */
+    .graph-svg {
+        width: 100%;
+        height: 260px;
+        display: block;
+        background: #0f172a;
+        border: 1px solid rgba(139,92,246,0.2);
+        border-radius: 10px;
+    }
+
+    .graph-node { transition: all .3s ease; cursor: pointer; }
+    .graph-node .node-circle {
+        stroke-width: 3;
+        transition: all .3s ease;
+        r: 26;
+    }
+    .graph-node .node-label {
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 15px;
+        font-weight: 700;
+        fill: #fff;
+        text-anchor: middle;
+        dominant-baseline: central;
+    }
+    .graph-node.unvisited .node-circle { fill: #374151; stroke: #6b7280; }
+    .graph-node.neighbor .node-circle {
+        fill: rgba(245,158,11,0.12); stroke: #f59e0b;
+        stroke-width: 2.5;
+    }
+    .graph-node.visiting .node-circle {
+        fill: #3b82f6; stroke: #60a5fa;
+        filter: drop-shadow(0 0 10px rgba(59,130,246,0.7));
+        animation: node-pulse 1s ease-in-out infinite;
+    }
+    .graph-node.visited .node-circle {
+        fill: #10b981; stroke: #34d399;
+        filter: drop-shadow(0 0 8px rgba(16,185,129,0.5));
+    }
+    .graph-node.current .node-circle {
+        transform: scale(1.15);
+        filter: drop-shadow(0 0 14px rgba(59,130,246,0.9));
+    }
+    @keyframes node-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+    @keyframes dash { to{stroke-dashoffset:-18} }
+
+    .graph-edge {
+        stroke: #4b5563; stroke-width: 2; fill: none;
+        transition: all .3s ease;
+    }
+    .graph-edge.active {
+        stroke: #fbbf24; stroke-width: 3;
+    }
+    .graph-edge.path {
+        stroke: #60a5fa; stroke-width: 5; stroke-linecap: round;
+        filter: drop-shadow(0 0 10px rgba(96,165,250,0.9));
+    }
+
+    /* 递归栈：水平排列，紧凑 */
+    .dfs-stack-wrap {
+        background: #0f172a;
+        border: 1px solid rgba(139,92,246,0.25);
+        border-radius: 8px;
+        padding: 8px 10px;
+    }
+    .dfs-stack-title {
+        font-size: 10px; font-weight: 600;
+        color: #94a3b8; margin-bottom: 6px;
+        text-transform: uppercase; letter-spacing: 1px;
+    }
+    .stack-items {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .stack-item {
+        display: flex; align-items: center; gap: 4px;
+        padding: 4px 10px;
+        background: #1f2937;
+        border-radius: 5px;
+        border-left: 3px solid #6b7280;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 12px; color: #e5e7eb;
+        transition: all .2s ease;
+        white-space: nowrap;
+    }
+    .stack-item.current {
+        background: rgba(59,130,246,0.2);
+        border-left-color: #3b82f6;
+        color: #93c5fd; font-weight: 600;
+        box-shadow: 0 0 8px rgba(59,130,246,0.3);
+    }
+    .stack-item.visited {
+        background: rgba(16,185,129,0.15);
+        border-left-color: #10b981;
+        color: #a7f3d0;
+    }
+    .stack-arrow {
+        color: #6b7280;
+        font-size: 12px;
+    }
+
+    /* 邻接矩阵 */
+    .adjacency-matrix {
+        display: grid;
+        gap: 3px;
+        padding: 12px;
+        background: #0f172a;
+        border: 1px solid rgba(139,92,246,0.25);
+        border-radius: 8px;
+        justify-content: center;
+    }
+    .matrix-cell {
+        width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center;
+        background: #1f2937;
+        border: 1px solid #4b5563;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 12px; font-weight: 600;
+        color: #6b7280;
+        transition: all .2s ease;
+    }
+    .matrix-cell.header {
+        background: transparent; border-color: transparent;
+        color: #a78bfa; font-size: 11px;
+    }
+    .matrix-cell.has-edge { color: #3b82f6; }
+    .matrix-cell.current-row { background: rgba(59,130,246,0.2); border-color: #3b82f6; }
+    .matrix-cell.current-col { background: rgba(59,130,246,0.2); border-color: #3b82f6; }
+    .matrix-cell.selected {
+        background: rgba(245,158,11,0.25);
+        border-color: #f59e0b; color: #fbbf24;
+        transform: scale(1.1);
+    }
+
+    /* ===== 右侧：代码面板（独占，无滚动条） ===== */
+    .info-panel {
+        display: flex;
+        flex-direction: column;
+    }
+    .code-panel {
+        flex: 1;
+        min-height: 360px;
+        max-height: none !important;
+        overflow-y: visible !important;
+        overflow: visible !important;
+        height: auto !important;
+        font-size: 13.5px;
+        line-height: 1.7;
+    }
 </style>
 </head>
 <body>
@@ -302,9 +289,7 @@
     <section class="explanation-panel">
         <div class="formula-box">
             <span class="formula-text">当前状态</span>
-            <span id="current-result">
-                起始节点: 0
-            </span>
+            <span id="current-result">起始节点: 0</span>
         </div>
 
         <div class="step-info">
@@ -320,49 +305,68 @@
         </div>
     </section>
 
+    <!-- ===== 可视化区域：左侧图+栈+矩阵，右侧代码 ===== -->
     <section class="visualization-section">
         <div class="canvas-container grid-section">
-            <svg class="graph-svg" id="graphSvg" viewBox="0 0 500 340">
-                <defs>
-                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                        <polygon points="0 0, 10 3.5, 0 7" fill="#4b5563" />
-                    </marker>
-                </defs>
-            </svg>
-        </div>
-
-        <div class="info-panel">
-            <div class="code-panel" id="codePanel">
-                <div class="code-line" id="line-0">// 深度优先搜索 - Depth First Search</div>
-                <div class="code-line" id="line-1">// 使用邻接矩阵存储图</div>
-                <div class="code-line" id="line-2">int adj[10][10];</div>
-                <div class="code-line" id="line-3">int visited[10];</div>
-                <div class="code-line" id="line-4"></div>
-                <div class="code-line" id="line-5">void dfs(int node, int n) {</div>
-                <div class="code-line" id="line-6">    visited[node] = 1;</div>
-                <div class="code-line" id="line-7">    // 处理当前节点...</div>
-                <div class="code-line" id="line-8"></div>
-                <div class="code-line" id="line-9">    for (int i = 0; i &lt; n; i++) {</div>
-                <div class="code-line" id="line-10">        if (adj[node][i] == 1 &amp;&amp; !visited[i]) {</div>
-                <div class="code-line" id="line-11">            dfs(i, n);</div>
-                <div class="code-line" id="line-12">        }</div>
-                <div class="code-line" id="line-13">    }</div>
-                <div class="code-line" id="line-14">    // 回溯: 从 node 退出</div>
-                <div class="code-line" id="line-15">}</div>
-            </div>
-
-            <div class="dfs-stack" id="dfsStack">
-                <div class="dfs-stack-title">递归栈</div>
-            </div>
-
-            <div class="adjacency-matrix" id="adjacencyMatrix"></div>
-
+            <!-- 图例 -->
             <div class="legend">
                 <span class="item"><span class="dot unvisited"></span><span>未访问</span></span>
                 <span class="item"><span class="dot visiting"></span><span>正在访问（栈中）</span></span>
                 <span class="item"><span class="dot visited"></span><span>已访问（已回溯）</span></span>
                 <span class="item"><span class="dot neighbor"></span><span>邻居（待访问）</span></span>
                 <span class="item"><span class="line path"></span><span>当前路径</span></span>
+            </div>
+
+            <!-- 图 -->
+            <svg class="graph-svg" id="graphSvg" viewBox="0 0 500 320">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#4b5563" />
+                    </marker>
+                </defs>
+            </svg>
+
+            <!-- 递归栈（水平排列） -->
+            <div class="dfs-stack-wrap" id="dfsStack">
+                <div class="dfs-stack-title">递归栈（栈底 → 栈顶）</div>
+                <div class="stack-items" id="stackItems"></div>
+            </div>
+
+            <!-- 邻接矩阵 -->
+            <div class="adjacency-matrix" id="adjacencyMatrix"></div>
+        </div>
+
+        <div class="info-panel">
+            <div class="code-panel" id="codePanel">
+                <div class="code-line" id="line-0">// 深度优先搜索 - Depth First Search</div>
+                <div class="code-line" id="line-1">// 时间复杂度: O(V+E)   空间复杂度: O(V)</div>
+                <div class="code-line" id="line-2">// 使用邻接矩阵存储无向图</div>
+                <div class="code-line" id="line-3"></div>
+                <div class="code-line" id="line-4">#include &lt;bits/stdc++.h&gt;</div>
+                <div class="code-line" id="line-5">using namespace std;</div>
+                <div class="code-line" id="line-6"></div>
+                <div class="code-line" id="line-7">int adj[10][10];      // 邻接矩阵</div>
+                <div class="code-line" id="line-8">int visited[10];      // 访问标记数组</div>
+                <div class="code-line" id="line-9"></div>
+                <div class="code-line" id="line-10">void dfs(int node, int n) {</div>
+                <div class="code-line" id="line-11">    visited[node] = 1;                // 标记当前节点已访问</div>
+                <div class="code-line" id="line-12"></div>
+                <div class="code-line" id="line-13">    for (int i = 0; i &lt; n; i++) {     // 遍历所有可能的邻居</div>
+                <div class="code-line" id="line-14">        if (adj[node][i] == 1 &amp;&amp; !visited[i]) {</div>
+                <div class="code-line" id="line-15">            dfs(i, n);                // 递归访问未访问的邻居</div>
+                <div class="code-line" id="line-16">        }</div>
+                <div class="code-line" id="line-17">    }</div>
+                <div class="code-line" id="line-18"></div>
+                <div class="code-line" id="line-19">    cout &lt;&lt; "回溯: 离开节点 " &lt;&lt; node &lt;&lt; endl;</div>
+                <div class="code-line" id="line-20">    // 回溯: 从 node 返回到上一层</div>
+                <div class="code-line" id="line-21">}</div>
+                <div class="code-line" id="line-22"></div>
+                <div class="code-line" id="line-23">int main() {</div>
+                <div class="code-line" id="line-24">    int n = 6;</div>
+                <div class="code-line" id="line-25">    memset(visited, 0, sizeof(visited));</div>
+                <div class="code-line" id="line-26">    dfs(0, n);                        // 从节点 0 开始搜索</div>
+                <div class="code-line" id="line-27">    return 0;</div>
+                <div class="code-line" id="line-28">}</div>
             </div>
         </div>
     </section>
@@ -385,17 +389,17 @@
     ];
 
     const nodePositions = [
-        { x: 250, y: 60 },
-        { x: 120, y: 160 },
-        { x: 380, y: 160 },
-        { x: 60, y: 280 },
-        { x: 180, y: 280 },
-        { x: 420, y: 280 }
+        { x: 250, y: 55 },
+        { x: 110, y: 155 },
+        { x: 390, y: 155 },
+        { x: 50,  y: 265 },
+        { x: 170, y: 265 },
+        { x: 430, y: 265 }
     ];
 
     const codePanel = new CodePanel('#codePanel');
     const graphSvg = document.getElementById('graphSvg');
-    const dfsStack = document.getElementById('dfsStack');
+    const stackItems = document.getElementById('stackItems');
     const adjacencyMatrix = document.getElementById('adjacencyMatrix');
     const startNodeInput = document.getElementById('startNodeInput');
 
@@ -417,8 +421,8 @@
         for (let i = 0; i < N; i++) {
             const p = nodePositions[i];
             svgContent += `<g class="graph-node unvisited" id="node-${i}" transform="translate(${p.x}, ${p.y})">` +
-                '<circle class="node-circle" r="28" />' +
-                '<text class="node-label" text-anchor="middle" dominant-baseline="middle">' + i + '</text>' +
+                '<circle class="node-circle" r="26" />' +
+                '<text class="node-label" y="1">' + i + '</text>' +
                 '</g>';
         }
         svgContent += '</g>';
@@ -436,7 +440,7 @@
             en: 'Start DFS from node ' + startNode,
             zh: '从节点 ' + startNode + ' 开始深度优先搜索',
             formula: 'startNode = ' + startNode,
-            codeLines: [5],
+            codeLines: [10],
             visited: visited.slice(),
             path: [],
             stack: [],
@@ -452,10 +456,10 @@
 
             result.push({
                 type: 'visit',
-                en: 'Visit node ' + node,
-                zh: '访问节点 ' + node,
+                en: 'Visit node ' + node + ' — mark as visited',
+                zh: '访问节点 ' + node + ' — 标记为已访问',
                 formula: 'visited[' + node + '] = 1',
-                codeLines: [6],
+                codeLines: [11],
                 visited: visited.slice(),
                 path: path.slice(),
                 stack: stack.slice().map(s => ({ ...s })),
@@ -476,7 +480,7 @@
                 en: 'Find unvisited neighbors of node ' + node + ': [' + neighbors.join(', ') + ']',
                 zh: '找到节点 ' + node + ' 的未访问邻居：[' + neighbors.join(', ') + ']',
                 formula: 'neighbors(' + node + ') = [' + neighbors.join(', ') + ']',
-                codeLines: [9],
+                codeLines: [13],
                 visited: visited.slice(),
                 path: path.slice(),
                 stack: stack.slice().map(s => ({ ...s })),
@@ -488,10 +492,10 @@
             for (const neighbor of neighbors) {
                 result.push({
                     type: 'select-neighbor',
-                    en: 'Select neighbor ' + neighbor + ' of node ' + node,
-                    zh: '选择节点 ' + node + ' 的邻居 ' + neighbor,
-                    formula: 'adj[' + node + '][' + neighbor + '] = 1',
-                    codeLines: [10],
+                    en: 'Select neighbor ' + neighbor + ', recursive call dfs(' + neighbor + ')',
+                    zh: '选择邻居 ' + neighbor + '，递归调用 dfs(' + neighbor + ')',
+                    formula: 'dfs(' + neighbor + ')',
+                    codeLines: [14, 15],
                     visited: visited.slice(),
                     path: path.slice(),
                     stack: stack.slice().map(s => ({ ...s })),
@@ -507,10 +511,10 @@
 
             result.push({
                 type: 'backtrack',
-                en: 'Backtrack from node ' + node + ', return to parent',
-                zh: '从节点 ' + node + ' 回溯，返回父节点',
-                formula: 'backtrack(' + node + ')',
-                codeLines: [14],
+                en: 'Backtrack from node ' + node + ' — all neighbors processed',
+                zh: '从节点 ' + node + ' 回溯 — 所有邻居已处理完毕',
+                formula: 'return from dfs(' + node + ')',
+                codeLines: [19, 20],
                 visited: visited.slice(),
                 path: path.slice(),
                 stack: stack.slice().map(s => ({ ...s })),
@@ -530,7 +534,7 @@
             en: 'DFS completed. All reachable nodes visited.',
             zh: 'DFS 完成。所有可达节点已访问。',
             formula: 'visited[] = [' + visited.join(', ') + ']',
-            codeLines: [15],
+            codeLines: [21],
             visited: visited.slice(),
             path: [],
             stack: [],
@@ -544,28 +548,21 @@
 
     function renderVisual(step) {
         if (!step) {
+            // 彻底归零：重建 SVG 清除所有残留状态，再重置节点/边/栈/矩阵
+            initGraph();
             for (let i = 0; i < N; i++) {
                 const node = document.getElementById('node-' + i);
-                if (node) {
-                    node.className = 'graph-node unvisited';
-                }
+                if (node) node.className = 'graph-node unvisited';
             }
-            for (let i = 0; i < N; i++) {
-                for (let j = i + 1; j < N; j++) {
-                    if (adj[i][j] === 1) {
-                        const edge = document.getElementById('edge-' + i + '-' + j);
-                        if (edge) edge.className = 'graph-edge';
-                    }
-                }
-            }
-            dfsStack.innerHTML = '<div class="dfs-stack-title">递归栈</div>';
-            adjacencyMatrix.innerHTML = '';
-            renderAdjacencyMatrix(-1, -1, []);
+            stackItems.innerHTML = '<span style="color:#6b7280;font-size:12px;">空栈</span>';
+            adjacencyMatrix.innerHTML = '<div style="color:#6b7280;font-size:12px;text-align:center;padding:20px 0;">点击「生成场景」后显示邻接矩阵</div>';
+            adjacencyMatrix.style.gridTemplateColumns = '1fr';
             return;
         }
 
         const { visited, path, stack, currentNode, currentNeighbor, neighbors } = step;
 
+        // 渲染节点
         for (let i = 0; i < N; i++) {
             const node = document.getElementById('node-' + i);
             if (!node) continue;
@@ -585,12 +582,13 @@
             if (i === currentNode) {
                 node.classList.add('current');
             }
-
-            if (neighbors.includes(i)) {
+            // 只在"选择邻居"步骤高亮当前选中的那个邻居，避免所有邻居同时变黄
+            if (step.type === 'select-neighbor' && i === currentNeighbor) {
                 node.classList.add('neighbor');
             }
         }
 
+        // 渲染边
         for (let i = 0; i < N; i++) {
             for (let j = i + 1; j < N; j++) {
                 if (adj[i][j] === 1) {
@@ -615,15 +613,23 @@
             }
         }
 
-        let stackHtml = '<div class="dfs-stack-title">递归栈</div>';
-        for (let i = stack.length - 1; i >= 0; i--) {
-            const item = stack[i];
-            let cls = 'stack-item';
-            if (item.node === currentNode) cls += ' current';
-            if (item.visited) cls += ' visited';
-            stackHtml += '<div class="' + cls + '"><span style="color:#6b7280;">#' + (i + 1) + '</span>节点 ' + item.node + '</div>';
+        // 渲染递归栈（水平排列，栈底在左，栈顶在右）
+        if (stack.length === 0) {
+            stackItems.innerHTML = '<span style="color:#6b7280;font-size:12px;">空栈</span>';
+        } else {
+            let html = '';
+            for (let i = 0; i < stack.length; i++) {
+                const item = stack[i];
+                let cls = 'stack-item';
+                if (item.node === currentNode) cls += ' current';
+                if (item.visited) cls += ' visited';
+                html += '<div class="' + cls + '">节点 ' + item.node + '</div>';
+                if (i < stack.length - 1) {
+                    html += '<span class="stack-arrow">→</span>';
+                }
+            }
+            stackItems.innerHTML = html;
         }
-        dfsStack.innerHTML = stackHtml;
 
         renderAdjacencyMatrix(currentNode, currentNeighbor, neighbors);
     }
@@ -649,6 +655,7 @@
             }
         }
         adjacencyMatrix.innerHTML = html;
+        adjacencyMatrix.style.gridTemplateColumns = 'repeat(' + (N + 1) + ', 32px)';
     }
 
     const controller = new StepController({
@@ -678,20 +685,14 @@
     }
 
     function reset() {
+        controller.reset();  // 停止播放、重置进度条和步骤索引
         state = null;
         codePanel.clearHighlight();
         document.getElementById('step-counter').textContent = '0';
         document.getElementById('step-en').textContent = 'Click "Generate" to start the visualization.';
         document.getElementById('step-zh').textContent = '点击上方 "生成场景" 以开始演示。';
         document.getElementById('current-result').textContent = '起始节点: 0';
-        renderVisual({
-            visited: new Array(N).fill(0),
-            path: [],
-            stack: [],
-            currentNode: -1,
-            currentNeighbor: -1,
-            neighbors: []
-        });
+        renderVisual(null);  // 彻底重置视觉状态（节点、边、栈、矩阵全部归零）
     }
 
     bindControls({
@@ -703,14 +704,7 @@
 
     window.addEventListener('load', function () {
         initGraph();
-        renderVisual({
-            visited: new Array(N).fill(0),
-            path: [],
-            stack: [],
-            currentNode: -1,
-            currentNeighbor: -1,
-            neighbors: []
-        });
+        renderVisual(null);  // 页面加载时矩阵不显示，等待生成场景
     });
 })();
 </script>
