@@ -173,6 +173,14 @@
         color: #6b7280;
         font-size: 12px;
     }
+    .stack-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 9px;
+        color: #4b5563;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        margin-top: 4px;
+    }
 
     /* 邻接矩阵 */
     .adjacency-matrix {
@@ -328,8 +336,12 @@
 
             <!-- 递归栈（水平排列） -->
             <div class="dfs-stack-wrap" id="dfsStack">
-                <div class="dfs-stack-title">递归栈（栈底 → 栈顶）</div>
+                <div class="dfs-stack-title">递归栈 Stack</div>
                 <div class="stack-items" id="stackItems"></div>
+                <div class="stack-labels">
+                    <span>栈底</span>
+                    <span>栈顶</span>
+                </div>
             </div>
 
             <!-- 邻接矩阵 -->
@@ -367,6 +379,12 @@
                 <div class="code-line" id="line-26">    dfs(0, n);                        // 从节点 0 开始搜索</div>
                 <div class="code-line" id="line-27">    return 0;</div>
                 <div class="code-line" id="line-28">}</div>
+            </div>
+
+            <div class="legend">
+                <span class="item" style="color:#c4b5fd;font-weight:600;">
+                    💡 紫色高亮 = 当前正在执行的代码行
+                </span>
             </div>
         </div>
     </section>
