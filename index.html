@@ -439,6 +439,102 @@
     /* -- 全局防御：确保 #stage 在 body(flex) 下始终撑满宽度 -- */
     body { display: flex !important; }
     #stage { width: 100% !important; }
+
+    /* ====== 认证区域 ====== */
+    .auth-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .auth-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 20px;
+      transition: all .25s ease;
+    }
+    .auth-btn.login-btn {
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+    }
+    .auth-btn.login-btn:hover {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.5);
+    }
+    .auth-btn.register-btn {
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: #c4b5fd;
+    }
+    .auth-btn.register-btn:hover {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: rgba(139, 92, 246, 0.5);
+    }
+    .user-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 20px;
+      cursor: pointer;
+      position: relative;
+      transition: all .25s ease;
+    }
+    .user-badge:hover {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+    .user-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .user-name {
+      font-size: 12px;
+      color: #6ee7b7;
+      font-weight: 600;
+    }
+    .user-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 6px;
+      padding: 4px 0;
+      background: #1e293b;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      z-index: 100;
+      min-width: 100px;
+    }
+    .user-dropdown.show {
+      display: block;
+    }
+    .user-dropdown a {
+      display: block;
+      padding: 8px 16px;
+      font-size: 12px;
+      color: #94a3b8;
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .user-dropdown a:hover {
+      color: #f87171;
+    }
   </style>
 </head>
 <body>
@@ -447,6 +543,7 @@
     <!-- Hero -->
     <div class="hero">
       <div class="header-actions">
+        <div id="auth-area" class="auth-area"></div>
         <a href="about.html" class="about-link">关于 About</a>
         <div class="author-badge">
           <span class="author-icon">DB</span>
@@ -638,6 +735,7 @@
     </div>
   </div>
 
+  <script src="./js/auth.js"></script>
   <script src="./js/common.js"></script>
 
 </body>
