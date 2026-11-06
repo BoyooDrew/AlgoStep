@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 
 <html lang="zh-CN">
 
@@ -25,7 +25,6 @@
         }
 
         html, body {
-            height: 100%;
             margin: 0;
             padding: 0;
         }
@@ -38,7 +37,9 @@
             font-family: "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
             -webkit-font-smoothing: antialiased;
             color: #1e293b;
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         /* -------- 等宽字体类 -------- */
@@ -49,10 +50,11 @@
         /* -------- 页面主容器：三栏 Flex 布局 -------- */
         .app-container {
             display: flex;
-            height: 100vh;
-            gap: 12px;
-            padding: 12px;
-            overflow: hidden;
+            flex: 1 1 auto;
+            min-height: calc(100vh - 52px);
+            min-width: 1180px;
+            gap: 10px;
+            padding: 10px;
         }
 
         /* =======================================================
@@ -85,11 +87,11 @@
             position: relative;
             overflow: hidden;
             background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%);
-            padding: 16px;
+            padding: 12px 14px;
             color: #ffffff;
         }
 
-        /* 装饰性模糊光晕（替代原 Tailwind 的 blur-2xl div） */
+        /* 装饰性模糊光晕（青绿荧光感） */
         .info-header::before,
         .info-header::after {
             content: '';
@@ -132,10 +134,25 @@
         }
 
         .info-title {
-            margin: 8px 0 0;
+            margin: 6px 0 0;
             font-size: 20px;
             font-weight: 700;
             line-height: 1.25;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .info-title-en {
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.12em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: rgba(199, 210, 254, 0.90);
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-family: ui-monospace, Menlo, Consolas, monospace;
         }
 
         .info-subtitle {
@@ -150,7 +167,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
-            margin-top: 12px;
+            margin-top: 8px;
         }
 
         .info-badge {
@@ -159,30 +176,35 @@
             font-size: 10px;
             font-weight: 500;
             color: rgba(199, 210, 254, 1);
-            background: rgba(255, 255, 255, 0.10);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.18);
         }
 
-        /* --- 内容滚动区 --- */
+        /* --- 内容区：可滚动，紧凑排列 --- */
         .info-body {
             flex: 1;
             min-height: 0;
-            padding: 12px;
+            padding: 6px 8px 8px;
             overflow-y: auto;
+            overflow-x: hidden;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            /* 隐藏滚动条但保留功能 */
-            scrollbar-width: none;
+            gap: 5px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
         }
-        .info-body::-webkit-scrollbar {
-            display: none;
+        .info-body::-webkit-scrollbar { width: 5px; }
+        .info-body::-webkit-scrollbar-track { background: transparent; }
+        .info-body::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.25);
+            border-radius: 3px;
         }
+        .info-body::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.45); }
 
-        /* --- 信息子卡片（数据输入 / 视图模式 / 快捷键） --- */
+        /* --- 信息子卡片（紧凑排列） --- */
         .info-section {
-            padding: 12px;
-            border-radius: 12px;
+            padding: 6px 8px;
+            border-radius: 10px;
             border: 1px solid #e2e8f0;
             background: #ffffff;
         }
@@ -192,34 +214,33 @@
             align-items: center;
             justify-content: space-between;
             gap: 4px;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
         }
 
         .info-section-title h2 {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             margin: 0;
-            font-size: 12px;
+            padding: 0;
+            font-size: 14px;
             font-weight: 600;
+            line-height: 1.3;
             color: #0f172a;
         }
 
         /* 装饰性小图标容器（用 CSS 绘制，不依赖图标库） */
         .mini-icon {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
+            flex: none;
             display: grid;
             place-items: center;
-            border-radius: 6px;
+            border-radius: 7px;
             background: #eef2ff;
             color: #4f46e5;
-            font-size: 12px;
+            font-size: 15px;
             line-height: 1;
-        }
-
-        .mini-icon::before {
-            content: attr(data-icon);
         }
 
         .section-meta {
@@ -235,7 +256,7 @@
         /* --- 表单控件 --- */
         .form-label {
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
             font-size: 10px;
             font-weight: 500;
             color: #64748b;
@@ -245,7 +266,7 @@
         .form-textarea,
         .form-select {
             width: 100%;
-            padding: 6px 10px;
+            padding: 5px 8px;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
             background: #f8fafc;
@@ -281,8 +302,8 @@
             justify-content: center;
             gap: 6px;
             width: 100%;
-            margin-top: 10px;
-            padding: 8px 12px;
+            margin-top: 6px;
+            padding: 7px 10px;
             border: none;
             border-radius: 8px;
             background: #4f46e5;
@@ -304,8 +325,8 @@
 
         /* --- 提示/错误文字 --- */
         .form-note {
-            margin-top: 8px;
-            font-size: 10px;
+            margin-top: 4px;
+            font-size: 9.5px;
             line-height: 1.5;
             color: #94a3b8;
         }
@@ -329,9 +350,9 @@
         .mode-option {
             display: flex;
             align-items: flex-start;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
             background: #ffffff;
@@ -355,8 +376,13 @@
         .mode-option-icon {
             flex-shrink: 0;
             margin-top: 2px;
-            font-size: 15px;
+            display: flex;
+            align-items: center;
+            color: #64748b;
+            line-height: 1;
         }
+
+        .mode-option.active .mode-option-icon { color: #4f46e5; }
 
         .mode-option-text {
             min-width: 0;
@@ -372,7 +398,7 @@
         }
 
         .mode-option.active .mode-option-title {
-            color: #4338ca;
+            color: #4f46e5;
         }
 
         .mode-option-badge {
@@ -392,7 +418,7 @@
         }
 
         .mode-option + .mode-option {
-            margin-top: 6px;
+            margin-top: 4px;
         }
 
         /* --- 快捷键列表 --- */
@@ -400,7 +426,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 6px 8px;
+            padding: 5px 8px;
             border-radius: 8px;
             background: #f8fafc;
             font-size: 10.5px;
@@ -408,7 +434,7 @@
         }
 
         .shortcut-item + .shortcut-item {
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
         kbd {
@@ -559,7 +585,32 @@
             font-size: 14px;
             line-height: 1.95;
             color: #e2e8f0;
+            /* Firefox */
             scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.10) transparent;
+        }
+
+        /* WebKit 代码区滚动条美化 */
+        .code-body::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .code-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .code-body::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.30);
+            border-radius: 4px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+        .code-body::-webkit-scrollbar-thumb:hover {
+            background: rgba(129, 140, 248, 0.40);
+            background-clip: padding-box;
+            border: 2px solid transparent;
+        }
+        .code-body::-webkit-scrollbar-corner {
+            background: transparent;
         }
 
         /* --- 代码行样式 --- */
@@ -602,28 +653,12 @@
         .tok-str { color: #c3e88d; }   /* 字符串 */
         .tok-com { color: #676e95; font-style: italic; } /* 注释 */
 
-        /* --- 代码底部提示条 --- */
-        .code-hint {
-            margin: 0 12px 8px;
-            padding: 8px 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.06);
-            background: rgba(255,255,255,0.03);
-            font-size: 9.5px;
-            line-height: 1.5;
-            color: #64748b;
-        }
-
-        .code-hint strong {
-            color: #a5b4fc;
-        }
-
+        /* --- 代码状态栏（提示 + 高亮行信息合并） --- */
         .code-footer {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 6px 12px;
+            border-top: 1px solid rgba(99, 102, 241, 0.12);
             background: #0e141d;
             font-size: 9.5px;
         }
@@ -640,11 +675,12 @@
             height: 6px;
             border-radius: 50%;
             background: #818cf8;
+            
         }
 
         .code-footer-line-info {
             font-family: ui-monospace, Menlo, Consolas, monospace;
-            color: #64748b;
+            color: #a5b4fc;
         }
 
         /* =======================================================
@@ -803,12 +839,18 @@
             flex-direction: column;
             gap: 10px;
             overflow-y: auto;
-            scrollbar-width: none;
             padding-bottom: 10px;
+            /* 统一滚动条风格 */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(99, 102, 241, 0.30) transparent;
         }
-        .stage-body-main::-webkit-scrollbar {
-            display: none;
+        .stage-body-main::-webkit-scrollbar { width: 6px; }
+        .stage-body-main::-webkit-scrollbar-track { background: transparent; }
+        .stage-body-main::-webkit-scrollbar-thumb {
+            background: rgba(79, 70, 229, 0.25);
+            border-radius: 3px;
         }
+        .stage-body-main::-webkit-scrollbar-thumb:hover { background: rgba(129, 140, 248, 0.35); }
 
         /* --- 展示子卡片 --- */
         .stage-card {
@@ -911,8 +953,8 @@
         .var-cell.theme-orange .var-cell-value { color: #c2410c; }
 
         .var-cell.theme-indigo { background: rgba(238, 242, 255, 0.7); }
-        .var-cell.theme-indigo .var-cell-label { color: #818cf8; }
-        .var-cell.theme-indigo .var-cell-value { color: #4338ca; }
+        .var-cell.theme-indigo .var-cell-label { color: #60a5fa; }
+        .var-cell.theme-indigo .var-cell-value { color: #1d4ed8; }
 
         .var-cell.theme-slate  { background: #f8fafc; }
         .var-cell.theme-slate  .var-cell-label { color: #94a3b8; }
@@ -986,11 +1028,19 @@
             min-height: 0;
             padding: 6px;
             overflow-y: auto;
-            scrollbar-width: thin;
             display: flex;
             flex-direction: column;
             gap: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(99, 102, 241, 0.30) transparent;
         }
+        .aside-list::-webkit-scrollbar { width: 6px; }
+        .aside-list::-webkit-scrollbar-track { background: transparent; }
+        .aside-list::-webkit-scrollbar-thumb {
+            background: rgba(79, 70, 229, 0.25);
+            border-radius: 3px;
+        }
+        .aside-list::-webkit-scrollbar-thumb:hover { background: rgba(129, 140, 248, 0.35); }
 
         .trace-item {
             display: flex;
@@ -1013,7 +1063,7 @@
 
         .trace-item.active {
             background: #ffffff;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 0 0 1px rgba(165, 180, 252, 0.5);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 0 0 1px rgba(94, 234, 212, 0.5);
         }
 
         .trace-index {
@@ -1116,6 +1166,22 @@
             background: #4338ca;
         }
 
+        /* 暂停状态：琥珀固定色，hover 不变 */
+        .btn-ctrl-paused {
+            border: none;
+            background: #F97316;
+            color: #ffffff;
+            box-shadow: 0 1px 2px rgba(249, 115, 22, 0.30);
+        }
+
+        /* 重播状态：荧光绿固定色，hover 不变 */
+        .btn-ctrl-replay {
+            border: none;
+            background: #B7E445;
+            color: #1A2E05;
+            box-shadow: 0 1px 2px rgba(183, 228, 69, 0.35);
+        }
+
         .btn-ctrl-icon {
             width: 24px;
             height: 24px;
@@ -1209,7 +1275,7 @@
         }
 
         .progress-dot.past {
-            background: #a5b4fc;
+            background: #5EEAD4;
         }
 
         .progress-dot.current {
@@ -1232,37 +1298,155 @@
         .ml-auto { margin-left: auto; }
 
         /* =======================================================
-           响应式断点
+           图标系统（内联 SVG Sprite，统一 24×24 线性风格）
            ======================================================= */
-        @media (max-width: 1200px) {
-            .stage-aside { width: 180px; }
+        .ico {
+            width: 14px;
+            height: 14px;
+            flex: none;
+            display: block;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .btn-ctrl .ico { width: 13px; height: 13px; }
+        .btn-ctrl-icon .ico { width: 14px; height: 14px; }
+        .mini-icon .ico { width: 15px; height: 15px; }
+        .mode-option-icon .ico { width: 15px; height: 15px; }
+        .code-icon-wrap .ico { width: 13px; height: 13px; }
+
+        .shortcut-icons {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
 
-        @media (max-width: 960px) {
-            body { overflow: auto; }
-            .app-container {
-                flex-direction: column;
-                height: auto;
-                min-height: 100vh;
-            }
-            .panel-info, .panel-code, .panel-stage {
-                flex: none;
-                width: 100%;
-                min-height: 300px;
-            }
-            .stage-body {
-                flex-direction: column;
-            }
-            .stage-aside {
-                width: 100%;
-                max-height: 200px;
-            }
-            .var-grid { grid-template-columns: repeat(2, 1fr); }
+        /* =======================================================
+           导航（方案A：面包屑 + 下拉菜单）
+           ======================================================= */
+        .algo-nav {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 6px;
+            border: none;
+            border-radius: 5px;
+            background: transparent;
+            color: rgba(224, 231, 255, 0.85);
+            font: inherit;
+            letter-spacing: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+        }
+        .nav-link .ico { width: 11px; height: 11px; }
+
+        .nav-sep {
+            color: rgba(199, 210, 254, 0.45);
+            font-size: 10px;
+        }
+
+        .nav-current {
+            padding: 2px 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.14);
+            color: #ffffff;
+            white-space: nowrap;
+        }
+
+        /* 下拉面板：portal 到 body 层级，避免被 header 的 overflow 裁切 */
+        .nav-menu {
+            position: fixed;
+            z-index: 80;
+            min-width: 170px;
+            padding: 6px;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 14px 34px -10px rgba(15, 23, 42, 0.32);
+            display: none;
+        }
+        .nav-menu.open { display: block; }
+
+        .nav-group + .nav-group {
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .nav-group-title {
+            padding: 2px 6px 3px;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            color: #94a3b8;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 5px 6px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #334155;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-item:hover {
+            background: #eef2ff;
+            color: #4f46e5;
+        }
+        .nav-item.current {
+            background: #eef2ff;
+            color: #4f46e5;
+            font-weight: 600;
+        }
+        .nav-item-tag {
+            font-size: 9px;
+            color: #94a3b8;
         }
     </style>
 </head>
 
 <body>
+
+<!-- =======================================================
+     图标库（内联 SVG Sprite，24×24 线性风格，统一描边）
+     用法：<svg class="ico"><use href="#i-play"/></svg>
+     扩展：在此追加 <symbol>，全站即可复用
+     ======================================================= -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true" focusable="false">
+    <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="14" y="5" width="4" height="14" rx="1"/><rect x="6" y="5" width="4" height="14" rx="1"/></symbol>
+    <symbol id="i-step-back" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></symbol>
+    <symbol id="i-step-next" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
+    <symbol id="i-replay" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-generate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.2"/><path d="M21 12a9 9 0 0 1-15.5 6.2"/><polyline points="18 3 18.5 8.5 13 9"/><polyline points="6 21 5.5 15.5 11 15"/></symbol>
+    <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></symbol>
+    <symbol id="i-layout" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="4" x2="9" y2="20"/><line x1="15" y1="4" x2="15" y2="20"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><line x1="7" y1="10" x2="7" y2="10"/><line x1="11" y1="10" x2="11" y2="10"/><line x1="15" y1="10" x2="15" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 21 9 12 15 12 15 21"/></symbol>
+</svg>
 
 <!-- =======================================================
      页面主容器
@@ -1280,11 +1464,25 @@
         <!-- --- 标题区 --- -->
         <header class="info-header">
             <div class="info-header-content">
-                <div class="info-tag">
-                    <span>⚙</span>
-                    算法实验室 · 可视化教学
-                </div>
-                <h1 class="info-title" id="infoTitle">算法名称 · Algorithm Template</h1>
+                <!-- 导航（方案A：面包屑 + 下拉切换） -->
+                <nav class="algo-nav" aria-label="算法导航">
+                    <a class="nav-link" href="../index.html" title="返回首页">
+                        <svg class="ico" aria-hidden="true"><use href="#i-home"/></svg>
+                        <span>AlgoStep</span>
+                    </a>
+                    <span class="nav-sep">›</span>
+                    <button class="nav-link" id="navToggle" type="button"
+                            aria-haspopup="true" aria-expanded="false">
+                        <span id="navCategory">算法目录</span>
+                        <svg class="ico" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+                    </button>
+                    <span class="nav-sep">›</span>
+                    <span class="nav-current" id="navCurrent">模板页</span>
+                </nav>
+                <h1 class="info-title" id="infoTitle">
+                    算法名称
+                    <span class="info-title-en">ALGO·TPL</span>
+                </h1>
                 <p class="info-subtitle" id="infoSubtitle">
                     一行简介：此处用最简洁的语言描述本算法解决了什么问题。
                 </p>
@@ -1301,7 +1499,7 @@
             <section class="info-section">
                 <div class="info-section-title">
                     <h2>
-                        <span class="mini-icon" data-icon="▣"></span>
+                        <span class="mini-icon"><svg class="ico" aria-hidden="true"><use href="#i-database"/></svg></span>
                         数据与查询
                     </h2>
                     <span class="section-meta" id="dataSummary">—</span>
@@ -1312,24 +1510,22 @@
                 <input class="form-input" id="paramInput" type="number" value="5" min="1" max="40" />
 
                 <button class="btn-primary" id="btnGenerate" type="button">
-                    ⟳ 生成场景
+                    <svg class="ico" aria-hidden="true"><use href="#i-generate"/></svg>
+                    生成场景
                 </button>
-
-                <p class="form-note" id="dataNote">点击按钮生成演示数据，之后可播放或逐步查看。</p>
-                <p class="form-error" id="dataError"></p>
             </section>
 
             <!-- 子卡片：视图模式切换（保留通用逻辑） -->
             <section class="info-section">
-                <h2 class="info-section-title">
+                <div class="info-section-title">
                     <h2>
-                        <span class="mini-icon" data-icon="▤"></span>
+                        <span class="mini-icon"><svg class="ico" aria-hidden="true"><use href="#i-layout"/></svg></span>
                         视图模式
                     </h2>
-                </h2>
+                </div>
 
                 <button class="mode-option active" data-mode="both" type="button">
-                    <span class="mode-option-icon">◫</span>
+                    <span class="mode-option-icon"><svg class="ico" aria-hidden="true"><use href="#i-layout"/></svg></span>
                     <span class="mode-option-text">
                         <span class="mode-option-title">
                             代码 + 动画
@@ -1340,7 +1536,7 @@
                 </button>
 
                 <button class="mode-option" data-mode="anim" type="button">
-                    <span class="mode-option-icon">▶</span>
+                    <span class="mode-option-icon"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg></span>
                     <span class="mode-option-text">
                         <span class="mode-option-title">只看动画</span>
                         <span class="mode-option-desc">隐藏核心代码，专注过程</span>
@@ -1348,42 +1544,46 @@
                 </button>
 
                 <button class="mode-option" data-mode="code" type="button">
-                    <span class="mode-option-icon">&lt;/&gt;</span>
+                    <span class="mode-option-icon"><svg class="ico" aria-hidden="true"><use href="#i-code"/></svg></span>
                     <span class="mode-option-text">
                         <span class="mode-option-title">只看代码</span>
                         <span class="mode-option-desc">隐藏动画，保留执行行高亮</span>
                     </span>
                 </button>
-
-                <p class="form-note" id="layoutNote">当前布局 · 2 : 3 : 5（三栏联动）</p>
             </section>
 
             <!-- 子卡片：快捷键说明（保留通用逻辑） -->
             <section class="info-section">
-                <h2 class="info-section-title">
+                <div class="info-section-title">
                     <h2>
-                        <span class="mini-icon" data-icon="⌨"></span>
+                        <span class="mini-icon"><svg class="ico" aria-hidden="true"><use href="#i-keyboard"/></svg></span>
                         快捷键
                     </h2>
-                </h2>
+                </div>
 
                 <div class="shortcut-item">
-                    <span>▶/⏸ 播放 / 暂停</span>
+                    <span class="shortcut-icons">
+                        <svg class="ico" aria-hidden="true"><use href="#i-play"/></svg>播放 / 
+                        <svg class="ico" aria-hidden="true"><use href="#i-pause"/></svg>暂停
+                        
+                    </span>
                     <kbd>Space</kbd>
                 </div>
                 <div class="shortcut-item">
-                    <span>◀ 上一步</span>
+                    <span class="shortcut-icons">
+                        <svg class="ico" aria-hidden="true"><use href="#i-step-back"/></svg>
+                        上一步
+                    </span>
                     <kbd>←</kbd>
                 </div>
                 <div class="shortcut-item">
-                    <span>▶ 下一步</span>
+                    <span class="shortcut-icons">
+                        <svg class="ico" aria-hidden="true"><use href="#i-step-next"/></svg>
+                        下一步
+                    </span>
                     <kbd>→</kbd>
                 </div>
-
-                <p class="form-note">光标停留在输入框内时，快捷键自动让位给文字输入。</p>
             </section>
-
-            <p class="info-footer">数据修改后自动回到第 1 步；播放速度会保留。</p>
         </div>
     </section>
 
@@ -1401,7 +1601,7 @@
                 <div class="code-traffic-lights">
                     <span></span><span></span><span></span>
                 </div>
-                <div class="code-icon-wrap">&lt;/&gt;</div>
+                <div class="code-icon-wrap"><svg class="ico" aria-hidden="true"><use href="#i-code"/></svg></div>
                 <div>
                     <div class="code-header-title">核心代码</div>
                     <div class="code-header-sub" id="codeFileName">template.java · 算法模板</div>
@@ -1421,19 +1621,13 @@
             <!-- JS 动态渲染 .code-line，每个 .code-line 有 data-line 索引 -->
         </div>
 
-        <!-- 代码底部提示 -->
-        <div class="code-hint">
-            <strong>提示：</strong>
-            高亮行对应当前步骤正在执行的语句，与右侧动画演示实时同步。
-        </div>
-
-        <!-- 代码状态栏 -->
+        <!-- 代码状态栏（提示 + 高亮行信息合并） -->
         <div class="code-footer">
             <span class="code-footer-status">
                 <span class="code-footer-dot"></span>
-                高亮行随步骤联动
+                高亮行对应执行语句 ·
+                <span class="code-footer-line-info" id="codeLineInfo">第 — 行</span>
             </span>
-            <span class="code-footer-line-info" id="codeLineInfo">第 — 行</span>
         </div>
     </section>
 
@@ -1550,28 +1744,34 @@
         <!-- --- 底部控制条（通用逻辑） --- -->
         <div class="stage-controls">
             <div class="controls-row">
-                <button class="btn-ctrl btn-ctrl-default" id="prevBtn" type="button">◀ 上一步</button>
-                <button class="btn-ctrl btn-ctrl-primary" id="playBtn" type="button">▶ 播放</button>
-                <button class="btn-ctrl btn-ctrl-default" id="nextBtn" type="button">下一步 ▶</button>
+                <button class="btn-ctrl btn-ctrl-default" id="prevBtn" type="button">
+                    <svg class="ico" aria-hidden="true"><use href="#i-step-back"/></svg>
+                    上一步
+                </button>
+                <button class="btn-ctrl btn-ctrl-primary" id="playBtn" type="button">
+                    <span class="play-ico" id="playIco"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg></span>
+                    <span id="playLabel">播放</span>
+                </button>
+                <button class="btn-ctrl btn-ctrl-default" id="nextBtn" type="button">
+                    下一步
+                    <svg class="ico" aria-hidden="true"><use href="#i-step-next"/></svg>
+                </button>
 
-                <div class="ml-auto speed-group" id="speedGroup">
+                <button class="btn-ctrl-icon" id="resetBtn" type="button"
+                        title="回到第一步" aria-label="回到第一步">
+                    <svg class="ico" aria-hidden="true"><use href="#i-reset"/></svg>
+                </button>
+
+                <div class="speed-group" id="speedGroup">
                     <span class="speed-label">倍速</span>
                     <button class="speed-btn" data-speed="0.5" type="button">0.5×</button>
                     <button class="speed-btn active" data-speed="1" type="button">1×</button>
-                    <button class="speed-btn" data-speed="1.5" type="button">1.5×</button>
                     <button class="speed-btn" data-speed="2" type="button">2×</button>
+                    <button class="speed-btn" data-speed="3" type="button">3×</button>
                 </div>
-            </div>
 
-            <div class="controls-row">
                 <span class="progress-label" id="progressLabel">第 0 / 0 步</span>
-                <div class="progress-dots" id="dots">
-                    <!-- JS 动态渲染进度点 -->
-                </div>
-                <button class="btn-ctrl-icon" id="resetBtn" type="button" title="回到第一步">↻</button>
             </div>
-
-            <p class="controls-hint">Space 播放 / 暂停 · ← 上一步 · → 下一步</p>
         </div>
     </section>
 </div>
@@ -1792,6 +1992,93 @@ class CodePanel {
     /* ---------- DOM 快捷访问 ---------- */
     function $(id) { return document.getElementById(id); }
 
+    /* ---------- 导航（方案A：面包屑 + 下拉切换） ----------
+       ★ 可扩展：复制模板到具体算法页时，只改 NAV_CURRENT 两处 */
+    const NAV_CURRENT = { category: 'template', page: '模板页' };
+
+    const NAV_TREE = {
+        sort: { label: '排序算法', items: [
+            ['冒泡排序', 'sort/bubble-sort.html'],
+            ['选择排序', 'sort/selection-sort.html'],
+            ['插入排序', 'sort/insertion-sort.html'],
+            ['快速排序', 'sort/quick-sort.html']
+        ]},
+        search: { label: '查找与遍历', items: [
+            ['二分查找', 'search/binary-search.html'],
+            ['广度优先搜索', 'search/bfs.html'],
+            ['深度优先搜索', 'search/dfs.html']
+        ]},
+        dp: { label: '动态规划', items: [
+            ['爬楼梯', 'dp/climb-stairs.html'],
+            ['0-1 背包', 'dp/0-1knapsack.html'],
+            ['完全背包', 'dp/complete-knapsack.html'],
+            ['最长公共子序列', 'dp/lcs.html'],
+            ['最长递增子序列', 'dp/lis.html']
+        ]}
+    };
+
+    function initNav() {
+        const toggle = $('navToggle');
+        if (!toggle) return;
+
+        const menu = document.createElement('div');
+        menu.className = 'nav-menu';
+        menu.id = 'navMenu';
+        menu.setAttribute('role', 'menu');
+
+        menu.innerHTML = Object.keys(NAV_TREE).map(function (key) {
+            const group = NAV_TREE[key];
+            const items = group.items.map(function (it) {
+                const cur = (key === NAV_CURRENT.category && it[0] === NAV_CURRENT.page);
+                return '<a class="nav-item' + (cur ? ' current' : '') + '" href="' + it[1] + '" role="menuitem">'
+                    + '<span>' + it[0] + '</span>'
+                    + (cur ? '<span class="nav-item-tag">当前</span>' : '')
+                    + '</a>';
+            }).join('');
+            return '<div class="nav-group"><div class="nav-group-title">' + group.label + '</div>'
+                + items + '</div>';
+        }).join('');
+
+        document.body.appendChild(menu);
+
+        const cat = NAV_TREE[NAV_CURRENT.category];
+        $('navCategory').textContent = cat ? cat.label : '算法目录';
+        $('navCurrent').textContent = NAV_CURRENT.page;
+
+        function place() {
+            const r = toggle.getBoundingClientRect();
+            const w = menu.offsetWidth;
+            let left = r.left;
+            if (left + w > window.innerWidth - 8) left = window.innerWidth - w - 8;
+            menu.style.left = Math.max(8, left) + 'px';
+            menu.style.top = (r.bottom + 6) + 'px';
+        }
+        function openMenu() {
+            menu.classList.add('open');
+            toggle.setAttribute('aria-expanded', 'true');
+            place();
+        }
+        function closeMenu() {
+            menu.classList.remove('open');
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.classList.contains('open') ? closeMenu() : openMenu();
+        });
+        document.addEventListener('click', function (e) {
+            if (!menu.contains(e.target) && !toggle.contains(e.target)) closeMenu();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeMenu();
+        });
+        window.addEventListener('scroll', closeMenu);
+        window.addEventListener('resize', function () {
+            if (menu.classList.contains('open')) place();
+        });
+    }
+
     /* ---------- 步骤元信息（步骤类型 → 颜色/图标映射） ---------- */
     const STEP_META = {
         init:     { icon: '⚑', accent: 'init',     tagClass: 'init' },
@@ -1910,15 +2197,7 @@ class CodePanel {
             }
         });
 
-        // 6. 更新进度点
-        document.querySelectorAll('.progress-dot').forEach(el => {
-            const i = Number(el.getAttribute('data-dot'));
-            el.classList.remove('past', 'current');
-            if (i < index) el.classList.add('past');
-            else if (i === index) el.classList.add('current');
-        });
-
-        // 7. 更新控制条状态
+        // 6. 更新控制条状态
         updateControls();
     }
 
@@ -1938,16 +2217,6 @@ class CodePanel {
         $('traceCount').textContent = `${state.steps.length} 步`;
     }
 
-    /* ---------- 渲染：进度点 ---------- */
-    function renderDots() {
-        const dots = $('dots');
-        dots.innerHTML = state.steps.map((s, i) => {
-            return `<button class="progress-dot" data-dot="${i}"
-                title="第 ${i + 1} 步：${s.tag || ''}"
-                aria-label="跳转到第 ${i + 1} 步"></button>`;
-        }).join('');
-    }
-
     /* ---------- 渲染：控制条按钮状态 ---------- */
     function updateControls() {
         const atEnd   = controller.index >= state.steps.length - 1;
@@ -1956,15 +2225,29 @@ class CodePanel {
         $('prevBtn').disabled = atStart;
         $('nextBtn').disabled = atEnd;
 
-        // 更新播放按钮文字（保留 emoji + 文字）
+        // 更新播放按钮：图标 + 颜色状态切换
         const playBtn = $('playBtn');
+        playBtn.classList.remove('btn-ctrl-primary', 'btn-ctrl-paused', 'btn-ctrl-replay');
+
+        let iconId, label;
         if (controller.playing) {
-            playBtn.textContent = '⏸ 暂停';
+            // 正在播放 → 琥珀色 + 暂停图标
+            iconId = 'i-pause';
+            label  = '暂停';
+            playBtn.classList.add('btn-ctrl-paused');
         } else if (atEnd) {
-            playBtn.textContent = '↻ 重播';
+            // 播完了 → 荧光绿 + 重播图标
+            iconId = 'i-replay';
+            label  = '重播';
+            playBtn.classList.add('btn-ctrl-replay');
         } else {
-            playBtn.textContent = '▶ 播放';
+            // 待播放 → 主色 + 播放图标
+            iconId = 'i-play';
+            label  = '播放';
+            playBtn.classList.add('btn-ctrl-primary');
         }
+        $('playIco').innerHTML = `<svg class="ico" aria-hidden="true"><use href="#${iconId}"/></svg>`;
+        $('playLabel').textContent = label;
 
         $('progressLabel').textContent =
             `第 ${Math.max(0, controller.index + 1)} / ${state.steps.length} 步`;
@@ -1988,15 +2271,12 @@ class CodePanel {
         if (state.viewMode === 'both') {
             p2.style.flex = '3 1 0%';
             p3.style.flex = '5 1 0%';
-            $('layoutNote').textContent = '当前布局 · 2 : 3 : 5（三栏联动）';
         } else if (state.viewMode === 'anim') {
             p2.style.display = 'none';
             p3.style.flex = '8 1 0%';
-            $('layoutNote').textContent = '当前布局 · 2 : 8（核心代码已隐藏）';
         } else {
             p3.style.display = 'none';
             p2.style.flex = '8 1 0%';
-            $('layoutNote').textContent = '当前布局 · 2 : 8（动画演示已隐藏）';
         }
     }
 
@@ -2024,7 +2304,6 @@ class CodePanel {
         applyViewMode();
         renderSpeed();
         renderTrace();
-        renderDots();
         renderStep(state.steps[controller.index] || null, controller.index);
     }
 
@@ -2052,9 +2331,7 @@ class CodePanel {
         $('varR').textContent = '—';
         $('varSum').textContent = '—';
         $('varRemain').textContent = '—';
-        // 重建轨迹和进度点
-        renderTrace();
-        renderDots();
+        // 重建轨迹        renderTrace();
         renderSpeed();
         updateControls();
     }
@@ -2128,15 +2405,7 @@ class CodePanel {
         controller.goTo(Number(btn.getAttribute('data-step')));
     });
 
-    // 进度点点击跳转
-    $('dots').addEventListener('click', function (e) {
-        const btn = e.target.closest('.progress-dot');
-        if (!btn) return;
-        controller.pause();
-        controller.goTo(Number(btn.getAttribute('data-dot')));
-    });
-
-    // 键盘快捷键
+    // 进度点点击跳转    // 键盘快捷键
     document.addEventListener('keydown', function (e) {
         const target = e.target;
         const tag = target && target.tagName ? target.tagName.toLowerCase() : '';
@@ -2164,6 +2433,7 @@ class CodePanel {
     });
 
     /* ---------- 启动 ---------- */
+    initNav();
     codePanel.setCode(EXAMPLE_CODE);
     codePanel.setFontSize(state.codeFont);
     renderBadges();
@@ -2174,13 +2444,9 @@ class CodePanel {
 </script>
 
 <!-- =======================================================
-     版权声明（与 v1.0 template.html 完全一致）
+     版权声明（精简版）
      ======================================================= -->
-<div style="width:100%;text-align:center;padding:20px;color:#6b7280;font-size:13px;border-top:1px solid #e5e7eb;margin-top:auto;">© 2026 boyooDrew. AlgoStep 网站设计保留所有权利，源代码以 MIT 许可证开源。</div>
-<div style="width:100%;text-align:center;padding:0 20px 20px;color:#6b7280;font-size:12px;display:flex;justify-content:center;gap:18px;flex-wrap:wrap;">
-    <a href="https://gitee.com/boyoo/algo-step" target="_blank" rel="noopener" style="color:#9ca3af;text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#c4b5fd'" onmouseout="this.style.color='#9ca3af'">Gitee</a>
-    <a href="https://github.com/BoyooDrew/AlgoStep" target="_blank" rel="noopener" style="color:#9ca3af;text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#c4b5fd'" onmouseout="this.style.color='#9ca3af'">GitHub</a>
-</div>
+<div style="flex:none;width:100%;text-align:center;padding:12px 20px;color:#6b7280;font-size:11.5px;border-top:1px solid #e5e7eb;">© 2026 boyooDrew · AlgoStep 算法实验室 · MIT License</div>
 
 </body>
 
