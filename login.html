@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 · AlgoStep</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%236366f1'/><text x='16' y='22' font-size='14' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>DB</text></svg>">
+  <link rel="stylesheet" href="./css/common.css">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-card);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: var(--radius-lg);
+      padding: 40px 32px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      position: relative;
+    }
+
+    .auth-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--brand), var(--accent));
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .auth-header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 6px;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .auth-header p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      color: var(--text-strong);
+      background: #0f172a;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+    .form-group input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22);
+    }
+
+    .form-group input::placeholder {
+      color: #475569;
+      font-family: 'Inter', 'PingFang SC', sans-serif;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .2s ease, opacity .2s ease;
+      margin-top: 4px;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-submit:active {
+      transform: translateY(0);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .auth-error {
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .auth-error.show {
+      display: block;
+    }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .auth-footer a {
+      color: #c4b5fd;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color .2s;
+    }
+
+    .auth-footer a:hover {
+      color: #a78bfa;
+    }
+
+    .back-home {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .back-home a {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color .2s;
+    }
+
+    .back-home a:hover {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1>AlgoStep</h1>
+      <p>CSP 算法可视化 · 登录账户</p>
+    </div>
+
+    <div class="auth-error" id="error-msg"></div>
+
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="username">用户名</label>
+        <input type="text" id="username" name="username" placeholder="请输入用户名" required autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="password">密码</label>
+        <input type="password" id="password" name="password" placeholder="请输入密码" required autocomplete="current-password">
+      </div>
+
+      <button type="submit" class="btn-submit" id="btn-login">登录</button>
+    </form>
+
+    <div class="auth-footer">
+      还没有账号？<a href="./register.html">立即注册</a>
+    </div>
+
+    <div class="back-home">
+      <a href="./index.html">&larr; 返回首页</a>
+    </div>
+  </div>
+
+  <script src="./js/auth.js"></script>
+  <script>
+    // 已登录则跳转首页
+    if (isLoggedIn()) {
+      window.location.href = './index.html';
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+
+      const btn = document.getElementById('btn-login');
+      const errEl = document.getElementById('error-msg');
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      errEl.classList.remove('show');
+      btn.disabled = true;
+      btn.textContent = '登录中...';
+
+      try {
+        const data = await loginAPI(username, password);
+        if (data.code === 200 && data.data) {
+          setAuth(data.data);
+          window.location.href = './index.html';
+        } else {
+          errEl.textContent = data.msg || '登录失败';
+          errEl.classList.add('show');
+          btn.disabled = false;
+          btn.textContent = '登录';
+        }
+      } catch (err) {
+        errEl.textContent = '网络错误，请检查后端服务是否启动';
+        errEl.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = '登录';
+      }
+    }
+  </script>
+</body>
+</html>
