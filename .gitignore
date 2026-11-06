@@ -1,17 +1,29 @@
-# Í³¼ÆÃæ°å£¨°üº¬ API Key£¬²»ÉÏ´«µ½¹«¿ª²Ö¿â£©
+# ç»Ÿè®¡é¢æ¿ï¼ˆåŒ…å« API Keyï¼Œä¸ä¸Šä¼ åˆ°å…¬å¼€ä»“åº“ï¼‰
 view.html
 
-# ÉÏ´«ÁÙÊ±ÎÄ¼ş
+# ä¸Šä¼ ä¸´æ—¶æ–‡ä»¶
 .uploads/
+.trae-html-share-packages/
 
-# ±à¼­Æ÷/IDE ÅäÖÃ
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.log
+
+# ç¯å¢ƒå˜é‡
+.env
+.env.local
+
+# ç¼–è¾‘å™¨/IDE é…ç½®
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# ÏµÍ³ÎÄ¼ş
+# ç³»ç»Ÿæ–‡ä»¶
 .DS_Store
 Thumbs.db
 *.tmp
