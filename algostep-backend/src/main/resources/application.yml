@@ -1,0 +1,66 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev
+
+  # JSON 序列化
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+
+# MyBatis-Plus
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.algostep.module.**.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# JWT 配置
+jwt:
+  secret: algostep-secret-key-2026-must-be-at-least-256-bits-long-for-hs256
+  # Access Token 有效期（毫秒）2小时
+  access-token-expiration: 7200000
+  # Refresh Token 有效期（毫秒）7天
+  refresh-token-expiration: 604800000
+  # Token Header 名称
+  header: Authorization
+  # Token 前缀
+  prefix: "Bearer "
+
+# 自定义业务配置
+algostep:
+  # 不需要认证的路径（白名单）
+  security:
+    whitelist:
+      - /api/auth/register
+      - /api/auth/login
+      - /api/auth/refresh
+      - /api/algorithms
+      - /api/algorithms/**
+      - /doc.html
+      - /webjars/**
+      - /swagger-resources/**
+      - /v3/api-docs/**
+      - /favicon.ico
+
+# Knife4j API 文档
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+# 日志
+logging:
+  level:
+    com.algostep: debug
+    org.springframework.security: info

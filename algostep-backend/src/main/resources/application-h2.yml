@@ -1,0 +1,25 @@
+spring:
+  # H2 内存数据库（无需安装，启动即用）
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:algostep;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+
+  # 启动时自动执行建表脚本
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:sql/schema-h2.sql
+
+  # H2 Web 控制台（调试用，访问 /h2-console）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+# 日志级别
+logging:
+  level:
+    com.algostep: debug
+    org.springframework.security: info

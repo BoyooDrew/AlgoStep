@@ -1,0 +1,39 @@
+spring:
+  # MySQL 数据库（本地）
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/algostep?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+
+  # 启动时自动执行建表脚本（MySQL）
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:sql/init.sql
+
+# 前端静态文件路径（相对于 algostep-backend 工作目录的上级目录）
+algostep:
+  frontend:
+    path: "file:../"
+
+# Redis 配置（暂未接入，后续启用）
+# spring:
+#   data:
+#     redis:
+#       host: localhost
+#       port: 6379
+#       password:
+#       database: 0
+#       timeout: 5000ms
+
+# Kafka 配置（暂未接入，后续启用）
+# spring:
+#   kafka:
+#     bootstrap-servers: localhost:9092
