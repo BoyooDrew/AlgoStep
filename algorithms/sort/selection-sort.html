@@ -1,366 +1,576 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
+
 <head>
-<meta charset="UTF-8" />
-<link rel="canonical" href="https://algo-step.surge.sh/algorithms/sort/selection-sort.html">
-<title>选择排序 · Selection Sort</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%236366f1'/><text x='16' y='22' font-size='14' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>DB</text></svg>">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>AlgoStep 算法实验室 · 选择排序</title>
+
+    <!-- =======================================================
+         Favicon：内联 SVG，无外部依赖
+         ======================================================= -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='asg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%236366f1'/><stop offset='1' stop-color='%238b5cf6'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='url(%23asg)'/><text x='16' y='22.5' font-size='15' font-weight='700' fill='white' text-anchor='middle' font-family='Inter,Arial,sans-serif'>AS</text></svg>">
+
+    <!-- v2.0 共享样式：基础外壳 + 算法页三栏布局 -->
+    <link rel="stylesheet" href="../../css/base.css" />
+    <link rel="stylesheet" href="../../css/algo.css" />
+    <link rel="stylesheet" href="../../css/algo-viz.css" />
+
+    <style>
+        /* ======== 本页专属样式：通用可视化样式已提炼至 ../../css/algo-viz.css；
+           以下为本页特有或与共享包存在语义差异（同名不同义）的规则 ======== */
+.bar-chart {
+    width: 100%;
+    height: 420px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px 12px 40px;
+    background: linear-gradient(180deg, #0f172a, #020617);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.bar {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 60px;
+    background: linear-gradient(180deg, #6366f1 0%, #4338ca 100%);
+    border-radius: 6px 6px 0 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 6px;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    transition: transform 420ms cubic-bezier(.2,.7,.2,1),
+                        background 300ms ease,
+                        box-shadow 300ms ease,
+                        height 300ms ease;
+    position: relative;
+}
+
+.bar.compare {
+    background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45);
+    transform: translateY(-6px);
+}
+
+.bar.min-found {
+    background: linear-gradient(180deg, #10b981 0%, #047857 100%);
+    box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45);
+    transform: translateY(-6px);
+}
+
+.bar.swap {
+    background: linear-gradient(180deg, #ef4444 0%, #991b1b 100%);
+    box-shadow: 0 4px 18px rgba(239, 68, 68, 0.45);
+}
+
+/* 当前轮次目标位置：顶部小蓝线 */
+.bar.target::before {
+    content: '';
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 16px;
+    background: #3b82f6;
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+}
+
+/* 当前轮次目标位置标签 */
+.bar.target::after {
+    content: 'target';
+    position: absolute;
+    top: -36px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #93c5fd;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* 状态条：当前数组快照（洋红系，与选择交换主色呼应） */
+.snapshot-bar {
+    margin-top: 34px;
+    padding: 10px 14px;
+    background: #0b1220;
+    border: 1px solid rgba(236, 72, 153, 0.28);
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 12px;
+    color: #cbd5e1;
+    line-height: 1.6;
+    word-break: break-all;
+    text-align: center;
+}
+
+.explain-tag.swap {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.explain-accent.swap {
+    background: #ef4444;
+}
+    </style>
+</head>
+
+<body class="algo-page">
+
+<!-- 全站图标库（内联 SVG Sprite 注入） -->
+<script src="../../js/icons.js"></script>
 
 <!-- =======================================================
-     CSS：先通用，后布局（如页面有专属动画，再在下面补）
-     相对路径：当前页在 /algorithms/sort/，CSS/JS 在根目录
+     页面主容器
+     布局：基础信息区(flex:2) | 核心代码区(flex:3) | 内容展示区(flex:5)
      ======================================================= -->
-<link rel="stylesheet" href="../../css/common.css" />
-<link rel="stylesheet" href="../../css/layout.css" />
+<div class="app-container">
 
-<style>
-    /* -------- 本页专属：柱状图可视化（与 bubble-sort 风格一致） -------- */
-    .bar-chart {
-        width: 100%;
-        height: 420px;
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        gap: 8px;
-        padding: 20px 12px 40px;
-        background: linear-gradient(180deg, #0f172a, #020617);
-        border-radius: 10px;
-        position: relative;
-        overflow: hidden;
-    }
+    <!-- =======================================================
+         区域一：基础信息区（左侧面板）
+         ======================================================= -->
+    <section class="panel-card panel-info" id="panelInfo">
 
-    .bar {
-        flex: 1 1 0;
-        min-width: 0;
-        max-width: 60px;
-        background: linear-gradient(180deg, #6366f1 0%, #4338ca 100%);
-        border-radius: 6px 6px 0 0;
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        padding-top: 6px;
-        font-family: 'JetBrains Mono', Consolas, monospace;
-        font-size: 13px;
-        font-weight: 700;
-        color: #fff;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
-        transition: transform 420ms cubic-bezier(.2,.7,.2,1),
-                    background 300ms ease,
-                    box-shadow 300ms ease,
-                    height 300ms ease;
-        position: relative;
-    }
+        <!-- --- 面包屑导航（纯文本样式 + 二级下拉） --- -->
+        <nav class="algo-nav-bar" aria-label="算法导航">
+            <a class="crumb" id="navHome" href="../../index.html">首页</a>
+            <span class="nav-sep">/</span>
+            <button class="crumb" id="navToggle" type="button"
+                    aria-haspopup="true" aria-expanded="false">
+                <span id="navCategory">算法目录</span>
+                <svg class="ico" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+            </button>
+            <span class="nav-sep">/</span>
+            <span class="crumb crumb-current" id="navCurrent">选择排序</span>
+        </nav>
 
-    .bar.compare {
-        background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
-        box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45);
-        transform: translateY(-6px);
-    }
+        <!-- --- 标题区 --- -->
+        <header class="info-header">
+            <div class="info-header-content">
+                <h1 class="info-title" id="infoTitle">
+                    选择排序
+                    <span class="info-title-en">SELECT</span>
+                </h1>
+                <p class="info-subtitle" id="infoSubtitle">
+                    每轮从未排序部分选出最小元素，放到已排序部分末尾。时间复杂度 O(n²)，空间复杂度 O(1)。
+                </p>
+                <div class="info-badges" id="infoBadges">
+                    <span class="info-badge info-badge--level">难度 · 入门</span>
+                    <span class="info-badge">排序算法</span>
+                    <span class="info-badge">交换排序</span>
+                </div>
 
-    .bar.min-found {
-        background: linear-gradient(180deg, #10b981 0%, #047857 100%);
-        box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45);
-        transform: translateY(-6px);
-    }
-
-    .bar.swap {
-        background: linear-gradient(180deg, #ef4444 0%, #991b1b 100%);
-        box-shadow: 0 4px 18px rgba(239, 68, 68, 0.45);
-    }
-
-    .bar.sorted {
-        background: linear-gradient(180deg, #10b981 0%, #065f46 100%);
-        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-    }
-
-    /* 当前轮次目标位置：顶部小蓝线 */
-    .bar.target::before {
-        content: '';
-        position: absolute;
-        top: -18px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 4px;
-        height: 16px;
-        background: #3b82f6;
-        border-radius: 2px;
-        box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
-    }
-
-    /* 当前轮次目标位置标签 */
-    .bar.target::after {
-        content: 'target';
-        position: absolute;
-        top: -36px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 10px;
-        color: #93c5fd;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .bar-index {
-        position: absolute;
-        bottom: -22px;
-        left: 0;
-        right: 0;
-        text-align: center;
-        font-size: 11px;
-        color: #64748b;
-        font-family: 'JetBrains Mono', Consolas, monospace;
-    }
-
-    /* 状态条：当前数组快照（洋红系，与选择交换主色呼应） */
-    .snapshot-bar {
-        margin-top: 34px;
-        padding: 10px 14px;
-        background: #0b1220;
-        border: 1px solid rgba(236, 72, 153, 0.28);
-        border-radius: 8px;
-        font-family: 'JetBrains Mono', Consolas, monospace;
-        font-size: 12px;
-        color: #cbd5e1;
-        line-height: 1.6;
-        word-break: break-all;
-        text-align: center;
-    }
-
-    .snapshot-bar .label {
-        color: #f9a8d4;
-        font-weight: 700;
-        margin-right: 6px;
-    }
-
-    /* 图例：洋红色系，与选择排序主色呼应 */
-    .legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 14px;
-        padding: 10px 14px;
-        margin-top: 10px;
-        background: rgba(236, 72, 153, 0.06);
-        border: 1px dashed rgba(236, 72, 153, 0.3);
-        border-radius: 8px;
-        font-size: 12px;
-        color: #cbd5e1;
-    }
-    .legend .item { display: flex; align-items: center; gap: 6px; }
-    .dot {
-        width: 14px;
-        height: 14px;
-        border-radius: 4px;
-        background: #6366f1;
-        display: inline-block;
-    }
-    .dot.target { background: #3b82f6; }
-    .dot.compare { background: #f59e0b; }
-    .dot.min { background: #10b981; }
-    .dot.swap { background: #ef4444; }
-    .dot.sorted { background: #10b981; }
-
-    /* 代码面板：扩大高度以展示完整代码，移除滚动条 */
-    .code-panel {
-        min-height: 380px;
-        max-height: none;
-        overflow-y: visible;
-    }
-
-    /* 数组输入框稍微加宽 */
-    #arrayInput { width: 320px; }
-</style>
-</head>
-<body>
-
-<div id="stage">
-
-    <!-- ===========================================================
-         区块 1：标题区（渐变蓝色，左侧竖线强调）
-         =========================================================== -->
-    <header>
-        <div>
-            <h1>选择排序 · Selection Sort</h1>
-            <div class="subtitle">
-                每轮从未排序部分选出最小元素，放到已排序部分末尾。时间复杂度 O(n²)，空间复杂度 O(1)。
+                <div class="info-complexity" id="infoComplexity">
+                    <span class="complexity-item">
+                        <svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>
+                        <span class="complexity-label">时间</span>
+                        <span class="complexity-value">O(n²)</span>
+                    </span>
+                    <span class="complexity-item">
+                        <svg class="ico" aria-hidden="true"><use href="#i-cube"/></svg>
+                        <span class="complexity-label">空间</span>
+                        <span class="complexity-value">O(1)</span>
+                    </span>
+                </div>
             </div>
-        </div>
-        <span class="difficulty beginner">入门 · Beginner</span>
-    </header>
+        </header>
 
-    <!-- ===========================================================
-         区块 2：控制区（淡蓝，左侧品牌色竖线）
-         子区：
-            第一行：场景参数（数组输入 / 随机生成）+ 重置
-            第二行：播放 / 暂停 / 上一步 / 下一步 + 速度滑块
-            第三行：进度滑块
-         =========================================================== -->
-    <section class="control-panel">
-        <h3 class="panel-title">· Controls · 控制面板</h3>
+        <!-- --- 滚动内容区 --- -->
+        <div class="info-body">
 
-        <!-- 第一行：场景参数 -->
-        <div class="control-row">
-            <div class="control-group">
-                <span class="control-label">数组：</span>
-                <input type="text" class="input-number" id="arrayInput"
+            <!-- 子卡片：相关题目 -->
+            <section class="info-section">
+                <div class="info-section-title">
+                    <h2>
+                        <span class="mini-icon"><svg class="ico" aria-hidden="true"><use href="#i-link"/></svg></span>
+                        相关题目
+                    </h2>
+                    <span class="section-meta" id="problemCount">2</span>
+                </div>
+
+                <a class="problem-item" href="https://www.luogu.com.cn/problem/P1177"
+                   target="_blank" rel="noopener">
+                    <span class="oj-tag oj-tag--luogu">洛谷</span>
+                    <span class="problem-name">P1177【模板】排序</span>
+                </a>
+                <a class="problem-item" href="https://leetcode.cn/problems/sort-an-array/"
+                   target="_blank" rel="noopener">
+                    <span class="oj-tag oj-tag--leetcode">LeetCode</span>
+                    <span class="problem-name">912 排序数组</span>
+                </a>
+            </section>
+
+            <!-- 子卡片：数据输入 -->
+            <section class="info-section">
+                <div class="info-section-title">
+                    <h2>
+                        <span class="mini-icon"><svg class="ico" aria-hidden="true"><use href="#i-database"/></svg></span>
+                        数据与查询
+                    </h2>
+                    <span class="section-meta" id="dataSummary">—</span>
+                </div>
+
+                <label class="form-label" for="arrayInput">数组（逗号或空格分隔）</label>
+                <input class="form-input" id="arrayInput" type="text"
                        placeholder="如：5,2,9,1,7,3,8,4" value="5,2,9,1,7,3,8,4" />
-            </div>
-            <div class="control-group">
-                <button class="btn btn-primary" id="btnGenerate">生成场景</button>
-                <button class="btn btn-accent" id="btnRandom">随机</button>
-                <button class="btn btn-danger"  id="btnReset">重置</button>
-            </div>
-        </div>
 
-        <!-- 第二行：操作按钮 + 速度 -->
-        <div class="control-row">
-            <div class="control-group">
-                <button class="btn btn-primary" id="btnStart">▶ 播放</button>
-                <button class="btn btn-secondary" id="btnPause">⏸ 暂停</button>
-                <button class="btn btn-accent" id="btnPrev">◀ 上一步</button>
-                <button class="btn btn-accent" id="btnNext">下一步 ▶</button>
-            </div>
+                <div class="btn-row">
+                    <button class="btn-primary" id="btnGenerate" type="button">
+                        <svg class="ico" aria-hidden="true"><use href="#i-generate"/></svg>
+                        生成场景
+                    </button>
+                    <button class="btn-ghost" id="btnRandom" type="button">随机</button>
+                </div>
+            </section>
 
-            <div class="control-group">
-                <span class="control-label">速度：</span>
-                <input type="range" class="slider" id="speed-slider"
-                       min="100" max="2000" step="50" value="800" />
-                <span class="slider-value" id="speed-value">800ms</span>
-                <span class="slider-value" id="speed-label"
-                      style="color:#f59e0b;">中等</span>
-            </div>
-        </div>
+            <!-- 子卡片：视图模式切换 -->
+            <section class="info-section">
+                <div class="info-section-title">
+                    <h2>
+                        <span class="mini-icon"><svg class="ico" aria-hidden="true"><use href="#i-layout"/></svg></span>
+                        视图模式
+                    </h2>
+                </div>
 
-        <!-- 第三行：进度 -->
-        <div class="control-row">
-            <span class="control-label">进度：</span>
-            <input type="range" class="slider" id="progress-slider"
-                   min="1" max="1" step="1" value="1" />
-            <span class="slider-value" id="progress-text">0 / 0</span>
+                <button class="mode-option active" data-mode="both" type="button">
+                    <span class="mode-option-icon"><svg class="ico" aria-hidden="true"><use href="#i-layout"/></svg></span>
+                    <span class="mode-option-text">
+                        <span class="mode-option-title">
+                            代码 + 动画
+                            <span class="mode-option-badge">推荐</span>
+                            <span class="mode-option-desc">适合完整学习</span>
+                        </span>
+                    </span>
+                </button>
+
+                <button class="mode-option" data-mode="anim" type="button">
+                    <span class="mode-option-icon"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg></span>
+                    <span class="mode-option-text">
+                        <span class="mode-option-title">只看动画
+                            <span class="mode-option-desc">专注过程</span>
+                        </span>
+                    </span>
+                </button>
+
+                <button class="mode-option" data-mode="code" type="button">
+                    <span class="mode-option-icon"><svg class="ico" aria-hidden="true"><use href="#i-code"/></svg></span>
+                    <span class="mode-option-text">
+                        <span class="mode-option-title">只看代码
+                            <span class="mode-option-desc">执行行高亮</span>
+                        </span>
+                    </span>
+                </button>
+            </section>
         </div>
     </section>
 
-    <!-- ===========================================================
-         区块 3：步骤解释区（淡黄，左侧琥珀色竖线）
-         左边：公式/状态（当前轮次、已排序位置）；右边：当前步骤文字描述
-         =========================================================== -->
-    <section class="explanation-panel">
-        <div class="formula-box">
-            <span class="formula-text">状态 · Status</span>
-            <span id="formula-text">
-                点击"生成场景"开始演示
+    <!-- =======================================================
+         区域二：核心代码区（中间面板）
+         ======================================================= -->
+    <section class="panel-card panel-code" id="panelCode">
+
+        <!-- 代码头部 -->
+        <div class="code-header">
+            <div class="code-header-left">
+                <div class="code-traffic-lights">
+                    <span></span><span></span><span></span>
+                </div>
+                <div class="code-icon-wrap"><svg class="ico" aria-hidden="true"><use href="#i-code"/></svg></div>
+                <div>
+                    <div class="code-header-title">核心代码</div>
+                    <div class="code-header-sub" id="codeFileName">selection_sort.cpp</div>
+                </div>
+            </div>
+
+            <div class="code-header-right">
+                <!-- 一键复制 -->
+                <button class="code-copy-btn" id="copyBtn" type="button" title="复制全部代码">
+                    <svg class="ico" aria-hidden="true"><use href="#i-copy"/></svg>
+                    <span id="copyBtnText">复制</span>
+                </button>
+
+                <!-- 字号控制器 -->
+                <div class="code-font-controls">
+                    <button class="code-font-btn" id="fontMinus" type="button" aria-label="减小代码字号">A−</button>
+                    <span class="code-font-label" id="fontSizeLabel">14</span>
+                    <button class="code-font-btn" id="fontPlus" type="button" aria-label="增大代码字号">A+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 代码主体（JS 动态渲染） -->
+        <div class="code-body" id="codeBody">
+            <!-- JS 动态渲染 .code-line，每个 .code-line 有 data-line 索引 -->
+        </div>
+
+        <!-- 代码状态栏 -->
+        <div class="code-footer">
+            <span class="code-footer-status">
+                <span class="code-footer-dot"></span>
+                高亮行对应执行语句 ·
+                <span class="code-footer-line-info" id="codeLineInfo">第 — 行</span>
             </span>
         </div>
-
-        <div class="step-info">
-            <span class="step-counter" id="step-counter">0</span>
-            <div class="step-description">
-                <div class="step-en" id="step-en">
-                    Click "Generate" then "Start" to begin.
-                </div>
-                <div class="step-zh" id="step-zh">
-                    点击"生成场景"后按"开始演示"。
-                </div>
-            </div>
-        </div>
     </section>
 
-    <!-- ===========================================================
-         区块 4：演示区 + 代码区（紫色，左右各 50%）
-         左：柱状图演示区；右：C++ 代码面板 + 图例
-         =========================================================== -->
-    <section class="visualization-section">
+    <!-- =======================================================
+         区域三：内容展示区（右侧面板）
+         ======================================================= -->
+    <section class="panel-card panel-stage" id="panelStage">
 
-        <!-- 左侧：演示区（柱状图） -->
-        <div class="canvas-container">
-            <div class="legend">
-                <span class="item"><span class="dot target"></span>目标位置 target (index i)</span>
-                <span class="item"><span class="dot compare"></span>正在比较 (scanning j)</span>
-                <span class="item"><span class="dot min"></span>当前最小值 (minIdx)</span>
-                <span class="item"><span class="dot swap"></span>正在交换 (swap)</span>
-                <span class="item"><span class="dot sorted"></span>已排序 (sorted)</span>
+        <!-- --- 步骤讲解头部 --- -->
+        <div class="stage-header">
+            <div class="stage-header-top">
+                <div class="stage-header-left">
+                    <div class="explain-icon-wrap" id="explainIconWrap">⚑</div>
+                    <span class="explain-label">步骤讲解</span>
+                    <span class="explain-counter" id="stepCounter">0 / 0</span>
+                </div>
+                <span class="explain-tag init" id="stepTag">就绪</span>
             </div>
-            <div class="bar-chart" id="barChart"></div>
-            <div class="snapshot-bar" id="snapshotBar">
-                <span class="label">arr =</span><span id="snapshotText">[]</span>
+
+            <div class="explain-detail">
+                <div class="explain-accent init" id="explainAccent"></div>
+                <div class="explain-text">
+                    <h2 id="stepTitle">数据已就绪，点击播放或下一步开始演示</h2>
+                    <p id="stepDetail">左侧可修改数组或随机生成，这里会显示每一步的详细说明。</p>
+                </div>
             </div>
         </div>
 
-        <!-- 右侧：代码面板 -->
-        <div class="info-panel">
+        <!-- --- 颜色图例条 --- -->
+        <div class="stage-legend">
+            <span class="legend-title">颜色示例</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#3b82f6;border-color:#3b82f6;"></span>目标位置 target (index i)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#f59e0b;border-color:#f59e0b;"></span>正在比较 (scanning j)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#10b981;border-color:#10b981;"></span>当前最小值 (minIdx)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#ef4444;border-color:#ef4444;"></span>正在交换 (swap)</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#10b981;border-color:#10b981;"></span>已排序 (sorted)</span>
+        </div>
 
-            <!-- 代码面板：手写 .code-line，由 CodePanel 组件做着色 -->
-            <div class="code-panel" id="codePanel">
-<div class="code-line" id="line-0">// 选择排序 - Selection Sort</div>
-<div class="code-line" id="line-1">// 时间复杂度: O(n^2)  空间复杂度: O(1)</div>
-<div class="code-line" id="line-2">// 思想: 每轮从未排序部分选出最小元素, 放到已排序部分末尾</div>
-<div class="code-line" id="line-3">void selectionSort(int arr[], int n) {</div>
-<div class="code-line" id="line-4">    for (int i = 0; i < n - 1; i++) {         // 外层循环: 轮数</div>
-<div class="code-line" id="line-5">        int minIdx = i;                        // 假设当前位置最小</div>
-<div class="code-line" id="line-6">        for (int j = i + 1; j < n; j++) {       // 在未排序部分找最小值</div>
-<div class="code-line" id="line-7">            if (arr[j] < arr[minIdx]) {</div>
-<div class="code-line" id="line-8">                minIdx = j;                     // 更新最小值索引</div>
-<div class="code-line" id="line-9">            }</div>
-<div class="code-line" id="line-10">        }</div>
-<div class="code-line" id="line-11">        if (minIdx != i) {                     // 交换最小值到正确位置</div>
-<div class="code-line" id="line-12">            int temp = arr[i];</div>
-<div class="code-line" id="line-13">            arr[i] = arr[minIdx];</div>
-<div class="code-line" id="line-14">            arr[minIdx] = temp;</div>
-<div class="code-line" id="line-15">        }</div>
-<div class="code-line" id="line-16">        // 第 i 轮结束, arr[0..i] 已排序</div>
-<div class="code-line" id="line-17">    }</div>
-<div class="code-line" id="line-18">}</div>
+        <!-- --- 主体展示区（左主区 + 右侧栏） --- -->
+        <div class="stage-body">
+
+            <!-- 左侧主区 -->
+            <div class="stage-body-main">
+
+                <!-- 柱状图演示卡片 -->
+                <div class="stage-card">
+                    <div class="stage-card-header">
+                        <span class="stage-card-title">◆ 柱状图演示</span>
+                        <span class="stage-card-sub" id="rangeInfo">—</span>
+                    </div>
+                    <div class="bar-chart" id="barChart"></div>
+                    <div class="snapshot-bar" id="snapshotBar">
+                        <span class="label">arr =</span><span id="snapshotText">[]</span>
+                    </div>
+                </div>
+
+                <!-- 公式/当前状态卡片 -->
+                <div class="stage-card formula-card">
+                    <div class="stage-card-header">
+                        <span class="stage-card-title">Σ 当前状态</span>
+                        <span class="stage-card-sub">每步实时更新</span>
+                    </div>
+                    <div class="result-area" id="formulaBox">等待生成数据</div>
+                </div>
+
+                <!-- 变量快照卡片 -->
+                <div class="stage-card">
+                    <div class="stage-card-header">
+                        <span class="stage-card-title">◇ 变量快照</span>
+                        <span class="stage-card-sub">每步实时更新</span>
+                    </div>
+                    <div class="var-grid">
+                        <div class="var-cell theme-blue">
+                            <div class="var-cell-label">目标 i</div>
+                            <div class="var-cell-value" id="varTarget">—</div>
+                        </div>
+                        <div class="var-cell theme-orange">
+                            <div class="var-cell-label">扫描 j</div>
+                            <div class="var-cell-value" id="varJ">—</div>
+                        </div>
+                        <div class="var-cell theme-indigo">
+                            <div class="var-cell-label">minIdx</div>
+                            <div class="var-cell-value" id="varMin">—</div>
+                        </div>
+                        <div class="var-cell theme-slate">
+                            <div class="var-cell-label">已排序数</div>
+                            <div class="var-cell-value" id="varSorted">—</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- 辅助说明：当前高亮含义 -->
-            <div class="legend">
-                <span class="item" style="color:#c4b5fd;font-weight:600;">
-                    💡 紫色高亮 = 当前正在执行的代码行
-                </span>
+            <!-- 右侧栏：执行轨迹 -->
+            <aside class="stage-aside">
+                <div class="aside-header">
+                    <span class="aside-title">☰ 执行轨迹</span>
+                    <span class="aside-count" id="traceCount">0 步</span>
+                </div>
+                <div class="aside-list" id="traceList">
+                    <!-- JS 动态渲染每一步轨迹按钮 -->
+                </div>
+            </aside>
+        </div>
+
+        <!-- --- 底部控制条 --- -->
+        <div class="stage-controls">
+            <div class="controls-row">
+                <button class="btn-ctrl btn-ctrl-default" id="prevBtn" type="button">
+                    <svg class="ico" aria-hidden="true"><use href="#i-step-back"/></svg>
+                    上一步
+                </button>
+                <button class="btn-ctrl btn-ctrl-primary" id="playBtn" type="button">
+                    <span class="play-ico" id="playIco"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg></span>
+                    <span id="playLabel">播放</span>
+                </button>
+                <button class="btn-ctrl btn-ctrl-default" id="nextBtn" type="button">
+                    下一步
+                    <svg class="ico" aria-hidden="true"><use href="#i-step-next"/></svg>
+                </button>
+
+                <button class="btn-ctrl-icon" id="resetBtn" type="button"
+                        title="回到第一步" aria-label="回到第一步">
+                    <svg class="ico" aria-hidden="true"><use href="#i-reset"/></svg>
+                </button>
+
+                <div class="speed-group" id="speedGroup">
+                    <span class="speed-label">倍速</span>
+                    <button class="speed-btn" data-speed="0.5" type="button">0.5×</button>
+                    <button class="speed-btn active" data-speed="1" type="button">1×</button>
+                    <button class="speed-btn" data-speed="2" type="button">2×</button>
+                    <button class="speed-btn" data-speed="3" type="button">3×</button>
+                </div>
+
+                <span class="progress-label" id="progressLabel">第 0 / 0 步</span>
+
+                <!-- 快捷键说明：问号按钮 + 悬停浮层 -->
+                <div class="help-wrap">
+                    <button class="help-btn" id="helpBtn" type="button"
+                            aria-label="快捷键说明" aria-describedby="shortcutTip">
+                        <svg class="ico" aria-hidden="true"><use href="#i-help"/></svg>
+                    </button>
+                    <div class="help-tip" id="shortcutTip" role="tooltip">
+                        <div class="help-tip-title">快捷键</div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-icons">
+                                <svg class="ico" aria-hidden="true"><use href="#i-play"/></svg>播放 /
+                                <svg class="ico" aria-hidden="true"><use href="#i-pause"/></svg>暂停
+                            </span>
+                            <kbd>Space</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-icons">
+                                <svg class="ico" aria-hidden="true"><use href="#i-step-back"/></svg>
+                                上一步
+                            </span>
+                            <kbd>←</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-icons">
+                                <svg class="ico" aria-hidden="true"><use href="#i-step-next"/></svg>
+                                下一步
+                            </span>
+                            <kbd>→</kbd>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 </div>
 
-<!-- ===========================================================
-     JS：先控制器，后 CodePanel，最后是本页业务脚本
-     =========================================================== -->
-<script src="../../js/common.js"></script>
-<script src="../../js/code-panel.js"></script>
-<script src="../../js/controls.js"></script>
+<!-- =======================================================
+     JS 模块区
+     ======================================================= -->
+<script src="../../js/algo-core.js"></script>
+<script src="../../js/algo-utils.js"></script>
+<script src="../../js/algo-nav.js"></script>
+<script src="../../js/site.js" data-base="../../"></script>
 
 <script>
+/* ============================================================
+ * 选择排序 · v2.0
+ * 步骤生成逻辑逐字搬运自 algorithms/sort/selection-sort.html
+ * ============================================================ */
 (function () {
-    /* ---------- 页面局部变量 ---------- */
-    const barChart       = document.getElementById('barChart');
-    const snapshotText   = document.getElementById('snapshotText');
-    const codePanel      = new CodePanel('#codePanel');
-    const arrayInput     = document.getElementById('arrayInput');
-    const formulaTextEl  = document.getElementById('formula-text');
+    'use strict';
 
-    let steps = [];
+    /* ---------- 全局状态 ---------- */
+    const state = {
+        steps: [],
+        index: 0,
+        speed: 1,
+        codeFont: 14,
+        viewMode: 'both'
+    };
+
     let initialArray = [];
 
-    /* ---------- 工具：解析/生成数组 ---------- */
-    function parseInput(str) {
-        const parts = String(str || '')
-            .split(/[,\s]+/)
-            .map(s => s.trim())
-            .filter(s => s.length)
-            .map(s => Number(s))
-            .filter(n => !isNaN(n));
-        return parts;
-    }
+    /* ---------- DOM 快捷访问 ---------- */
+    function $(id) { return document.getElementById(id); }
 
-    function randomArray() {
-        const len = 6 + Math.floor(Math.random() * 6); // 6 ~ 11
-        const arr = [];
-        for (let i = 0; i < len; i++) {
-            arr.push(1 + Math.floor(Math.random() * 99));
+    /* ---------- 核心代码（行号与旧页 .code-line 逐条一致，0-based） ---------- */
+    const PAGE_CODE = [
+        '// 选择排序 - Selection Sort',
+        '// 时间复杂度: O(n^2)  空间复杂度: O(1)',
+        '// 思想: 每轮从未排序部分选出最小元素, 放到已排序部分末尾',
+        'void selectionSort(int arr[], int n) {',
+        '    for (int i = 0; i < n - 1; i++) {         // 外层循环: 轮数',
+        '        int minIdx = i;                        // 假设当前位置最小',
+        '        for (int j = i + 1; j < n; j++) {       // 在未排序部分找最小值',
+        '            if (arr[j] < arr[minIdx]) {',
+        '                minIdx = j;                     // 更新最小值索引',
+        '            }',
+        '        }',
+        '        if (minIdx != i) {                     // 交换最小值到正确位置',
+        '            int temp = arr[i];',
+        '            arr[i] = arr[minIdx];',
+        '            arr[minIdx] = temp;',
+        '        }',
+        '        // 第 i 轮结束, arr[0..i] 已排序',
+        '    }',
+        '}'
+    ];
+
+    /* ---------- 步骤元信息（步骤类型 → 颜色/图标/短标签） ---------- */
+    const STEP_META = {
+        init:    { icon: '⚑', accent: 'init',    tagClass: 'init',    tag: '初始化' },
+        round:   { icon: '→', accent: 'move-l',  tagClass: 'move-l',  tag: '轮次' },
+        compare: { icon: 'Σ', accent: 'compare', tagClass: 'compare', tag: '比较' },
+        min:     { icon: '↓', accent: 'found',   tagClass: 'found',   tag: '最小值' },
+        swap:    { icon: '⇄', accent: 'swap',    tagClass: 'swap',    tag: '交换' },
+        found:   { icon: '✓', accent: 'found',   tagClass: 'found',   tag: '完成' }
+    };
+
+    /* 从步骤字段推导步骤类型 */
+    function stepTypeOf(step, index) {
+        if (index === 0) return 'init';
+        if (index === state.steps.length - 1) return 'found';
+        if (step.swap && step.swap.length) return 'swap';
+        if (step.minFound) return 'min';
+        if (step.compare && step.compare.length) return 'compare';
+        if (step.minIdx !== undefined && step.minIdx !== null) {
+            const cl = Array.isArray(step.codeLines) ? step.codeLines : [step.codeLines];
+            if (cl.indexOf(8) !== -1) return 'min';
+            return 'round';
         }
-        return arr;
+        return 'round';
     }
 
-    /* ---------- 渲染：柱状图 + 状态文本 ----------
+    /* ---------- 渲染：柱状图 + 状态文本（逐字搬运自旧页） ----------
        step 中携带的可视化标记：
          compare: 正在扫描/比较的位置 (橙色)
          minIdx : 当前最小值位置 (绿色高亮)
@@ -370,6 +580,8 @@
        高亮逻辑：compare 可能与 target/minIdx 组合，需叠加
     -------------------------------------------------------- */
     function renderBars(arr, step) {
+        const barChart = $('barChart');
+        const snapshotText = $('snapshotText');
         const compare = step.compare || [];
         const minIdx  = step.minIdx !== undefined && step.minIdx !== null ? [step.minIdx] : (step.minIdxList || []);
         const target  = step.target !== undefined && step.target !== null ? [step.target] : [];
@@ -410,7 +622,7 @@
         renderBars(initialArray, { compare: [], minIdx: null, target: null, swap: [], sorted: [], minFound: false });
     }
 
-    /* ---------- 算法：生成 steps ----------
+    /* ---------- 算法：生成 steps（逐字搬运自旧页，不改任何数值与文案） ----------
        每个 step 包含：
          { en, zh, formula, codeLines,
            arr, compare, minIdx, target, swap, sorted, minFound }
@@ -578,84 +790,249 @@
         return result;
     }
 
-    /* ---------- 应用 step 到 UI ---------- */
-    function applyStep(step, index) {
-        codePanel.highlight(step.codeLines);
+    /* ---------- 渲染：单个步骤 ---------- */
+    function renderStep(step, index) {
+        if (!step) return;
+
+        const meta = STEP_META[stepTypeOf(step, index)] || STEP_META.init;
+
+        // 1. 更新步骤讲解头部
+        $('stepCounter').textContent = `${index + 1} / ${state.steps.length}`;
+        $('stepTag').textContent = meta.tag;
+        $('stepTag').className = `explain-tag ${meta.tagClass}`;
+        $('stepTitle').textContent = step.zh || '—';
+        $('stepDetail').textContent = step.en || '';
+
+        const accent = $('explainAccent');
+        accent.className = `explain-accent ${meta.accent}`;
+        const icon   = $('explainIconWrap');
+        icon.textContent = meta.icon;
+
+        // 2. 更新代码高亮
+        codePanel.highlight(step.codeLines, step.codeVariant || null);
+
+        // 3. 更新可视化
         renderBars(step.arr, step);
-        if (formulaTextEl) formulaTextEl.textContent = step.formula || '';
+
+        // 4. 更新公式卡
+        $('formulaBox').textContent = step.formula || '';
+
+        // 5. 更新变量快照
+        const cmp = step.compare || [];
+        $('varTarget').textContent = step.target !== undefined && step.target !== null ? step.target : '—';
+        $('varJ').textContent      = cmp.length ? cmp[0] : '—';
+        $('varMin').textContent    = step.minIdx !== undefined && step.minIdx !== null ? step.minIdx : '—';
+        $('varSorted').textContent = (step.sorted || []).length;
+
+        // 6. 更新执行轨迹侧栏（active 状态）
+        document.querySelectorAll('.trace-item').forEach(el => {
+            const i = Number(el.getAttribute('data-step'));
+            el.classList.toggle('active', i === index);
+            if (i === index) {
+                el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        });
+
+        // 7. 更新控制条状态
+        updateControls();
     }
 
-    /* ---------- StepController 绑定 ---------- */
-    const controller = new StepController({
-        autoSpeed: 800,
-        onStep(step, index) {
-            applyStep(step, index);
-        },
-        onReset() {
-            codePanel.clearHighlight();
-            renderInitial();
-            if (formulaTextEl) formulaTextEl.textContent = `初始 arr = [${initialArray.join(', ')}]`;
-        }
-    });
+    /* ---------- 渲染：执行轨迹侧栏 ---------- */
+    function renderTrace() {
+        const list = $('traceList');
+        list.innerHTML = state.steps.map((s, i) => {
+            const meta = STEP_META[stepTypeOf(s, i)] || STEP_META.init;
+            return `<button class="trace-item" data-step="${i}" type="button">
+                <span class="trace-index">${i + 1}</span>
+                <span class="trace-content">
+                    <span class="trace-title">${meta.tag}</span>
+                    <span class="trace-sub">${s.zh || ''}</span>
+                </span>
+            </button>`;
+        }).join('');
+        $('traceCount').textContent = `${state.steps.length} 步`;
+    }
 
-    /* ---------- 业务：生成 / 随机 / 重置 ---------- */
+    /* ---------- 渲染：控制条按钮状态 ---------- */
+    function updateControls() {
+        const atEnd   = controller.index >= state.steps.length - 1;
+        const atStart = controller.index <= -1;
+
+        $('prevBtn').disabled = atStart;
+        $('nextBtn').disabled = atEnd;
+
+        const playBtn = $('playBtn');
+        playBtn.classList.remove('btn-ctrl-primary', 'btn-ctrl-paused', 'btn-ctrl-replay');
+
+        let iconId, label;
+        if (controller.playing) {
+            iconId = 'i-pause';
+            label  = '暂停';
+            playBtn.classList.add('btn-ctrl-paused');
+        } else if (atEnd) {
+            iconId = 'i-replay';
+            label  = '重播';
+            playBtn.classList.add('btn-ctrl-replay');
+        } else {
+            iconId = 'i-play';
+            label  = '播放';
+            playBtn.classList.add('btn-ctrl-primary');
+        }
+        $('playIco').innerHTML = `<svg class="ico" aria-hidden="true"><use href="#${iconId}"/></svg>`;
+        $('playLabel').textContent = label;
+
+        $('progressLabel').textContent =
+            `第 ${Math.max(0, controller.index + 1)} / ${state.steps.length} 步`;
+    }
+
+    /* ---------- 渲染：视图模式 ---------- */
+    function applyViewMode() {
+        const p2 = $('panelCode');
+        const p3 = $('panelStage');
+
+        p2.style.display = 'flex';
+        p3.style.display = 'flex';
+
+        document.querySelectorAll('[data-mode]').forEach(btn => {
+            const active = btn.getAttribute('data-mode') === state.viewMode;
+            btn.classList.toggle('active', active);
+        });
+
+        if (state.viewMode === 'both') {
+            p2.style.flex = '3 1 0%';
+            p3.style.flex = '5 1 0%';
+        } else if (state.viewMode === 'anim') {
+            p2.style.display = 'none';
+            p3.style.flex = '8 1 0%';
+        } else {
+            p3.style.display = 'none';
+            p2.style.flex = '8 1 0%';
+        }
+    }
+
+    /* ---------- 渲染：速度按钮 ---------- */
+    function renderSpeed() {
+        document.querySelectorAll('[data-speed]').forEach(btn => {
+            const v = Number(btn.getAttribute('data-speed'));
+            btn.classList.toggle('active', v === state.speed);
+        });
+    }
+
+    /* ---------- 业务：生成 / 随机 ---------- */
     function generate() {
-        const arr = parseInput(arrayInput.value);
+        const arr = parseNumArray($('arrayInput').value);
         if (arr.length < 2) {
-            arrayInput.value = '5,2,9,1,7,3,8,4';
+            $('arrayInput').value = '5,2,9,1,7,3,8,4';
             initialArray = [5, 2, 9, 1, 7, 3, 8, 4];
         } else {
             initialArray = arr;
-            arrayInput.value = arr.join(',');
+            $('arrayInput').value = arr.join(',');
         }
-        steps = buildSteps(initialArray);
-        controller.setSteps(steps);
-        controller.reset();
+        state.steps = buildSteps(initialArray);
+        controller.setSteps(state.steps);
+        $('dataSummary').textContent = `${initialArray.length} 个数`;
+        $('rangeInfo').textContent = `n = ${initialArray.length}`;
+        renderTrace();
+        reset();
     }
 
     function randomize() {
-        initialArray = randomArray();
-        arrayInput.value = initialArray.join(',');
-        steps = buildSteps(initialArray);
-        controller.setSteps(steps);
-        controller.reset();
+        initialArray = randomIntArray(6, 11, 1, 99);
+        $('arrayInput').value = initialArray.join(',');
+        state.steps = buildSteps(initialArray);
+        controller.setSteps(state.steps);
+        $('dataSummary').textContent = `${initialArray.length} 个数`;
+        $('rangeInfo').textContent = `n = ${initialArray.length}`;
+        renderTrace();
+        reset();
     }
 
+    /* ---------- 业务：重置 ---------- */
     function reset() {
-        codePanel.clearHighlight();
         controller.reset();
+        codePanel.clearHighlight();
         renderInitial();
-        if (formulaTextEl) formulaTextEl.textContent = `初始 arr = [${initialArray.join(', ')}]`;
+        $('formulaBox').textContent = `初始 arr = [${initialArray.join(', ')}]`;
+        $('stepCounter').textContent = `0 / ${state.steps.length}`;
+        $('stepTag').textContent = '就绪';
+        $('stepTag').className = 'explain-tag init';
+        $('explainAccent').className = 'explain-accent init';
+        $('explainIconWrap').textContent = '⚑';
+        $('stepTitle').textContent = '数据已就绪，点击播放或下一步开始演示';
+        $('stepDetail').textContent = '左侧可修改数组或随机生成，这里会显示每一步的详细说明。';
+        $('varTarget').textContent = '—';
+        $('varJ').textContent = '—';
+        $('varMin').textContent = '—';
+        $('varSorted').textContent = '—';
+        document.querySelectorAll('.trace-item').forEach(el => el.classList.remove('active'));
+        renderSpeed();
+        updateControls();
     }
 
-    /* ---------- 绑定按钮事件 ---------- */
-    document.getElementById('btnRandom').addEventListener('click', randomize);
+    /* ---------- 初始化组件 ---------- */
+    const controller = new AlgoV2.StepController({
+        onStep: renderStep,
+        onPlayChange: function () { updateControls(); }
+    });
+    controller.baseDelay = 800;
 
-    bindControls({
+    const codePanel = new AlgoV2.CodePanel('#codeBody');
+
+    /* ---------- 事件绑定 ---------- */
+    $('btnGenerate').addEventListener('click', generate);
+    $('btnRandom').addEventListener('click', randomize);
+
+    // 播放控制（按钮 + 速度 + 键盘快捷键）
+    AlgoV2.bindPlayback({
         controller: controller,
-        onGenerate: generate,
-        onReset:    reset
+        playBtn: $('playBtn'),
+        prevBtn: $('prevBtn'),
+        nextBtn: $('nextBtn'),
+        resetBtn: $('resetBtn'),
+        speedGroup: $('speedGroup'),
+        onReset: reset,
+        onSpeedChange: function (v) {
+            state.speed = v;
+            renderSpeed();
+        }
     });
 
-    /* ---------- 初始化 ---------- */
-    window.addEventListener('load', function () {
-        initialArray = parseInput(arrayInput.value);
-        if (initialArray.length < 2) {
-            initialArray = [5, 2, 9, 1, 7, 3, 8, 4];
-            arrayInput.value = initialArray.join(',');
-        }
-        steps = buildSteps(initialArray);
-        controller.setSteps(steps);
-        controller.reset();
-        renderInitial();
+    // 视图模式切换
+    document.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.addEventListener('click', function () {
+            state.viewMode = btn.getAttribute('data-mode');
+            applyViewMode();
+        });
     });
+
+    // 代码字号
+    AlgoV2.bindFontControls({
+        codePanel: codePanel,
+        initial: state.codeFont,
+        onChange: function (px) { state.codeFont = px; }
+    });
+
+    // 执行轨迹点击跳转
+    AlgoV2.bindTraceList($('traceList'), controller);
+
+    // 代码一键复制
+    AlgoV2.bindCopyButton($('copyBtn'), function () {
+        return PAGE_CODE.join('\n');
+    }, { labelEl: $('copyBtnText') });
+
+    /* ---------- 启动 ---------- */
+    AlgoNav.init({
+        current: { category: 'sort', page: '选择排序' },
+        base: '../',
+        home: '../../index.html'
+    });
+    codePanel.setCode(PAGE_CODE);
+    renderSpeed();
+    applyViewMode();
+    generate();
 })();
 </script>
 
-    <div style="width:100%;text-align:center;padding:20px;color:#6b7280;font-size:13px;border-top:1px solid #e5e7eb;margin-top:auto;">© 2026 boyooDrew. AlgoStep 网站设计保留所有权利，源代码以 MIT 许可证开源。</div>
-  <div style="width:100%;text-align:center;padding:0 20px 20px;color:#6b7280;font-size:12px;display:flex;justify-content:center;gap:18px;flex-wrap:wrap;">
-     <a href="https://gitee.com/boyoo/algo-step" target="_blank" rel="noopener" style="color:#9ca3af;text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#c4b5fd'" onmouseout="this.style.color='#9ca3af'">Gitee</a>
-     <a href="https://github.com/BoyooDrew/AlgoStep" target="_blank" rel="noopener" style="color:#9ca3af;text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#c4b5fd'" onmouseout="this.style.color='#9ca3af'">GitHub</a>
-  </div>
 </body>
+
 </html>

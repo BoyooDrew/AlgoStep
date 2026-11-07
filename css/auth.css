@@ -1,0 +1,312 @@
+/* ============================================================
+ * AlgoStep v2.0 · auth.css
+ * 登录 / 注册页 · 浅色视觉体系
+ * 依赖 base.css
+ * ============================================================ */
+
+body.auth-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.auth-shell {
+    flex: 1 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 36px 20px 48px;
+}
+
+.auth-card {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 420px;
+    padding: 34px 32px 30px;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: var(--v2-radius-panel);
+    background: #ffffff;
+    box-shadow: 0 20px 46px -28px rgba(15, 23, 42, 0.38);
+}
+
+/* 顶部渐变细条 */
+.auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #0ea5e9);
+}
+
+/* 装饰光晕 */
+.auth-card::after {
+    content: '';
+    position: absolute;
+    top: -110px;
+    right: -90px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.12), transparent 70%);
+    pointer-events: none;
+}
+
+/* -------- 品牌区 -------- */
+.auth-brand {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+.auth-logo {
+    width: 38px;
+    height: 38px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 12px -4px rgba(99, 102, 241, 0.55);
+}
+
+.auth-brand-text {
+    min-width: 0;
+}
+
+.auth-brand-name {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: var(--v2-text-strong);
+}
+
+.auth-brand-sub {
+    margin-top: 1px;
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--v2-text-muted);
+}
+
+/* -------- 标题区 -------- */
+.auth-heading {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 22px;
+}
+
+.auth-heading h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--v2-text-strong);
+}
+
+.auth-heading p {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--v2-text-secondary);
+}
+
+/* -------- 表单 -------- */
+.auth-form {
+    position: relative;
+    z-index: 1;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1px solid var(--v2-border);
+    border-radius: 10px;
+    background: #f8fafc;
+    font-family: var(--v2-font-mono);
+    font-size: 12.5px;
+    color: var(--v2-text);
+    outline: none;
+    transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.form-group input::placeholder {
+    font-family: var(--v2-font);
+    font-size: 11.5px;
+    color: var(--v2-text-muted);
+}
+
+.form-group input:focus {
+    border-color: var(--v2-primary-light);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15);
+}
+
+.form-group input.invalid {
+    border-color: #fca5a5;
+    background: #fff1f2;
+}
+
+.form-hint {
+    margin-top: 5px;
+    font-size: 10px;
+    line-height: 1.5;
+    color: var(--v2-text-muted);
+}
+
+/* -------- 错误提示 -------- */
+.auth-error {
+    position: relative;
+    z-index: 1;
+    display: none;
+    margin-bottom: 14px;
+    padding: 8px 11px;
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+    background: #fff1f2;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #be123c;
+}
+
+.auth-error.visible,
+.auth-error.show {
+    display: block;
+}
+
+/* -------- 成功提示 -------- */
+.auth-success {
+    position: relative;
+    z-index: 1;
+    display: none;
+    margin-bottom: 14px;
+    padding: 8px 11px;
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    background: #ecfdf5;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #047857;
+}
+
+.auth-success.visible,
+.auth-success.show {
+    display: block;
+}
+
+/* -------- 提交按钮 -------- */
+.btn-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    height: 42px;
+    margin-top: 4px;
+    border: none;
+    border-radius: 10px;
+    background: var(--v2-primary);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    box-shadow: 0 8px 18px -12px rgba(79, 70, 229, 0.85);
+}
+
+.btn-submit:hover:not(:disabled) {
+    background: var(--v2-primary-hover);
+    box-shadow: 0 10px 22px -12px rgba(67, 56, 202, 0.9);
+}
+
+.btn-submit:active:not(:disabled) {
+    transform: scale(0.995);
+}
+
+.btn-submit:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* -------- 底部辅助链接 -------- */
+.auth-footer {
+    position: relative;
+    z-index: 1;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--v2-border-soft);
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--v2-text-secondary);
+}
+
+.auth-footer a {
+    color: var(--v2-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+.back-home {
+    margin-top: 14px;
+    text-align: center;
+}
+
+.back-home a {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    color: var(--v2-text-muted);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.back-home a:hover {
+    color: var(--v2-primary);
+}
+
+/* =======================================================
+ * 窄屏适配
+ * ======================================================= */
+@media (max-width: 520px) {
+    .auth-shell {
+        padding: 24px 14px 32px;
+    }
+
+    .auth-card {
+        padding: 24px 20px 22px;
+        border-radius: 14px;
+    }
+
+    .auth-heading h1 {
+        font-size: 19px;
+    }
+}

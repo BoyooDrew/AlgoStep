@@ -1,259 +1,219 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
+
 <head>
-<meta charset="UTF-8" />
-<link rel="canonical" href="https://algo-step.surge.sh/algorithms/search/dfs.html">
-<title>深度优先搜索 · Depth First Search</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%236366f1'/><text x='16' y='22' font-size='14' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>DB</text></svg>">
-<link rel="stylesheet" href="../../css/common.css" />
-<link rel="stylesheet" href="../../css/layout.css" />
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>AlgoStep 算法实验室 · 深度优先搜索</title>
 
-<style>
-    /* 覆盖公共布局：取消所有内部滚动条，顶部对齐 */
-    .visualization-section {
-        align-items: flex-start !important;
-    }
-    .canvas-container {
-        overflow: visible !important;
-        min-height: auto !important;
-        height: auto !important;
-    }
-    .info-panel {
-        overflow: visible !important;
-        min-height: auto !important;
-        height: auto !important;
-    }
-    .code-panel {
-        max-height: none !important;
-        overflow-y: visible !important;
-        overflow: visible !important;
-        height: auto !important;
-    }
+    <!-- =======================================================
+         Favicon：内联 SVG，无外部依赖
+         ======================================================= -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='asg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%236366f1'/><stop offset='1' stop-color='%238b5cf6'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='url(%23asg)'/><text x='16' y='22.5' font-size='15' font-weight='700' fill='white' text-anchor='middle' font-family='Inter,Arial,sans-serif'>AS</text></svg>">
 
-    /* ===== 左侧：图 + 栈 + 矩阵 ===== */
-    .canvas-container {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
+    <!-- v2.0 共享样式：基础外壳 + 算法页三栏布局 -->
+    <link rel="stylesheet" href="../../css/base.css" />
+    <link rel="stylesheet" href="../../css/algo.css" />
+    <link rel="stylesheet" href="../../css/algo-viz.css" />
 
-    /* 图例：放在图上方，更紧凑 */
-    .legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        padding: 8px 10px;
-        background: rgba(139, 92, 246, 0.06);
-        border: 1px dashed rgba(139, 92, 246, 0.3);
-        border-radius: 8px;
-        font-size: 11px;
-        color: #cbd5e1;
-        order: -1;
-    }
-    .legend .item {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    .legend .dot {
-        width: 12px; height: 12px;
-        border-radius: 50%;
-        display: inline-block;
-    }
-    .legend .dot.unvisited { background: #374151; border: 2px solid #6b7280; }
-    .legend .dot.visiting { background: #3b82f6; border: 2px solid #60a5fa; box-shadow: 0 0 6px rgba(59,130,246,0.5); }
-    .legend .dot.visited { background: #10b981; border: 2px solid #34d399; }
-    .legend .dot.neighbor { background: #374151; border: 2px dashed #f59e0b; }
-    .legend .line {
-        width: 20px; height: 3px;
-        border-radius: 2px;
-        display: inline-block;
-    }
-    .legend .line.path { background: #3b82f6; }
+    <style>
+        /* ======== 本页专属样式：通用可视化样式已提炼至 ../../css/algo-viz.css；
+           以下为本页特有或与共享包存在语义差异（同名不同义）的规则 ======== */
+.graph-node.visiting .node-circle {
+    fill: #3b82f6;
+    stroke: #60a5fa;
+    filter: drop-shadow(0 0 10px rgba(59,130,246,0.7));
+    animation: node-pulse 1s ease-in-out infinite;
+}
 
-    /* 图 */
-    .graph-svg {
-        width: 100%;
-        height: 260px;
-        display: block;
-        background: #0f172a;
-        border: 1px solid rgba(139,92,246,0.2);
-        border-radius: 10px;
-    }
+.graph-node.current .node-circle {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 14px rgba(59,130,246,0.9));
+}
 
-    .graph-node { transition: all .3s ease; cursor: pointer; }
-    .graph-node .node-circle {
-        stroke-width: 3;
-        transition: all .3s ease;
-        r: 26;
-    }
-    .graph-node .node-label {
-        font-family: 'JetBrains Mono', Consolas, monospace;
-        font-size: 15px;
-        font-weight: 700;
-        fill: #fff;
-        text-anchor: middle;
-        dominant-baseline: central;
-    }
-    .graph-node.unvisited .node-circle { fill: #374151; stroke: #6b7280; }
-    .graph-node.neighbor .node-circle {
-        fill: rgba(245,158,11,0.12); stroke: #f59e0b;
-        stroke-width: 2.5;
-    }
-    .graph-node.visiting .node-circle {
-        fill: #3b82f6; stroke: #60a5fa;
-        filter: drop-shadow(0 0 10px rgba(59,130,246,0.7));
-        animation: node-pulse 1s ease-in-out infinite;
-    }
-    .graph-node.visited .node-circle {
-        fill: #10b981; stroke: #34d399;
-        filter: drop-shadow(0 0 8px rgba(16,185,129,0.5));
-    }
-    .graph-node.current .node-circle {
-        transform: scale(1.15);
-        filter: drop-shadow(0 0 14px rgba(59,130,246,0.9));
-    }
-    @keyframes node-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
-    @keyframes dash { to{stroke-dashoffset:-18} }
+@keyframes dash {
+    to{stroke-dashoffset:-18}
+}
 
-    .graph-edge {
-        stroke: #4b5563; stroke-width: 2; fill: none;
-        transition: all .3s ease;
-    }
-    .graph-edge.active {
-        stroke: #fbbf24; stroke-width: 3;
-    }
-    .graph-edge.path {
-        stroke: #60a5fa; stroke-width: 5; stroke-linecap: round;
-        filter: drop-shadow(0 0 10px rgba(96,165,250,0.9));
-    }
+.graph-edge.path {
+    stroke: #60a5fa;
+    stroke-width: 5;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 10px rgba(96,165,250,0.9));
+}
 
-    /* 递归栈：水平排列，紧凑 */
-    .dfs-stack-wrap {
-        background: #0f172a;
-        border: 1px solid rgba(139,92,246,0.25);
-        border-radius: 8px;
-        padding: 8px 10px;
-    }
-    .dfs-stack-title {
-        font-size: 10px; font-weight: 600;
-        color: #94a3b8; margin-bottom: 6px;
-        text-transform: uppercase; letter-spacing: 1px;
-    }
-    .stack-items {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 6px;
-        flex-wrap: wrap;
-    }
-    .stack-item {
-        display: flex; align-items: center; gap: 4px;
-        padding: 4px 10px;
-        background: #1f2937;
-        border-radius: 5px;
-        border-left: 3px solid #6b7280;
-        font-family: 'JetBrains Mono', Consolas, monospace;
-        font-size: 12px; color: #e5e7eb;
-        transition: all .2s ease;
-        white-space: nowrap;
-    }
-    .stack-item.current {
-        background: rgba(59,130,246,0.2);
-        border-left-color: #3b82f6;
-        color: #93c5fd; font-weight: 600;
-        box-shadow: 0 0 8px rgba(59,130,246,0.3);
-    }
-    .stack-item.visited {
-        background: rgba(16,185,129,0.15);
-        border-left-color: #10b981;
-        color: #a7f3d0;
-    }
-    .stack-arrow {
-        color: #6b7280;
-        font-size: 12px;
-    }
-    .stack-labels {
-        display: flex;
-        justify-content: space-between;
-        font-size: 9px;
-        color: #4b5563;
-        font-family: 'JetBrains Mono', Consolas, monospace;
-        margin-top: 4px;
-    }
+/* 递归栈：水平排列，紧凑 */
+.dfs-stack-wrap {
+    background: #0f172a;
+    border: 1px solid rgba(139,92,246,0.25);
+    border-radius: 8px;
+    padding: 8px 10px;
+}
 
-    /* 邻接矩阵 */
-    .adjacency-matrix {
-        display: grid;
-        gap: 3px;
-        padding: 12px;
-        background: #0f172a;
-        border: 1px solid rgba(139,92,246,0.25);
-        border-radius: 8px;
-        justify-content: center;
-    }
-    .matrix-cell {
-        width: 32px; height: 32px;
-        display: flex; align-items: center; justify-content: center;
-        background: #1f2937;
-        border: 1px solid #4b5563;
-        border-radius: 4px;
-        font-family: 'JetBrains Mono', Consolas, monospace;
-        font-size: 12px; font-weight: 600;
-        color: #6b7280;
-        transition: all .2s ease;
-    }
-    .matrix-cell.header {
-        background: transparent; border-color: transparent;
-        color: #a78bfa; font-size: 11px;
-    }
-    .matrix-cell.has-edge { color: #3b82f6; }
-    .matrix-cell.current-row { background: rgba(59,130,246,0.2); border-color: #3b82f6; }
-    .matrix-cell.current-col { background: rgba(59,130,246,0.2); border-color: #3b82f6; }
-    .matrix-cell.selected {
-        background: rgba(245,158,11,0.25);
-        border-color: #f59e0b; color: #fbbf24;
-        transform: scale(1.1);
-    }
+.dfs-stack-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
 
-    /* ===== 右侧：代码面板（独占，无滚动条） ===== */
-    .info-panel {
-        display: flex;
-        flex-direction: column;
-    }
-    .code-panel {
-        flex: 1;
-        min-height: 360px;
-        max-height: none !important;
-        overflow-y: visible !important;
-        overflow: visible !important;
-        height: auto !important;
-        font-size: 13.5px;
-        line-height: 1.7;
-    }
-</style>
+.stack-items {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.stack-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: #1f2937;
+    border-radius: 5px;
+    border-left: 3px solid #6b7280;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 12px;
+    color: #e5e7eb;
+    transition: all .2s ease;
+    white-space: nowrap;
+}
+
+.stack-item.current {
+    background: rgba(59,130,246,0.2);
+    border-left-color: #3b82f6;
+    color: #93c5fd;
+    font-weight: 600;
+    box-shadow: 0 0 8px rgba(59,130,246,0.3);
+}
+
+.stack-item.visited {
+    background: rgba(16,185,129,0.15);
+    border-left-color: #10b981;
+    color: #a7f3d0;
+}
+
+.stack-arrow {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.stack-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: #4b5563;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    margin-top: 4px;
+}
+
+.matrix-cell.current-row {
+    background: rgba(59,130,246,0.2);
+    border-color: #3b82f6;
+}
+
+.matrix-cell.current-col {
+    background: rgba(59,130,246,0.2);
+    border-color: #3b82f6;
+}
+
+/* 图卡片内子块间距（原旧版容器 gap） */
+#graphCardBody > * + * {
+    margin-top: 10px;
+}
+    </style>
 </head>
-<body>
 
-<div id="stage">
+<body class="algo-page">
 
-    <header>
-        <div>
-            <h1>深度优先搜索 · Depth First Search</h1>
-            <div class="subtitle">
-                沿着一条路径尽可能深入，走到尽头后回溯到上一个分支点继续探索。时间复杂度 O(V+E)。
+<!-- 全站图标库（内联 SVG Sprite 注入） -->
+<script src="../../js/icons.js"></script>
+
+<!-- =======================================================
+     页面主容器
+     布局：基础信息区(flex:2) | 核心代码区(flex:3) | 内容展示区(flex:5)
+     ======================================================= -->
+<div class="app-container">
+
+    <!-- =======================================================
+         区域一：基础信息区（左侧面板）
+         ======================================================= -->
+    <section class="panel-card panel-info" id="panelInfo">
+
+        <!-- --- 面包屑导航（纯文本样式 + 二级下拉） --- -->
+        <nav class="algo-nav-bar" aria-label="算法导航">
+            <a class="crumb" id="navHome" href="../../index.html">首页</a>
+            <span class="nav-sep">/</span>
+            <button class="crumb" id="navToggle" type="button"
+                    aria-haspopup="true" aria-expanded="false">
+                <span id="navCategory">算法目录</span>
+                <svg class="ico" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+            </button>
+            <span class="nav-sep">/</span>
+            <span class="crumb crumb-current" id="navCurrent">深度优先搜索</span>
+        </nav>
+
+        <!-- --- 标题区 --- -->
+        <header class="info-header">
+            <div class="info-header-content">
+                <h1 class="info-title" id="infoTitle">
+                    深度优先搜索
+                    <span class="info-title-en">DFS</span>
+                </h1>
+                <p class="info-subtitle" id="infoSubtitle">
+                    沿着一条路径尽可能深入，走到尽头后回溯到上一个分支点继续探索。时间复杂度 O(V+E)。
+                </p>
+                <div class="info-badges" id="infoBadges">
+                    <!-- JS 动态填充：难度、考察内容标签 -->
+                </div>
+
+                <div class="info-complexity" id="infoComplexity">
+                    <!-- JS 动态填充：时间 / 空间复杂度 -->
+                </div>
             </div>
-        </div>
-        <span class="difficulty basic">基础 / Basic</span>
-    </header>
+        </header>
 
-    <section class="control-panel">
-        <h3 class="panel-title">· Controls · 控制面板</h3>
+        <!-- --- 滚动内容区 --- -->
+        <div class="info-body">
 
-        <div class="control-row">
-            <div class="control-group">
-                <span class="control-label">起始节点：</span>
-                <select class="input-number" id="startNodeInput" style="width:100px;">
+            <!-- 子卡片：相关题目 -->
+            <section class="info-section">
+                <div class="info-section-title">
+                    <h2>
+                        <span class="mini-icon"><svg class="ico" aria-hidden="true"><use href="#i-link"/></svg></span>
+                        相关题目
+                    </h2>
+                    <span class="section-meta" id="problemCount">2</span>
+                </div>
+
+                <a class="problem-item" href="https://leetcode.cn/problems/number-of-islands/"
+                   target="_blank" rel="noopener">
+                    <span class="oj-tag oj-tag--leetcode">LeetCode</span>
+                    <span class="problem-name">200. 岛屿数量</span>
+                </a>
+                <a class="problem-item" href="https://www.luogu.com.cn/problem/P1162"
+                   target="_blank" rel="noopener">
+                    <span class="oj-tag oj-tag--luogu">洛谷</span>
+                    <span class="problem-name">P1162 填涂颜色</span>
+                </a>
+            </section>
+
+            <!-- 子卡片：数据输入 -->
+            <section class="info-section">
+                <div class="info-section-title">
+                    <h2>
+                        <span class="mini-icon"><svg class="ico" aria-hidden="true"><use href="#i-database"/></svg></span>
+                        数据与查询
+                    </h2>
+                    <span class="section-meta" id="dataSummary">—</span>
+                </div>
+
+                <label class="form-label" for="startNodeInput">起始节点</label>
+                <select class="form-select" id="startNodeInput">
                     <option value="0">0</option>
                     <option value="1">1</option>
                     <option value="2">2</option>
@@ -261,141 +221,358 @@
                     <option value="4">4</option>
                     <option value="5">5</option>
                 </select>
-            </div>
-            <div class="control-group">
-                <button class="btn btn-primary" id="btnGenerate">生成场景</button>
-                <button class="btn btn-danger"  id="btnReset">重置</button>
-            </div>
-        </div>
 
-        <div class="control-row">
-            <div class="control-group">
-                <button class="btn btn-primary" id="btnStart">▶ 播放</button>
-                <button class="btn btn-secondary" id="btnPause">⏸ 暂停</button>
-                <button class="btn btn-accent" id="btnPrev">◀ 上一步</button>
-                <button class="btn btn-accent" id="btnNext">下一步 ▶</button>
-            </div>
+                <button class="btn-primary" id="btnGenerate" type="button">
+                    <svg class="ico" aria-hidden="true"><use href="#i-generate"/></svg>
+                    生成场景
+                </button>
+            </section>
 
-            <div class="control-group">
-                <span class="control-label">速度：</span>
-                <input type="range" class="slider" id="speed-slider"
-                       min="100" max="2000" step="50" value="800" />
-                <span class="slider-value" id="speed-value">800ms</span>
-                <span class="slider-value" id="speed-label"
-                      style="color:#f59e0b;">中等</span>
-            </div>
-        </div>
+            <!-- 子卡片：视图模式切换 -->
+            <section class="info-section">
+                <div class="info-section-title">
+                    <h2>
+                        <span class="mini-icon"><svg class="ico" aria-hidden="true"><use href="#i-layout"/></svg></span>
+                        视图模式
+                    </h2>
+                </div>
 
-        <div class="control-row">
-            <span class="control-label">进度：</span>
-            <input type="range" class="slider" id="progress-slider"
-                   min="1" max="1" step="1" value="1" />
-            <span class="slider-value" id="progress-text">0 / 0</span>
+                <button class="mode-option active" data-mode="both" type="button">
+                    <span class="mode-option-icon"><svg class="ico" aria-hidden="true"><use href="#i-layout"/></svg></span>
+                    <span class="mode-option-text">
+                        <span class="mode-option-title">
+                            代码 + 动画
+                            <span class="mode-option-badge">推荐</span>
+                            <span class="mode-option-desc">适合完整学习</span>
+                        </span>
+                    </span>
+                </button>
+
+                <button class="mode-option" data-mode="anim" type="button">
+                    <span class="mode-option-icon"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg></span>
+                    <span class="mode-option-text">
+                        <span class="mode-option-title">只看动画
+                            <span class="mode-option-desc">专注过程</span>
+                        </span>
+                    </span>
+                </button>
+
+                <button class="mode-option" data-mode="code" type="button">
+                    <span class="mode-option-icon"><svg class="ico" aria-hidden="true"><use href="#i-code"/></svg></span>
+                    <span class="mode-option-text">
+                        <span class="mode-option-title">只看代码
+                            <span class="mode-option-desc">执行行高亮</span>
+                        </span>
+                    </span>
+                </button>
+            </section>
+
+            <!-- 快捷键说明已移至区域三控制条（问号悬停提示） -->
         </div>
     </section>
 
-    <section class="explanation-panel">
-        <div class="formula-box">
-            <span class="formula-text">当前状态</span>
-            <span id="current-result">起始节点: 0</span>
-        </div>
+    <!-- =======================================================
+         区域二：核心代码区（中间面板）
+         ======================================================= -->
+    <section class="panel-card panel-code" id="panelCode">
 
-        <div class="step-info">
-            <span class="step-counter" id="step-counter">0</span>
-            <div class="step-description">
-                <div class="step-en" id="step-en">
-                    Click "Generate" to start the visualization.
+        <!-- 代码头部 -->
+        <div class="code-header">
+            <div class="code-header-left">
+                <div class="code-traffic-lights">
+                    <span></span><span></span><span></span>
                 </div>
-                <div class="step-zh" id="step-zh">
-                    点击上方"生成场景"以开始演示。
+                <div class="code-icon-wrap"><svg class="ico" aria-hidden="true"><use href="#i-code"/></svg></div>
+                <div>
+                    <div class="code-header-title">核心代码</div>
+                    <div class="code-header-sub" id="codeFileName">dfs.cpp</div>
                 </div>
             </div>
+
+            <div class="code-header-right">
+                <!-- 一键复制 -->
+                <button class="code-copy-btn" id="copyBtn" type="button" title="复制全部代码">
+                    <svg class="ico" aria-hidden="true"><use href="#i-copy"/></svg>
+                    <span id="copyBtnText">复制</span>
+                </button>
+
+                <!-- 字号控制器 -->
+                <div class="code-font-controls">
+                    <button class="code-font-btn" id="fontMinus" type="button" aria-label="减小代码字号">A−</button>
+                    <span class="code-font-label" id="fontSizeLabel">14</span>
+                    <button class="code-font-btn" id="fontPlus" type="button" aria-label="增大代码字号">A+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 代码主体（JS 动态渲染） -->
+        <div class="code-body" id="codeBody">
+            <!-- JS 动态渲染 .code-line，每个 .code-line 有 data-line 索引 -->
+        </div>
+
+        <!-- 代码状态栏 -->
+        <div class="code-footer">
+            <span class="code-footer-status">
+                <span class="code-footer-dot"></span>
+                高亮行对应执行语句 ·
+                <span class="code-footer-line-info" id="codeLineInfo">第 — 行</span>
+            </span>
         </div>
     </section>
 
-    <!-- ===== 可视化区域：左侧图+栈+矩阵，右侧代码 ===== -->
-    <section class="visualization-section">
-        <div class="canvas-container grid-section">
-            <!-- 图例 -->
-            <div class="legend">
-                <span class="item"><span class="dot unvisited"></span><span>未访问</span></span>
-                <span class="item"><span class="dot visiting"></span><span>正在访问（栈中）</span></span>
-                <span class="item"><span class="dot visited"></span><span>已访问（已回溯）</span></span>
-                <span class="item"><span class="dot neighbor"></span><span>邻居（待访问）</span></span>
-                <span class="item"><span class="line path"></span><span>当前路径</span></span>
+    <!-- =======================================================
+         区域三：内容展示区（右侧面板）
+         ======================================================= -->
+    <section class="panel-card panel-stage" id="panelStage">
+
+        <!-- --- 步骤讲解头部 --- -->
+        <div class="stage-header">
+            <div class="stage-header-top">
+                <div class="stage-header-left">
+                    <div class="explain-icon-wrap" id="explainIconWrap">⚑</div>
+                    <span class="explain-label">步骤讲解</span>
+                    <span class="explain-counter" id="stepCounter">0 / 0</span>
+                </div>
+                <span class="explain-tag init" id="stepTag">就绪</span>
             </div>
 
-            <!-- 图 -->
-            <svg class="graph-svg" id="graphSvg" viewBox="0 0 500 320">
-                <defs>
-                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                        <polygon points="0 0, 10 3.5, 0 7" fill="#4b5563" />
-                    </marker>
-                </defs>
-            </svg>
+            <div class="explain-detail">
+                <div class="explain-accent init" id="explainAccent"></div>
+                <div class="explain-text">
+                    <h2 id="stepTitle">点击 "生成场景" 开始演示</h2>
+                    <p id="stepDetail">生成场景后，这里会显示每一步的详细说明。</p>
+                </div>
+            </div>
+        </div>
 
-            <!-- 递归栈（水平排列） -->
-            <div class="dfs-stack-wrap" id="dfsStack">
-                <div class="dfs-stack-title">递归栈 Stack</div>
-                <div class="stack-items" id="stackItems"></div>
-                <div class="stack-labels">
-                    <span>栈底</span>
-                    <span>栈顶</span>
+        <!-- --- 颜色图例条 --- -->
+        <div class="stage-legend">
+            <span class="legend-title">颜色示例</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#374151;border-color:#6b7280;"></span>未访问</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#3b82f6;border-color:#60a5fa;"></span>正在访问（栈中）</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#10b981;border-color:#34d399;"></span>已访问（已回溯）</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#374151;border:2px dashed #f59e0b;"></span>邻居（待访问）</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#60a5fa;border-color:#60a5fa;"></span>当前路径</span>
+        </div>
+
+        <!-- --- 主体展示区（左主区 + 右侧栏） --- -->
+        <div class="stage-body">
+
+            <!-- 左侧主区 -->
+            <div class="stage-body-main">
+
+                <!-- 图结构与递归栈卡片 -->
+                <div class="stage-card">
+                    <div class="stage-card-header">
+                        <span class="stage-card-title">◆ 图结构与递归栈</span>
+                        <span class="stage-card-sub" id="rangeInfo">6 节点 · 6 边</span>
+                    </div>
+                    <div id="graphCardBody">
+                        <!-- 图 -->
+                        <svg class="graph-svg" id="graphSvg" viewBox="0 0 500 320">
+                            <defs>
+                                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#4b5563" />
+                                </marker>
+                            </defs>
+                        </svg>
+
+                        <!-- 递归栈（水平排列） -->
+                        <div class="dfs-stack-wrap" id="dfsStack">
+                            <div class="dfs-stack-title">递归栈 Stack</div>
+                            <div class="stack-items" id="stackItems"></div>
+                            <div class="stack-labels">
+                                <span>栈底</span>
+                                <span>栈顶</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 邻接矩阵卡片 -->
+                <div class="stage-card">
+                    <div class="stage-card-header">
+                        <span class="stage-card-title">◇ 邻接矩阵</span>
+                        <span class="stage-card-sub">adj[6][6]</span>
+                    </div>
+                    <div class="adjacency-matrix" id="adjacencyMatrix"></div>
+                </div>
+
+                <!-- 公式/当前状态卡片 -->
+                <div class="stage-card formula-card">
+                    <div class="stage-card-header">
+                        <span class="stage-card-title">Σ 当前状态</span>
+                        <span class="stage-card-sub" id="formulaCaption">—</span>
+                    </div>
+                    <div class="result-area" id="sumBox">起始节点: 0</div>
+                    <div class="verdict-area" id="verdict"></div>
+                </div>
+
+                <!-- 变量快照卡片 -->
+                <div class="stage-card">
+                    <div class="stage-card-header">
+                        <span class="stage-card-title">◇ 变量快照</span>
+                        <span class="stage-card-sub">每步实时更新</span>
+                    </div>
+                    <div class="var-grid">
+                        <div class="var-cell theme-blue">
+                            <div class="var-cell-label">当前节点</div>
+                            <div class="var-cell-value" id="varCur">—</div>
+                        </div>
+                        <div class="var-cell theme-orange">
+                            <div class="var-cell-label">栈大小</div>
+                            <div class="var-cell-value" id="varStack">—</div>
+                        </div>
+                        <div class="var-cell theme-indigo">
+                            <div class="var-cell-label">已访问数</div>
+                            <div class="var-cell-value" id="varVisited">—</div>
+                        </div>
+                        <div class="var-cell theme-slate">
+                            <div class="var-cell-label">路径长度</div>
+                            <div class="var-cell-value" id="varPath">—</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- 邻接矩阵 -->
-            <div class="adjacency-matrix" id="adjacencyMatrix"></div>
+            <!-- 右侧栏：执行轨迹 -->
+            <aside class="stage-aside">
+                <div class="aside-header">
+                    <span class="aside-title">☰ 执行轨迹</span>
+                    <span class="aside-count" id="traceCount">0 步</span>
+                </div>
+                <div class="aside-list" id="traceList">
+                    <!-- JS 动态渲染每一步轨迹按钮 -->
+                </div>
+            </aside>
         </div>
 
-        <div class="info-panel">
-            <div class="code-panel" id="codePanel">
-                <div class="code-line" id="line-0">// 深度优先搜索 - Depth First Search</div>
-                <div class="code-line" id="line-1">// 时间复杂度: O(V+E)   空间复杂度: O(V)</div>
-                <div class="code-line" id="line-2">// 使用邻接矩阵存储无向图</div>
-                <div class="code-line" id="line-3"></div>
-                <div class="code-line" id="line-4">#include &lt;bits/stdc++.h&gt;</div>
-                <div class="code-line" id="line-5">using namespace std;</div>
-                <div class="code-line" id="line-6"></div>
-                <div class="code-line" id="line-7">int adj[10][10];      // 邻接矩阵</div>
-                <div class="code-line" id="line-8">int visited[10];      // 访问标记数组</div>
-                <div class="code-line" id="line-9"></div>
-                <div class="code-line" id="line-10">void dfs(int node, int n) {</div>
-                <div class="code-line" id="line-11">    visited[node] = 1;                // 标记当前节点已访问</div>
-                <div class="code-line" id="line-12"></div>
-                <div class="code-line" id="line-13">    for (int i = 0; i &lt; n; i++) {     // 遍历所有可能的邻居</div>
-                <div class="code-line" id="line-14">        if (adj[node][i] == 1 &amp;&amp; !visited[i]) {</div>
-                <div class="code-line" id="line-15">            dfs(i, n);                // 递归访问未访问的邻居</div>
-                <div class="code-line" id="line-16">        }</div>
-                <div class="code-line" id="line-17">    }</div>
-                <div class="code-line" id="line-18"></div>
-                <div class="code-line" id="line-19">    cout &lt;&lt; "回溯: 离开节点 " &lt;&lt; node &lt;&lt; endl;</div>
-                <div class="code-line" id="line-20">    // 回溯: 从 node 返回到上一层</div>
-                <div class="code-line" id="line-21">}</div>
-                <div class="code-line" id="line-22"></div>
-                <div class="code-line" id="line-23">int main() {</div>
-                <div class="code-line" id="line-24">    int n = 6;</div>
-                <div class="code-line" id="line-25">    memset(visited, 0, sizeof(visited));</div>
-                <div class="code-line" id="line-26">    dfs(0, n);                        // 从节点 0 开始搜索</div>
-                <div class="code-line" id="line-27">    return 0;</div>
-                <div class="code-line" id="line-28">}</div>
-            </div>
+        <!-- --- 底部控制条 --- -->
+        <div class="stage-controls">
+            <div class="controls-row">
+                <button class="btn-ctrl btn-ctrl-default" id="prevBtn" type="button">
+                    <svg class="ico" aria-hidden="true"><use href="#i-step-back"/></svg>
+                    上一步
+                </button>
+                <button class="btn-ctrl btn-ctrl-primary" id="playBtn" type="button">
+                    <span class="play-ico" id="playIco"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg></span>
+                    <span id="playLabel">播放</span>
+                </button>
+                <button class="btn-ctrl btn-ctrl-default" id="nextBtn" type="button">
+                    下一步
+                    <svg class="ico" aria-hidden="true"><use href="#i-step-next"/></svg>
+                </button>
 
-            <div class="legend">
-                <span class="item" style="color:#c4b5fd;font-weight:600;">
-                    💡 紫色高亮 = 当前正在执行的代码行
-                </span>
+                <button class="btn-ctrl-icon" id="resetBtn" type="button"
+                        title="回到第一步" aria-label="回到第一步">
+                    <svg class="ico" aria-hidden="true"><use href="#i-reset"/></svg>
+                </button>
+
+                <div class="speed-group" id="speedGroup">
+                    <span class="speed-label">倍速</span>
+                    <button class="speed-btn" data-speed="0.5" type="button">0.5×</button>
+                    <button class="speed-btn active" data-speed="1" type="button">1×</button>
+                    <button class="speed-btn" data-speed="2" type="button">2×</button>
+                    <button class="speed-btn" data-speed="3" type="button">3×</button>
+                </div>
+
+                <span class="progress-label" id="progressLabel">第 0 / 0 步</span>
+
+                <!-- 快捷键说明：问号按钮 + 悬停浮层 -->
+                <div class="help-wrap">
+                    <button class="help-btn" id="helpBtn" type="button"
+                            aria-label="快捷键说明" aria-describedby="shortcutTip">
+                        <svg class="ico" aria-hidden="true"><use href="#i-help"/></svg>
+                    </button>
+                    <div class="help-tip" id="shortcutTip" role="tooltip">
+                        <div class="help-tip-title">快捷键</div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-icons">
+                                <svg class="ico" aria-hidden="true"><use href="#i-play"/></svg>播放 /
+                                <svg class="ico" aria-hidden="true"><use href="#i-pause"/></svg>暂停
+                            </span>
+                            <kbd>Space</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-icons">
+                                <svg class="ico" aria-hidden="true"><use href="#i-step-back"/></svg>
+                                上一步
+                            </span>
+                            <kbd>←</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-icons">
+                                <svg class="ico" aria-hidden="true"><use href="#i-step-next"/></svg>
+                                下一步
+                            </span>
+                            <kbd>→</kbd>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 </div>
 
-<script src="../../js/common.js"></script>
-<script src="../../js/code-panel.js"></script>
-<script src="../../js/controls.js"></script>
+<!-- =======================================================
+     JS 模块区
+     ======================================================= -->
+<script src="../../js/algo-core.js"></script>
+<script src="../../js/algo-utils.js"></script>
+<script src="../../js/algo-nav.js"></script>
+<script src="../../js/site.js" data-base="../../"></script>
 
 <script>
+/* ============================================================
+ * 主业务逻辑：深度优先搜索（Depth First Search）
+ * 算法逻辑与步骤生成 100% 沿用旧版 algorithms/search/dfs.html
+ * ============================================================ */
 (function () {
+    'use strict';
+
+    /* ---------- 全局状态 ---------- */
+    const state = {
+        steps: [],
+        index: 0,
+        speed: 1,
+        codeFont: 14,
+        viewMode: 'both'
+    };
+
+    /* ---------- 核心代码（0-based 行号与 step.codeLines 对齐） ---------- */
+    const PAGE_CODE = [
+        '// 深度优先搜索 - Depth First Search',
+        '// 时间复杂度: O(V+E)   空间复杂度: O(V)',
+        '// 使用邻接矩阵存储无向图',
+        '',
+        '#include <bits/stdc++.h>',
+        'using namespace std;',
+        '',
+        'int adj[10][10];      // 邻接矩阵',
+        'int visited[10];      // 访问标记数组',
+        '',
+        'void dfs(int node, int n) {',
+        '    visited[node] = 1;                // 标记当前节点已访问',
+        '',
+        '    for (int i = 0; i < n; i++) {     // 遍历所有可能的邻居',
+        '        if (adj[node][i] == 1 && !visited[i]) {',
+        '            dfs(i, n);                // 递归访问未访问的邻居',
+        '        }',
+        '    }',
+        '',
+        '    cout << "回溯: 离开节点 " << node << endl;',
+        '    // 回溯: 从 node 返回到上一层',
+        '}',
+        '',
+        'int main() {',
+        '    int n = 6;',
+        '    memset(visited, 0, sizeof(visited));',
+        '    dfs(0, n);                        // 从节点 0 开始搜索',
+        '    return 0;',
+        '}'
+    ];
+
+    /* ---------- 图数据（与旧版一致） ---------- */
     const N = 6;
     const adj = [
         [0, 1, 1, 0, 0, 0],
@@ -415,14 +592,40 @@
         { x: 430, y: 265 }
     ];
 
-    const codePanel = new CodePanel('#codePanel');
-    const graphSvg = document.getElementById('graphSvg');
-    const stackItems = document.getElementById('stackItems');
-    const adjacencyMatrix = document.getElementById('adjacencyMatrix');
-    const startNodeInput = document.getElementById('startNodeInput');
+    /* ---------- DOM 快捷访问 ---------- */
+    function $(id) { return document.getElementById(id); }
 
-    let steps = [];
-    let state = null;
+    /* ---------- 步骤元信息（步骤类型 → 颜色/图标映射） ---------- */
+    const STEP_META = {
+        init:     { icon: '⚑', accent: 'init',     tagClass: 'init' },
+        compare:  { icon: 'Σ', accent: 'compare',  tagClass: 'compare' },
+        'move-l': { icon: '→', accent: 'move-l',   tagClass: 'move-l' },
+        'move-r': { icon: '←', accent: 'move-r',   tagClass: 'move-r' },
+        found:    { icon: '✓', accent: 'found',    tagClass: 'found' },
+        notfound: { icon: '✗', accent: 'notfound', tagClass: 'notfound' }
+    };
+
+    /* ---------- 旧版步骤 type → v2 六色类型 ---------- */
+    function stepTypeOf(step, index) {
+        switch (step && step.type) {
+            case 'visit':          return 'move-l';   // 深入访问
+            case 'find-neighbors': return 'compare';
+            case 'select-neighbor':return 'move-l';   // 递归深入
+            case 'backtrack':      return 'move-r';   // 回溯
+            case 'finish':         return 'found';
+            default:               return 'init';
+        }
+    }
+
+    /* ---------- 旧版步骤 type → 短标签 ---------- */
+    const STEP_TAGS = {
+        'init':           '初始化',
+        'visit':          '访问',
+        'find-neighbors': '找邻居',
+        'select-neighbor':'递归深入',
+        'backtrack':      '回溯',
+        'finish':         '完成'
+    };
 
     function initGraph() {
         let svgContent = '<g id="edges">';
@@ -444,7 +647,7 @@
                 '</g>';
         }
         svgContent += '</g>';
-        graphSvg.innerHTML = svgContent;
+        $('graphSvg').innerHTML = svgContent;
     }
 
     function buildSteps(startNode) {
@@ -565,6 +768,9 @@
     }
 
     function renderVisual(step) {
+        const stackItems = $('stackItems');
+        const adjacencyMatrix = $('adjacencyMatrix');
+
         if (!step) {
             // 彻底归零：重建 SVG 清除所有残留状态，再重置节点/边/栈/矩阵
             initGraph();
@@ -653,6 +859,7 @@
     }
 
     function renderAdjacencyMatrix(currentNode, currentNeighbor, neighbors) {
+        const adjacencyMatrix = $('adjacencyMatrix');
         let html = '';
         html += '<div class="matrix-cell header"></div>';
         for (let j = 0; j < N; j++) {
@@ -676,22 +883,171 @@
         adjacencyMatrix.style.gridTemplateColumns = 'repeat(' + (N + 1) + ', 32px)';
     }
 
-    const controller = new StepController({
-        onStep(step, index) {
-            state = step;
-            codePanel.highlight(step.codeLines);
-            document.getElementById('step-counter').textContent = (index + 1);
-            document.getElementById('step-en').textContent = step.en;
-            document.getElementById('step-zh').textContent = step.zh;
-            document.getElementById('current-result').textContent = step.formula;
-            renderVisual(step);
-        }
-    });
+    /* ---------- 渲染：单个步骤 ---------- */
+    function renderStep(step, index) {
+        if (!step) return;
 
-    function generate() {
-        const startNode = parseInt(startNodeInput.value || '0', 10);
-        steps = buildSteps(startNode);
-        controller.setSteps(steps);
+        const meta = STEP_META[stepTypeOf(step, index)] || STEP_META.init;
+
+        // 1. 更新步骤讲解头部
+        $('stepCounter').textContent = (index + 1) + ' / ' + state.steps.length;
+        $('stepTag').textContent = STEP_TAGS[step.type] || '—';
+        $('stepTag').className = 'explain-tag ' + meta.tagClass;
+        $('stepTitle').textContent = step.zh || '—';
+        $('stepDetail').textContent = step.en || '';
+
+        // 更新装饰性强调条
+        $('explainAccent').className = 'explain-accent ' + meta.accent;
+        $('explainIconWrap').textContent = meta.icon;
+
+        // 2. 更新代码高亮（支持单行数字或多行数组）
+        if (codePanel) codePanel.highlight(step.codeLines);
+
+        // 3. 更新图 / 递归栈 / 邻接矩阵
+        renderVisual(step);
+
+        // 4. 更新公式卡 + 变量快照
+        $('sumBox').textContent = step.formula || '—';
+        $('varCur').textContent = step.currentNode >= 0 ? step.currentNode : '—';
+        $('varStack').textContent = step.stack ? step.stack.length : '—';
+        $('varVisited').textContent = step.visited
+            ? step.visited.reduce(function (a, b) { return a + b; }, 0)
+            : '—';
+        $('varPath').textContent = step.path ? step.path.length : '—';
+
+        // 5. 更新执行轨迹侧栏（active 状态）
+        document.querySelectorAll('.trace-item').forEach(el => {
+            const i = Number(el.getAttribute('data-step'));
+            el.classList.toggle('active', i === index);
+            if (i === index) {
+                el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        });
+
+        // 6. 更新控制条状态
+        updateControls();
+    }
+
+    /* ---------- 渲染：执行轨迹侧栏 ---------- */
+    function renderTrace() {
+        const list = $('traceList');
+        list.innerHTML = state.steps.map((s, i) => {
+            return `<button class="trace-item" data-step="${i}" type="button">
+                <span class="trace-index">${i + 1}</span>
+                <span class="trace-content">
+                    <span class="trace-title">${STEP_TAGS[s.type] || '—'}</span>
+                    <span class="trace-sub">${s.zh || ''}</span>
+                </span>
+            </button>`;
+        }).join('');
+        $('traceCount').textContent = `${state.steps.length} 步`;
+    }
+
+    /* ---------- 渲染：控制条按钮状态 ---------- */
+    function updateControls() {
+        const atEnd   = controller.index >= state.steps.length - 1;
+        const atStart = controller.index <= -1;
+
+        $('prevBtn').disabled = atStart;
+        $('nextBtn').disabled = atEnd;
+
+        // 更新播放按钮：图标 + 颜色状态切换
+        const playBtn = $('playBtn');
+        playBtn.classList.remove('btn-ctrl-primary', 'btn-ctrl-paused', 'btn-ctrl-replay');
+
+        let iconId, label;
+        if (controller.playing) {
+            iconId = 'i-pause';
+            label  = '暂停';
+            playBtn.classList.add('btn-ctrl-paused');
+        } else if (atEnd) {
+            iconId = 'i-replay';
+            label  = '重播';
+            playBtn.classList.add('btn-ctrl-replay');
+        } else {
+            iconId = 'i-play';
+            label  = '播放';
+            playBtn.classList.add('btn-ctrl-primary');
+        }
+        $('playIco').innerHTML = `<svg class="ico" aria-hidden="true"><use href="#${iconId}"/></svg>`;
+        $('playLabel').textContent = label;
+
+        $('progressLabel').textContent =
+            `第 ${Math.max(0, controller.index + 1)} / ${state.steps.length} 步`;
+    }
+
+    /* ---------- 渲染：视图模式 ---------- */
+    function applyViewMode() {
+        const p2 = $('panelCode');
+        const p3 = $('panelStage');
+
+        // 先恢复默认
+        p2.style.display = 'flex';
+        p3.style.display = 'flex';
+
+        document.querySelectorAll('[data-mode]').forEach(btn => {
+            const active = btn.getAttribute('data-mode') === state.viewMode;
+            btn.classList.toggle('active', active);
+        });
+
+        if (state.viewMode === 'both') {
+            p2.style.flex = '3 1 0%';
+            p3.style.flex = '5 1 0%';
+        } else if (state.viewMode === 'anim') {
+            p2.style.display = 'none';
+            p3.style.flex = '8 1 0%';
+        } else {
+            p3.style.display = 'none';
+            p2.style.flex = '8 1 0%';
+        }
+    }
+
+    /* ---------- 渲染：速度按钮 ---------- */
+    function renderSpeed() {
+        document.querySelectorAll('[data-speed]').forEach(btn => {
+            const v = Number(btn.getAttribute('data-speed'));
+            btn.classList.toggle('active', v === state.speed);
+        });
+    }
+
+    /* ---------- 渲染：标题区 badges ---------- */
+    function renderBadges() {
+        $('infoBadges').innerHTML = `
+            <span class="info-badge info-badge--level">难度 · 基础</span>
+            <span class="info-badge">图遍历</span>
+            <span class="info-badge">递归·栈</span>
+        `;
+
+        $('infoComplexity').innerHTML = `
+            <span class="complexity-item">
+                <svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>
+                <span class="complexity-label">时间</span>
+                <span class="complexity-value">O(V+E)</span>
+            </span>
+            <span class="complexity-item">
+                <svg class="ico" aria-hidden="true"><use href="#i-cube"/></svg>
+                <span class="complexity-label">空间</span>
+                <span class="complexity-value">O(V)</span>
+            </span>
+        `;
+    }
+
+    /* ---------- 就绪态：恢复初始可视化与文案（图立即可见） ---------- */
+    function showReady() {
+        codePanel.clearHighlight();
+        $('stepCounter').textContent = '0 / ' + state.steps.length;
+        $('stepTag').textContent = '就绪';
+        $('stepTag').className = 'explain-tag init';
+        $('explainAccent').className = 'explain-accent init';
+        $('explainIconWrap').textContent = '⚑';
+        $('stepTitle').textContent = '点击「播放」或「下一步」开始演示';
+        $('stepDetail').textContent = '场景已生成，共 ' + state.steps.length + ' 个步骤。';
+        $('sumBox').textContent = '起始节点: ' + $('startNodeInput').value;
+        $('varCur').textContent = '—';
+        $('varStack').textContent = '—';
+        $('varVisited').textContent = '—';
+        $('varPath').textContent = '—';
+        // 与旧版 generate 一致：以空状态对象渲染（图/矩阵可见、全未访问）
         renderVisual({
             visited: new Array(N).fill(0),
             path: [],
@@ -700,38 +1056,110 @@
             currentNeighbor: -1,
             neighbors: []
         });
+        renderTrace();
+        updateControls();
     }
 
+    /* ---------- 业务：生成场景 ---------- */
+    function generate() {
+        const startNode = parseInt($('startNodeInput').value || '0', 10);
+        state.steps = buildSteps(startNode);
+        controller.setSteps(state.steps);
+
+        $('dataSummary').textContent = '起点 ' + startNode;
+        $('formulaCaption').textContent = 'startNode = ' + startNode;
+
+        showReady();
+    }
+
+    /* ---------- 业务：重置（与旧版一致：彻底归零可视化） ---------- */
     function reset() {
-        controller.reset();  // 停止播放、重置进度条和步骤索引
-        state = null;
+        controller.reset();
         codePanel.clearHighlight();
-        document.getElementById('step-counter').textContent = '0';
-        document.getElementById('step-en').textContent = 'Click "Generate" to start the visualization.';
-        document.getElementById('step-zh').textContent = '点击上方 "生成场景" 以开始演示。';
-        document.getElementById('current-result').textContent = '起始节点: 0';
-        renderVisual(null);  // 彻底重置视觉状态（节点、边、栈、矩阵全部归零）
+        $('stepCounter').textContent = '0 / ' + state.steps.length;
+        $('stepTag').textContent = '就绪';
+        $('stepTag').className = 'explain-tag init';
+        $('explainAccent').className = 'explain-accent init';
+        $('explainIconWrap').textContent = '⚑';
+        $('stepTitle').textContent = '点击「播放」或「下一步」开始演示';
+        $('stepDetail').textContent = '场景已生成，共 ' + state.steps.length + ' 个步骤。';
+        $('sumBox').textContent = '起始节点: ' + $('startNodeInput').value;
+        $('varCur').textContent = '—';
+        $('varStack').textContent = '—';
+        $('varVisited').textContent = '—';
+        $('varPath').textContent = '—';
+        renderVisual(null);
+        renderTrace();
+        updateControls();
     }
 
-    bindControls({
+    /* ---------- 初始化组件 ---------- */
+    const controller = new AlgoV2.StepController({
+        onStep: renderStep,
+        onPlayChange: function () { updateControls(); }
+    });
+    controller.baseDelay = 800;
+
+    const codePanel = new AlgoV2.CodePanel('#codeBody');
+
+    /* ---------- 事件绑定 ---------- */
+
+    // 数据生成
+    $('btnGenerate').addEventListener('click', generate);
+
+    // 播放控制（按钮 + 速度 + 键盘快捷键）
+    AlgoV2.bindPlayback({
         controller: controller,
-        onGenerate: generate,
-        onReset:    reset,
-        onReplay:   function () { reset(); generate(); controller.play(); }
+        playBtn: $('playBtn'),
+        prevBtn: $('prevBtn'),
+        nextBtn: $('nextBtn'),
+        resetBtn: $('resetBtn'),
+        speedGroup: $('speedGroup'),
+        onReset: reset,
+        onSpeedChange: function (v) {
+            state.speed = v;
+            renderSpeed();
+        }
     });
 
-    window.addEventListener('load', function () {
-        initGraph();
-        renderVisual(null);  // 页面加载时矩阵不显示，等待生成场景
+    // 视图模式切换
+    document.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.addEventListener('click', function () {
+            state.viewMode = btn.getAttribute('data-mode');
+            applyViewMode();
+        });
     });
+
+    // 代码字号
+    AlgoV2.bindFontControls({
+        codePanel: codePanel,
+        initial: state.codeFont,
+        onChange: function (px) { state.codeFont = px; }
+    });
+
+    // 执行轨迹点击跳转
+    AlgoV2.bindTraceList($('traceList'), controller);
+
+    /* ---------- 代码一键复制 ---------- */
+    AlgoV2.bindCopyButton($('copyBtn'), function () {
+        return PAGE_CODE.join('\n');
+    }, { labelEl: $('copyBtnText') });
+
+    /* ---------- 启动 ---------- */
+    AlgoNav.init({
+        current: { category: 'search', page: '深度优先搜索' },
+        base: '../',
+        home: '../../index.html'
+    });
+    codePanel.setCode(PAGE_CODE);
+    renderBadges();
+    renderSpeed();
+    applyViewMode();
+    initGraph();
+    generate();
 })();
 </script>
 
-    <div style="width:100%;text-align:center;padding:20px;color:#6b7280;font-size:13px;border-top:1px solid #e5e7eb;margin-top:auto;">© 2026 boyooDrew. AlgoStep 网站设计保留所有权利，源代码以 MIT 许可证开源。</div>
-  <div style="width:100%;text-align:center;padding:0 20px 20px;color:#6b7280;font-size:12px;display:flex;justify-content:center;gap:18px;flex-wrap:wrap;">
-    <a href="https://gitee.com/boyoo/algo-step" target="_blank" rel="noopener" style="color:#9ca3af;text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#c4b5fd'" onmouseout="this.style.color='#9ca3af'">Gitee</a>
-    <a href="https://github.com/BoyooDrew/AlgoStep" target="_blank" rel="noopener" style="color:#9ca3af;text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#c4b5fd'" onmouseout="this.style.color='#9ca3af'">GitHub</a>
-  </div>
-
 </body>
+
 </html>

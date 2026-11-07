@@ -1,0 +1,328 @@
+/* ============================================================
+ * AlgoStep v2.0 · algo-viz.css  算法可视化共享样式包
+ * ------------------------------------------------------------
+ * 本文件由 dp / search / sort 三个目录 12 个 v2.0 算法页的
+ * 页内 [SHARED] 样式提炼去重而成，仅收录「跨页且定义完全一致」
+ * 的规则；同名但语义有差异的规则（如 .bar、.cell、.snapshot-bar
+ * 的页面变体）保留在各页面 <style> 中，页面样式在本文件之后加载，
+ * 可按需覆盖。
+ * 依赖：base.css（var(--v2-*) 变量），不依赖 algo.css。
+ * ============================================================ */
+
+/* --- 次要按钮 / 按钮行（左侧数据区） --- */
+
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 6px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--v2-border);
+    background: #fff;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+}
+
+.btn-ghost:hover {
+    border-color: var(--v2-primary-line);
+    background: #f8fafc;
+}
+
+.btn-row {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-row > * {
+    flex: 1;
+    margin-top: 6px;
+}
+
+.btn-magenta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 6px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #ec4899, #db2777);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    box-shadow: 0 1px 2px rgba(236,72,153,.3);
+}
+
+.btn-magenta:hover {
+    background: linear-gradient(135deg, #f472b6, #ec4899);
+}
+
+/* --- 数组快照条 --- */
+
+.snapshot-bar .label {
+    color: #f9a8d4;
+    font-weight: 700;
+    margin-right: 6px;
+}
+
+/* --- 排序柱状图（跨页公共部分） --- */
+
+.bar.sorted {
+    background: linear-gradient(180deg, #10b981 0%, #065f46 100%);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.bar-index {
+    position: absolute;
+    bottom: -22px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11px;
+    color: #64748b;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+/* --- DP 网格单元格状态 --- */
+
+.cell.header {
+    background: #1e293b;
+    color: #a78bfa;
+    font-weight: 700;
+}
+
+.cell.header.active-header {
+    background: rgba(99, 102, 241, 0.25);
+    color: #c4b5fd;
+}
+
+/* 基础行/列：i=0 或 j=0，灰度 */
+.cell.dp-val[data-row="0"],
+        .cell.dp-val[data-col="0"] {
+    background: #334155;
+    color: #cbd5e1;
+    opacity: 0.75;
+}
+
+/* 当前正在计算的格子（focus）：金色系 */
+.cell.processing {
+    background: rgba(251, 191, 36, 0.32);
+    color: #fffbeb;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.55);
+}
+
+/* 不选来源：蓝色边框 + 半透明蓝色背景（dp[i-1][j]） */
+.cell.ref-skip {
+    background: rgba(59, 130, 246, 0.18);
+    border: 2px solid #3b82f6;
+    color: #93c5fd;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+/* 已填完的格子 */
+.cell.finished {
+    background: rgba(148, 163, 184, 0.18);
+    color: #e2e8f0;
+}
+
+/* 回溯路径中"真正选择物品"的决策格：洋红强高亮，优先级最高 */
+.cell.path-take {
+    background: rgba(236, 72, 153, 0.45) !important;
+    color: #fdf2f8 !important;
+    font-weight: 800 !important;
+    border: 2px solid #ec4899 !important;
+    box-shadow: 0 0 14px rgba(236, 72, 153, 0.75) !important;
+}
+
+/* --- 背包当前物品读数 --- */
+
+.current-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 12.5px;
+    color: #cbd5e1;
+}
+
+.current-item .idx {
+    color: #fbbf24;
+    font-weight: 700;
+}
+
+.current-item .w {
+    color: #60a5fa;
+    font-weight: 700;
+}
+
+.current-item .v {
+    color: #34d399;
+    font-weight: 700;
+}
+
+/* --- DP 数组速览条 --- */
+
+.array-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: #0f172a;
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 10px;
+}
+
+.array-cell {
+    min-width: 56px;
+    height: 56px;
+    padding: 4px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    color: #cbd5e1;
+    background: #111827;
+    border: 2px solid #475569;
+    border-radius: 8px;
+    transition: transform .2s ease, background-color .2s ease,
+    border-color .2s ease, box-shadow .2s ease;
+}
+
+.array-cell .cell-index {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.array-cell .cell-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+/* --- 图遍历可视化（BFS/DFS） --- */
+
+/* 图 */
+.graph-svg {
+    width: 100%;
+    height: 260px;
+    display: block;
+    background: #0f172a;
+    border: 1px solid rgba(139,92,246,0.2);
+    border-radius: 10px;
+}
+
+.graph-node {
+    transition: all .3s ease;
+    cursor: pointer;
+}
+
+.graph-node .node-circle {
+    stroke-width: 3;
+    transition: all .3s ease;
+    r: 26;
+}
+
+.graph-node .node-label {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 15px;
+    font-weight: 700;
+    fill: #fff;
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+
+/* CSS 优先级：后定义的覆盖先定义的 */
+.graph-node.unvisited .node-circle {
+    fill: #374151;
+    stroke: #6b7280;
+}
+
+.graph-node.neighbor .node-circle {
+    fill: rgba(245,158,11,0.12);
+    stroke: #f59e0b;
+    stroke-width: 2.5;
+}
+
+.graph-node.visited .node-circle {
+    fill: #10b981;
+    stroke: #34d399;
+    filter: drop-shadow(0 0 8px rgba(16,185,129,0.5));
+}
+
+@keyframes node-pulse {
+    0%,100%{transform:scale(1)} 50%{transform:scale(1.1)}
+}
+
+.graph-edge {
+    stroke: #4b5563;
+    stroke-width: 2;
+    fill: none;
+    transition: all .3s ease;
+}
+
+.graph-edge.active {
+    stroke: #fbbf24;
+    stroke-width: 3;
+}
+
+/* 邻接矩阵 */
+.adjacency-matrix {
+    display: grid;
+    gap: 3px;
+    padding: 12px;
+    background: #0f172a;
+    border: 1px solid rgba(139,92,246,0.25);
+    border-radius: 8px;
+    justify-content: center;
+}
+
+.matrix-cell {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1f2937;
+    border: 1px solid #4b5563;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    transition: all .2s ease;
+}
+
+.matrix-cell.header {
+    background: transparent;
+    border-color: transparent;
+    color: #a78bfa;
+    font-size: 11px;
+}
+
+.matrix-cell.has-edge {
+    color: #3b82f6;
+}
+
+.matrix-cell.selected {
+    background: rgba(245,158,11,0.25);
+    border-color: #f59e0b;
+    color: #fbbf24;
+    transform: scale(1.1);
+}
+

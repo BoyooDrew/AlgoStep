@@ -1,6 +1,6 @@
 # AlgoStep 算法实验室 · 算法页 v2.0 风格规范
 
-> 基准实现：[`algorithms/template-test.html`](../algorithms/template-test.html)
+> 基准实现：[`algorithms/template.html`](../algorithms/template.html)
 > 后续所有 v2.0 算法可视化页面均从该模板派生，本规范为其唯一视觉与结构依据。
 
 ---
@@ -9,7 +9,15 @@
 
 - 所有放在 `algorithms/` 下的算法演示页（排序、查找、动态规划、图论等）
 - 页面形态：左侧信息面板 + 中间代码面板 + 右侧舞台面板的**三栏联动**结构
-- 技术要求：单文件、零外部依赖（CSS/JS 全部内联，图标用内联 SVG）
+- 技术要求：共享 v2.0 样式与通用模块，页面只保留业务逻辑
+  - `css/base.css`：设计令牌、基础样式、顶栏、页脚、Toast
+  - `css/algo.css`：算法页三栏布局与全部组件样式
+  - `css/algo-viz.css`：跨页复用的可视化样式（柱状图、网格单元格、数组条等）
+  - `js/algo-utils.js`：`parseNumArray` / `randomIntArray` 等输入解析工具
+  - `js/icons.js`：全站 SVG 图标 Sprite
+  - `js/site.js`：顶部导航栏 + 底部信息栏（统一注入）
+  - `js/algo-core.js`：StepController / CodePanel / 播放与复制绑定
+  - `js/algo-nav.js`：算法目录数据与面包屑下拉导航
 
 ---
 
@@ -182,15 +190,16 @@ font-family: "Inter", "PingFang SC", "Hiragino Sans GB",
 
 ## 7. 新算法页派生步骤
 
-1. 复制 `algorithms/template-test.html` 到目标目录，如 `algorithms/dp/climb-stairs.html`
-2. 改 `<title>`：`AlgoStep 算法实验室 · 爬楼梯`
-3. 改 `NAV_CURRENT = { category: 'dp', page: '爬楼梯' }`，导航面包屑与下拉高亮自动对应
-4. 改标题区：算法中文名、英文简称、简介、复杂度徽标（`infoTitle / infoSubtitle / infoBadges`）
-5. 改「数据与查询」表单控件，适配该算法参数；删掉不用的输入项
-6. 替换示例代码为 `EXAMPLE_CODE`，并保证 `codeLine` 与实际行号一一对应
-7. 编写 `buildSteps()`：每步给出 `{ codeLine, 说明文字, 状态快照 }`
-8. 在 `onStep` 中绘制舞台、刷新侧栏数据、更新 `progressLabel`
-9. 自检：左侧面板不滚动、控制条单行、底部版权可见、无响应式断点
+1. 复制 `algorithms/template.html` 到目标目录，如 `algorithms/dp/climb-stairs.html`
+2. 确认 `<head>` 中 `../css/base.css`、`../css/algo.css`、`../css/algo-viz.css` 路径正确；`<body>` 保持 `class="algo-page"`
+3. 改 `<title>`：`AlgoStep 算法实验室 · 爬楼梯`
+4. 启动处调用 `AlgoNav.init({ current: { category: 'dp', page: '爬楼梯' }, base: '../', home: '../../index.html' })`，面包屑与下拉高亮自动对应
+5. 改标题区：算法中文名、英文简称、简介、复杂度徽标（`infoTitle / infoSubtitle / infoBadges`）
+6. 改「数据与查询」表单控件，适配该算法参数；删掉不用的输入项
+7. 替换示例代码为 `EXAMPLE_CODE`，并保证 `codeLine` 与实际行号一一对应
+8. 编写 `buildSteps()`：每步给出 `{ codeLine, 说明文字, 状态快照 }`
+9. 在 `onStep` 中绘制舞台、刷新侧栏数据、更新 `progressLabel`
+10. 自检：左侧面板不滚动、控制条单行、底部版权可见、无响应式断点
 
 ---
 

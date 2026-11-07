@@ -1,0 +1,343 @@
+/* ============================================================
+ * AlgoStep v2.0 · about.css
+ * 关于页 · 浅色视觉体系
+ * 依赖 base.css
+ * ============================================================ */
+
+.about-main {
+    flex: 1 0 auto;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 18px 20px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* =======================================================
+ * Hero
+ * ======================================================= */
+.about-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 34px 30px 30px;
+    border: 1px solid rgba(199, 210, 254, 0.7);
+    border-radius: 18px;
+    background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 50%, #eef2ff 100%);
+    box-shadow: 0 20px 46px -30px rgba(49, 46, 129, 0.45);
+}
+
+.about-hero::before,
+.about-hero::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(64px);
+    pointer-events: none;
+}
+
+.about-hero::before {
+    width: 240px;
+    height: 240px;
+    top: -110px;
+    left: -70px;
+    background: rgba(99, 102, 241, 0.16);
+}
+
+.about-hero::after {
+    width: 220px;
+    height: 220px;
+    right: -60px;
+    bottom: -100px;
+    background: rgba(14, 165, 233, 0.13);
+}
+
+.about-eyebrow {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border: 1px solid var(--v2-primary-line);
+    border-radius: 999px;
+    background: var(--v2-primary-soft);
+    color: var(--v2-primary);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.about-title {
+    position: relative;
+    z-index: 1;
+    margin: 14px 0 8px;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    background: linear-gradient(120deg, #312e81 0%, #4f46e5 55%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.about-subtitle {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--v2-text-secondary);
+}
+
+.about-links {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 20px;
+    font-size: 10.5px;
+}
+
+.about-links a {
+    color: var(--v2-text-secondary);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.about-links a:hover {
+    color: var(--v2-primary);
+}
+
+/* =======================================================
+ * 内容区块
+ * ======================================================= */
+.about-section {
+    padding: 20px 22px;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: var(--v2-radius-panel);
+    background: var(--v2-bg-card);
+    box-shadow: var(--v2-shadow-panel);
+}
+
+.about-section h2 {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0 0 16px;
+    padding-bottom: 11px;
+    border-bottom: 1px solid var(--v2-border-soft);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--v2-text-strong);
+}
+
+.about-section h2::before {
+    content: '';
+    width: 4px;
+    height: 17px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #6366f1, #8b5cf6);
+}
+
+/* -------- 开发者 -------- */
+.about-profile {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--v2-border-soft);
+    border-radius: var(--v2-radius-card);
+    background: #f8fafc;
+}
+
+.about-avatar {
+    width: 62px;
+    height: 62px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 700;
+    box-shadow: 0 6px 18px -8px rgba(99, 102, 241, 0.75);
+}
+
+.about-profile h3 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--v2-text-strong);
+}
+
+.about-profile p {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--v2-text-secondary);
+}
+
+.about-note {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--v2-primary-light);
+    border-radius: 0 10px 10px 0;
+    background: #f5f3ff;
+    font-size: 11.5px;
+    line-height: 1.75;
+    color: #475569;
+}
+
+.about-note strong {
+    color: var(--v2-text-strong);
+}
+
+/* -------- 项目介绍 -------- */
+.about-sub {
+    margin-bottom: 14px;
+}
+
+.about-sub:last-child {
+    margin-bottom: 0;
+}
+
+.about-sub h3 {
+    margin: 0 0 5px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--v2-text-strong);
+}
+
+.about-sub p {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.75;
+    color: var(--v2-text-secondary);
+}
+
+.tech-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.tech-tag {
+    padding: 4px 12px;
+    border: 1px solid var(--v2-primary-line);
+    border-radius: 999px;
+    background: var(--v2-primary-soft);
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #4338ca;
+}
+
+/* -------- 社交链接 -------- */
+.social-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.social-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid var(--v2-border);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.social-links a:hover {
+    transform: translateY(-1px);
+    border-color: var(--v2-primary-line);
+    background: var(--v2-primary-soft);
+    color: var(--v2-primary);
+}
+
+/* -------- 更新计划时间线 -------- */
+.timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--v2-border-soft);
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.timeline-dot {
+    width: 10px;
+    height: 10px;
+    flex: none;
+    margin-top: 5px;
+    border-radius: 50%;
+}
+
+.timeline-dot.done { background: #10b981; }
+.timeline-dot.in-progress { background: #f59e0b; }
+.timeline-dot.planned { background: var(--v2-text-muted); }
+
+.timeline-content {
+    min-width: 0;
+}
+
+.timeline-title {
+    margin: 0 0 3px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.timeline-desc {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--v2-text-secondary);
+}
+
+/* =======================================================
+ * 窄屏适配
+ * ======================================================= */
+@media (max-width: 600px) {
+    .about-main {
+        padding: 14px 12px 24px;
+        gap: 14px;
+    }
+
+    .about-hero {
+        padding: 26px 20px 24px;
+        border-radius: 16px;
+    }
+
+    .about-title {
+        font-size: 26px;
+    }
+
+    .about-profile {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .about-section {
+        padding: 16px;
+    }
+}

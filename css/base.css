@@ -1,0 +1,390 @@
+/* ============================================================
+ * AlgoStep v2.0 · base.css
+ * 设计令牌 / 全局基础 / 站点外壳（顶部导航栏、页脚、轻提示）
+ * 所有 v2.0 页面共用
+ * ============================================================ */
+
+:root {
+    /* 页面与光晕 */
+    --v2-page:        #eef2f8;
+    --v2-glow-a:      rgba(99, 102, 241, 0.12);
+    --v2-glow-b:      rgba(14, 165, 233, 0.10);
+
+    /* 主色系 */
+    --v2-primary:       #4f46e5;
+    --v2-primary-hover: #4338ca;
+    --v2-primary-light: #818cf8;
+    --v2-primary-soft:  #eef2ff;
+    --v2-primary-line:  #c7d2fe;
+    --v2-primary-active:#a5b4fc;
+
+    /* 中性色 */
+    --v2-bg-card:       #ffffff;
+    --v2-border:        #e2e8f0;
+    --v2-border-soft:   #f1f5f9;
+    --v2-text-strong:   #0f172a;
+    --v2-text:          #1e293b;
+    --v2-text-secondary:#64748b;
+    --v2-text-muted:    #94a3b8;
+
+    /* 深色代码区 */
+    --v2-code-bg:       #0b1017;
+    --v2-code-bar:      #121826;
+    --v2-code-footer:   #0e141d;
+    --v2-code-text:     #e2e8f0;
+
+    /* 状态色 */
+    --v2-pause:         #F97316;
+    --v2-replay:        #B7E445;
+    --v2-replay-text:   #1A2E05;
+
+    /* 圆角与阴影 */
+    --v2-radius-panel: 16px;
+    --v2-radius-card:  12px;
+    --v2-shadow-panel: 0 1px 2px rgba(15, 23, 42, 0.04), 0 18px 40px -24px rgba(15, 23, 42, 0.22);
+    --v2-shadow-menu:  0 14px 34px -10px rgba(15, 23, 42, 0.32);
+
+    /* 字体 */
+    --v2-font: "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+    --v2-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* -------- 全局重置 -------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--v2-page);
+    background-image:
+        radial-gradient(900px 520px at 6% -8%, var(--v2-glow-a), transparent 62%),
+        radial-gradient(820px 520px at 102% 108%, var(--v2-glow-b), transparent 62%);
+    font-family: var(--v2-font);
+    -webkit-font-smoothing: antialiased;
+    color: var(--v2-text);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.mono, .code-line, kbd {
+    font-family: var(--v2-font-mono);
+}
+
+/* =======================================================
+ * 工具类
+ * ======================================================= */
+.hidden { display: none !important; }
+.block  { display: block; }
+.text-center { text-align: center; }
+.ml-auto { margin-left: auto; }
+
+/* =======================================================
+ * 图标系统（内联 SVG Sprite，统一 24×24 线性风格）
+ * Sprite 由 js/icons.js 注入
+ * ======================================================= */
+.ico {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* =======================================================
+ * 顶部全局导航栏（44px 极简深色条）
+ * ======================================================= */
+.topbar {
+    flex: none;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 16px;
+    background: linear-gradient(90deg, #1e1b4b 0%, #312e81 55%, #4c1d95 100%);
+    color: #ffffff;
+    box-shadow: 0 6px 18px -12px rgba(30, 27, 75, 0.9);
+    z-index: 20;
+}
+
+.topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+}
+
+.topbar-logo {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.45);
+}
+
+.topbar-name {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.topbar-divider {
+    width: 1px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.topbar-tagline {
+    font-size: 10.5px;
+    color: rgba(224, 231, 255, 0.75);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.topbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(238, 242, 255, 0.92);
+    font-size: 10.5px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.topbar-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.32);
+}
+.topbar-btn .ico { width: 12px; height: 12px; }
+
+.topbar-btn-primary {
+    border-color: rgba(165, 180, 252, 0.55);
+    background: rgba(99, 102, 241, 0.3);
+    color: #ffffff;
+}
+
+/* =======================================================
+ * 顶栏内认证区（由 js/auth.js 填充）
+ * 深色顶栏上的浅色半透明按钮
+ * ======================================================= */
+.auth-area {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.auth-btn {
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 11px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(238, 242, 255, 0.92);
+    font-size: 10.5px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s;
+}
+.auth-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.32);
+}
+.auth-btn.register-btn {
+    border-color: rgba(165, 180, 252, 0.55);
+    background: rgba(99, 102, 241, 0.3);
+    color: #ffffff;
+}
+
+.user-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 9px;
+    border: 1px solid rgba(110, 231, 183, 0.35);
+    border-radius: 20px;
+    background: rgba(16, 185, 129, 0.14);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.user-badge:hover {
+    background: rgba(16, 185, 129, 0.24);
+    border-color: rgba(110, 231, 183, 0.55);
+}
+.user-avatar {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.user-name {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #a7f3d0;
+}
+
+.user-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 108px;
+    padding: 4px;
+    border: 1px solid var(--v2-border);
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: var(--v2-shadow-menu);
+    z-index: 100;
+}
+.user-dropdown.show { display: block; }
+.user-dropdown a {
+    display: block;
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #475569;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+.user-dropdown a:hover {
+    background: #fef2f2;
+    color: #e11d48;
+}
+
+/* =======================================================
+ * 底部信息栏
+ * ======================================================= */
+.site-footer {
+    flex: none;
+    width: 100%;
+    padding: 12px 20px;
+    border-top: 1px solid var(--v2-border);
+    background: rgba(255, 255, 255, 0.55);
+    text-align: center;
+    font-family: var(--v2-font);
+    font-size: 11.5px;
+    font-weight: 400;
+    line-height: 1.7;
+    letter-spacing: 0.01em;
+    color: #6b7280;
+}
+
+.site-footer--full {
+    padding: 22px 20px 26px;
+}
+
+.site-footer-brand {
+    font-size: inherit;
+    font-weight: 600;
+    color: #475569;
+}
+
+.site-footer-copy {
+    margin-top: 5px;
+    font-size: inherit;
+    color: #94a3b8;
+}
+
+.site-footer-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 10px;
+    font-size: inherit;
+}
+
+.site-footer a {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 400;
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.site-footer a:hover {
+    color: var(--v2-primary);
+}
+
+/* =======================================================
+ * 轻提示 Toast（复制成功等）
+ * ======================================================= */
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translate(-50%, 8px);
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: rgba(30, 27, 75, 0.94);
+    color: #ffffff;
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+    box-shadow: 0 10px 26px -10px rgba(15, 23, 42, 0.7);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 120;
+}
+.toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+/* =======================================================
+ * 窄屏适配（仅站点外壳，算法页保持三栏横向滚动）
+ * ======================================================= */
+@media (max-width: 720px) {
+    .topbar-tagline,
+    .topbar-divider { display: none; }
+
+    .topbar {
+        height: auto;
+        min-height: 44px;
+        padding: 6px 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .topbar-actions { flex-wrap: wrap; }
+}

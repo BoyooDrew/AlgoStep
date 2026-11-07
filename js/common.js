@@ -1,4 +1,10 @@
 /* =====================================================
+ * 【v1 旧版脚本 · 部分在用】StepController 已被 js/algo-core.js
+ * （AlgoV2.StepController）取代，算法页不再引用本文件；
+ * 末尾的 GoatCounter 统计注入仍被 index.html / about.html 使用，
+ * 请勿整文件删除。两边全局 StepController 同名，algo-core.js 导出
+ * 带 || 守卫（先定义者优先），请勿在同一页面混载。
+ * =====================================================
  * common.js —— StepController 步骤控制器
  *
  * 统一构造方式：
