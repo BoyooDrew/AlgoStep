@@ -1,7 +1,9 @@
 # AlgoStep 项目参考文档
 
 > ⚠️ **架构已更新**：本文档描述的是 v1 旧版架构（四区块 + `common.css` / `layout.css`）。
-> 现行 v2.0 结构与页面约定请以 [AlgoStep-v2.0迁移与架构说明](AlgoStep-v2.0迁移与架构说明.md) 为准。
+> v1 资源文件（`common.css` / `layout.css` / `animations.css` / `common.js` / `code-panel.js` / `controls.js`）
+> **已删除**，相关章节仅作历史记录；现行结构请以
+> [AlgoStep-v2.0迁移与架构说明](AlgoStep-v2.0迁移与架构说明.md) 为准。
 
 > 本文档为 AI 辅助开发的精简参考，涵盖项目全貌、架构、规范、待办。
 > 模型调用开发时读取本文件即可获取完整上下文，无需逐个读取源文件。

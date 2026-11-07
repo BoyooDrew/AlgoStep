@@ -33,10 +33,7 @@ AlgoStep/
 │   ├── algo-viz.css           # 跨页复用的可视化样式
 │   ├── home.css               # 首页
 │   ├── auth.css               # 登录 / 注册
-│   ├── about.css              # 关于页
-│   ├── common.css             # [v1 保留备查]
-│   ├── layout.css             # [v1 保留备查]
-│   └── animations.css         # [v1 遗留，无引用]
+│   └── about.css              # 关于页
 ├── js/
 │   ├── icons.js               # SVG 图标 Sprite
 │   ├── site.js                # 顶部导航 + 页脚注入
@@ -44,10 +41,8 @@ AlgoStep/
 │   ├── algo-nav.js            # 算法目录与面包屑
 │   ├── algo-utils.js          # 输入解析与随机数组
 │   ├── auth.js                # 登录态
-│   ├── goatcounter.js         # 统计脚本
-│   ├── common.js              # [v1 保留：末尾统计注入仍被首页/关于页使用]
-│   ├── code-panel.js          # [v1 保留备查]
-│   └── controls.js            # [v1 保留备查]
+│   ├── analytics.js           # GoatCounter 统计注入（首页 / 关于页）
+│   └── goatcounter.js         # 统计脚本
 └── algorithms/
     ├── template.html          # v2.0 基准模板
     ├── dp/{climb-stairs,0-1knapsack,complete-knapsack,lcs,lis}.html
@@ -55,7 +50,7 @@ AlgoStep/
     └── sort/{bubble-sort,selection-sort,insertion-sort,quick-sort}.html
 ```
 
-> v1 资源未删除，仅在文件头标注用途边界；新页面不得引用。
+> v1 旧资源（`css/common.css`、`layout.css`、`animations.css`、`js/common.js`、`code-panel.js`、`controls.js`）已随 v2.0 迁移完成而删除；其中 `js/common.js` 末尾的 GoatCounter 注入已拆分为 `js/analytics.js`。
 
 ---
 
