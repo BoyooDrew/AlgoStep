@@ -106,7 +106,8 @@ font-family: "Inter", "PingFang SC", "Hiragino Sans GB",
 ### 4.2 标题圆角卡
 
 - 独立圆角卡：`margin: 6px 10px 0`、`border-radius: 12px`、靛蓝 135° 渐变
-- 内部：算法中文名（18px，700）+ 英文简称小标签（`ALGO·TPL`，等宽、半透明底）+ 一行简介 + 复杂度徽标
+- 内部：算法中文名（18px，700）+ 英文简称小标签（`ALGO·TPL`，等宽、半透明底）+ 一行简介 + 难度/考察内容标签行 + 虚线分隔的复杂度行（时间/空间，图标 + 等宽数值）
+- 标签分两层：难度/考察内容用 `.info-badge` 胶囊（难度用 `--level` 暖色变体）；时间/空间复杂度单独一行 `.info-complexity`，与标签之间用 `1px dashed rgba(255,255,255,.2)` 分隔
 - `::before / ::after` 两个模糊光晕装饰，靠 `overflow:hidden` 收在圆角内
 - 标题区高度需控制在 ~120px 内，保证左侧面板不滚动
 
