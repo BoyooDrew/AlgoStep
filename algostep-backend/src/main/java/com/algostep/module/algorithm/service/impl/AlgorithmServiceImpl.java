@@ -48,6 +48,7 @@ public class AlgorithmServiceImpl implements AlgorithmService {
         vo.setNameZh(algorithm.getNameZh());
         vo.setCategory(algorithm.getCategory());
         vo.setDifficulty(algorithm.getDifficulty());
+        vo.setComplexity(algorithm.getComplexity());
         vo.setUrl(algorithm.getUrl());
         vo.setDescription(algorithm.getDescription());
         return vo;

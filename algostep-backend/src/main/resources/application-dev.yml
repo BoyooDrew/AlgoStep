@@ -16,6 +16,7 @@ spring:
   sql:
     init:
       mode: always
+      encoding: UTF-8
       schema-locations: classpath:sql/init.sql
 
 # 前端静态文件路径（相对于 algostep-backend 工作目录的上级目录）

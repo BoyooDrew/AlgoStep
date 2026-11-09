@@ -1,13 +1,14 @@
 /**
  * auth.js —— 前端认证工具
  *
+ * 依赖：js/api.js（统一请求层，须在本文件之前引入）
+ *
  * 功能：
  *   - 登录 / 注册 / 登出 API 调用
  *   - JWT Token 管理（localStorage）
  *   - 登录状态检测与 UI 更新
  */
 
-const AUTH_API = 'http://localhost:8080/api/auth';
 const TOKEN_KEY = 'algostep_token';
 const REFRESH_KEY = 'algostep_refresh';
 const USER_KEY = 'algostep_user';
@@ -48,59 +49,29 @@ function isLoggedIn() {
   return !!getToken();
 }
 
-/* ====== API 调用 ====== */
+/* ====== API 调用（统一走 js/api.js） ====== */
 async function loginAPI(username, password) {
-  const res = await fetch(`${AUTH_API}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  });
-  return res.json();
+  return AlgoAPI.post('/auth/login', { username, password }, { silent: true });
 }
 
 async function registerAPI(username, email, password) {
-  const res = await fetch(`${AUTH_API}/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, email, password })
-  });
-  return res.json();
+  return AlgoAPI.post('/auth/register', { username, email, password }, { silent: true });
 }
 
 async function logoutAPI() {
-  const token = getToken();
-  if (!token) return;
-  try {
-    await fetch(`${AUTH_API}/logout`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
-      }
-    });
-  } catch (e) {
-    // 网络错误不影响前端登出
+  if (getToken()) {
+    try {
+      await AlgoAPI.post('/auth/logout', {}, { silent: true, noLoading: true });
+    } catch (e) {
+      // 网络错误不影响前端登出
+    }
   }
   clearAuth();
 }
 
-/* ====== 通用请求封装（带 Token） ====== */
-async function authFetch(url, options = {}) {
-  const token = getToken();
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {})
-  };
-  if (token) {
-    headers['Authorization'] = 'Bearer ' + token;
-  }
-  const res = await fetch(url, { ...options, headers });
-  if (res.status === 401) {
-    clearAuth();
-    window.location.href = './login.html';
-    return;
-  }
-  return res;
+/* ====== 通用请求封装（带 Token，401 由 api.js 统一处理） ====== */
+function authFetch(path, options = {}) {
+  return AlgoAPI.request(path, options);
 }
 
 /* ====== UI 更新 ====== */

@@ -10,6 +10,7 @@ public class AlgorithmVO {
     private String nameZh;
     private String category;
     private String difficulty;
+    private String complexity;
     private String url;
     private String description;
 }

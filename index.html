@@ -58,7 +58,7 @@
   </section>
 
   <!-- 动态规划 -->
-  <section class="category-block">
+  <section class="category-block" data-category="dp">
     <div class="category-head">
       <div class="category-icon dp">DP</div>
       <h2 class="category-title">动态规划 <small>Dynamic Programming</small></h2>
@@ -109,7 +109,7 @@
   </section>
 
   <!-- 排序 -->
-  <section class="category-block">
+  <section class="category-block" data-category="sort">
     <div class="category-head">
       <div class="category-icon sort">S</div>
       <h2 class="category-title">排序 <small>Sorting</small></h2>
@@ -152,7 +152,7 @@
   </section>
 
   <!-- 搜索 -->
-  <section class="category-block">
+  <section class="category-block" data-category="search">
     <div class="category-head">
       <div class="category-icon search">Q</div>
       <h2 class="category-title">搜索 <small>Search</small></h2>
@@ -186,25 +186,6 @@
     </div>
   </section>
 
-  <!-- 开发者工具 -->
-  <section class="category-block dev-block">
-    <div class="category-head">
-      <div class="category-icon tool">T</div>
-      <h2 class="category-title">开发工具 <small>Developer</small></h2>
-      <span class="category-count">1 个模板</span>
-    </div>
-    <div class="card-grid">
-      <a class="algo-card" href="./algorithms/template.html">
-        <div class="algo-name">v2.0 算法模板 <small>Template</small></div>
-        <div class="algo-desc">基于共享 v2.0 样式与通用组件的算法页面模板，复制后仅需填充业务逻辑。</div>
-        <div class="algo-meta">
-          <span class="difficulty basic">基础 · Basic</span>
-          <span class="algo-complexity">v2.0</span>
-        </div>
-      </a>
-    </div>
-  </section>
-
   <!-- 更新日志 -->
   <section class="changelog-block">
     <h3 class="changelog-title">更新日志 · Changelog</h3>
@@ -223,7 +204,89 @@
 </main>
 
 <script src="./js/site.js" data-base="./" data-auth="on" data-footer="full"></script>
+<script src="./js/api.js"></script>
 <script src="./js/auth.js"></script>
+<script>
+  /* 首页算法卡片：由后端 /api/algorithms 驱动；接口不可用时保留上方静态兜底卡片 */
+  (function () {
+    if (!window.AlgoAPI) return;
+
+    var DIFFICULTY_LABEL = {
+      beginner: '入门 · Beginner',
+      basic: '基础 · Basic',
+      advanced: '进阶 · Advanced'
+    };
+    var EN_NAME_SPECIAL = {
+      'lis': 'LIS',
+      'lcs': 'LCS',
+      'dfs': 'DFS',
+      'bfs': 'BFS',
+      '0-1knapsack': '0-1 Knapsack'
+    };
+
+    function esc(text) {
+      return String(text == null ? '' : text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function enName(slug) {
+      if (EN_NAME_SPECIAL[slug]) return EN_NAME_SPECIAL[slug];
+      return String(slug || '').split('-').map(function (word) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      }).join(' ');
+    }
+
+    function hrefOf(url) {
+      if (!url) return '#';
+      return url.charAt(0) === '/' ? '.' + url : url;
+    }
+
+    function cardOf(item) {
+      return '<a class="algo-card" href="' + esc(hrefOf(item.url)) +
+        '" data-algorithm="' + esc(item.name) + '">' +
+        '<div class="algo-name">' + esc(item.nameZh) + ' <small>' + esc(enName(item.name)) + '</small></div>' +
+        '<div class="algo-desc">' + esc(item.description || '') + '</div>' +
+        '<div class="algo-meta">' +
+        '<span class="difficulty ' + esc(item.difficulty) + '">' +
+        esc(DIFFICULTY_LABEL[item.difficulty] || item.difficulty || '') + '</span>' +
+        (item.complexity ? '<span class="algo-complexity">' + esc(item.complexity) + '</span>' : '') +
+        '</div></a>';
+    }
+
+    AlgoAPI.get('/algorithms', { noLoading: true }).then(function (list) {
+      if (!Array.isArray(list) || list.length === 0) return;
+
+      var items = list.filter(function (item) {
+        return item && item.url && item.url.indexOf('template') === -1;
+      });
+
+      var categories = [];
+      items.forEach(function (item) {
+        if (categories.indexOf(item.category) === -1) categories.push(item.category);
+      });
+
+      categories.forEach(function (category) {
+        var section = document.querySelector('.category-block[data-category="' + category + '"]');
+        if (!section) return;
+        var group = items.filter(function (item) { return item.category === category; });
+        var grid = section.querySelector('.card-grid');
+        var count = section.querySelector('.category-count');
+        if (grid) grid.innerHTML = group.map(cardOf).join('');
+        if (count) count.textContent = group.length + ' 个算法';
+      });
+
+      var statAlgos = document.getElementById('stat-algos');
+      var statCats = document.getElementById('stat-cats');
+      if (statAlgos) statAlgos.textContent = items.length;
+      if (statCats) statCats.textContent = categories.length;
+    }).catch(function () {
+      /* 后端未启动或接口异常：保留静态兜底卡片 */
+    });
+  })();
+</script>
 <script src="./js/analytics.js"></script>
 
 </body>

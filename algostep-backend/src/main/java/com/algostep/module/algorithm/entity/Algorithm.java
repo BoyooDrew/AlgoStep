@@ -24,6 +24,9 @@ public class Algorithm {
 
     private String difficulty;
 
+    /** 时间复杂度展示文案，如 O(n log n) */
+    private String complexity;
+
     private String url;
 
     private String description;

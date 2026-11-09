@@ -27,7 +27,8 @@ mybatis-plus:
 
 # JWT 配置
 jwt:
-  secret: algostep-secret-key-2026-must-be-at-least-256-bits-long-for-hs256
+  # 生产环境务必通过环境变量 JWT_SECRET 注入（至少 256 位）
+  secret: ${JWT_SECRET:algostep-secret-key-2026-must-be-at-least-256-bits-long-for-hs256}
   # Access Token 有效期（毫秒）2小时
   access-token-expiration: 7200000
   # Refresh Token 有效期（毫秒）7天

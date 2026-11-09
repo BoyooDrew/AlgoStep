@@ -10,6 +10,7 @@ spring:
   sql:
     init:
       mode: always
+      encoding: UTF-8
       schema-locations: classpath:sql/schema-h2.sql
 
   # H2 Web 控制台（调试用，访问 /h2-console）

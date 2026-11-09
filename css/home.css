@@ -352,16 +352,6 @@
     color: var(--v2-text-secondary);
 }
 
-/* 开发工具区块：虚线卡片 */
-.category-block.dev-block .algo-card {
-    border-style: dashed;
-    background: #fcfcfe;
-}
-.category-block.dev-block .algo-card:hover {
-    border-style: solid;
-    background: #ffffff;
-}
-
 /* =======================================================
  * 更新日志
  * ======================================================= */

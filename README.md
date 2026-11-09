@@ -55,6 +55,7 @@ open index.html
 - [v2.0 迁移与架构说明](docs/AlgoStep-v2.0迁移与架构说明.md)
 - [算法页 v2.0 风格规范](docs/AlgoStep-算法页v2.0风格规范.md)
 - [v2.0 全站视觉规范](docs/AlgoStep-v2.0全站视觉规范.md)
+- [前后端联调与落地路线图](docs/AlgoStep-前后端联调与落地路线图.md)
 
 ## 许可证
 
