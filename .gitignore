@@ -5,6 +5,9 @@ view.html
 .uploads/
 .trae-html-share-packages/
 
+# 前端静态发布产物（由 dist 复制生成，仅用于 Surge 部署）
+dist/
+
 # Java / Maven
 target/
 *.class
