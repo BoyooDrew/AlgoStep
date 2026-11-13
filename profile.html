@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人中心 · AlgoStep</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='asg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%236366f1'/><stop offset='1' stop-color='%238b5cf6'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='url(%23asg)'/><text x='16' y='22.5' font-size='15' font-weight='700' fill='white' text-anchor='middle' font-family='Inter,Arial,sans-serif'>AS</text></svg>">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/profile.css">
+</head>
+<body class="profile-page">
+
+<!-- 全站图标库 -->
+<script src="./js/icons.js"></script>
+
+<!-- 个人中心补充图标（内联 Sprite，避免修改公共 icons.js） -->
+<svg class="profile-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="p-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></symbol>
+  <symbol id="p-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="p-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></symbol>
+  <symbol id="p-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+  <symbol id="p-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 7 12 13 2 7"/></symbol>
+  <symbol id="p-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="p-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="p-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+</svg>
+
+<main class="profile-shell">
+
+  <!-- ==================== 左侧栏 ==================== -->
+  <aside class="profile-sidebar">
+    <section class="profile-card">
+      <div class="profile-avatar avatar-box" id="sidebarAvatar">
+        <span class="avatar-fallback">A</span>
+      </div>
+      <h1 class="profile-name" id="sidebarName">加载中…</h1>
+      <p class="profile-email" id="sidebarEmail">—</p>
+      <span class="profile-role" id="sidebarRole">USER</span>
+    </section>
+
+    <nav class="profile-nav" aria-label="个人中心导航">
+      <button class="profile-nav-item is-active" data-tab="overview" type="button">
+        <svg class="ico"><use href="#i-home"/></svg><span>概览</span>
+      </button>
+      <button class="profile-nav-item" data-tab="profile" type="button">
+        <svg class="ico"><use href="#i-layout"/></svg><span>个人资料</span>
+      </button>
+      <button class="profile-nav-item" data-tab="security" type="button">
+        <svg class="ico"><use href="#p-shield"/></svg><span>账号安全</span>
+      </button>
+      <button class="profile-nav-item" data-tab="progress" type="button">
+        <svg class="ico"><use href="#i-clock"/></svg><span>学习进度</span>
+      </button>
+      <button class="profile-nav-item" data-tab="favorites" type="button">
+        <svg class="ico"><use href="#i-star"/></svg><span>我的收藏</span>
+      </button>
+      <button class="profile-nav-item" data-tab="notifications" type="button">
+        <svg class="ico"><use href="#p-bell"/></svg><span>消息通知</span>
+        <span class="nav-badge hidden" id="navNotifBadge">0</span>
+      </button>
+    </nav>
+
+    <button class="profile-logout" id="btnLogout" type="button">
+      <svg class="ico"><use href="#p-logout"/></svg><span>退出登录</span>
+    </button>
+  </aside>
+
+  <!-- ==================== 右侧内容 ==================== -->
+  <section class="profile-main">
+
+    <!-- ---------- 概览 ---------- -->
+    <section class="profile-panel is-active" data-panel="overview">
+      <header class="panel-head">
+        <div>
+          <h2>学习概览</h2>
+          <p>汇总你的学习进度与收藏，数据来自 AlgoStep 后端。</p>
+        </div>
+        <a class="panel-action" href="./index.html">去探索算法</a>
+      </header>
+
+      <div class="stat-grid">
+        <article class="stat-card">
+          <span class="stat-label">已接触算法</span>
+          <strong class="stat-value" id="statTotal">0</strong>
+          <span class="stat-foot" id="statTotalFoot">共 0 个算法</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">学习中</span>
+          <strong class="stat-value" id="statLearning">0</strong>
+          <span class="stat-foot">继续完成未掌握的算法</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">已掌握</span>
+          <strong class="stat-value" id="statMastered">0</strong>
+          <span class="stat-foot" id="statMasteredFoot">完成率 0%</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">累计学习</span>
+          <strong class="stat-value stat-value--sm" id="statTime">0 分钟</strong>
+          <span class="stat-foot">按算法页实际上报累计</span>
+        </article>
+      </div>
+
+      <div class="overview-grid">
+        <article class="panel-card">
+          <header class="card-head">
+            <h3>最近学习</h3>
+            <button class="text-link" data-tab-link="progress" type="button">查看全部</button>
+          </header>
+          <div class="mini-list" id="recentProgress"></div>
+        </article>
+
+        <article class="panel-card">
+          <header class="card-head">
+            <h3>最近收藏</h3>
+            <button class="text-link" data-tab-link="favorites" type="button">查看全部</button>
+          </header>
+          <div class="mini-list" id="recentFavorites"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ---------- 个人资料 ---------- -->
+    <section class="profile-panel" data-panel="profile">
+      <header class="panel-head">
+        <div>
+          <h2>个人资料</h2>
+          <p>昵称会显示在右上角，头像支持图片 URL。</p>
+        </div>
+      </header>
+
+      <div class="alert" id="profileAlert" role="status"></div>
+
+      <form class="profile-form" id="profileForm" novalidate>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="inputUsername">用户名</label>
+            <input id="inputUsername" type="text" disabled>
+            <p class="form-hint">用户名注册后不可修改</p>
+          </div>
+          <div class="form-field">
+            <label for="inputEmail">邮箱</label>
+            <input id="inputEmail" type="email" disabled>
+            <p class="form-hint">邮箱暂不支持修改</p>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="inputNickname">昵称</label>
+            <input id="inputNickname" type="text" maxlength="50" placeholder="给自己起个昵称">
+            <p class="form-hint">最多 50 个字符</p>
+          </div>
+          <div class="form-field">
+            <label for="inputAvatar">头像 URL</label>
+            <input id="inputAvatar" type="text" maxlength="255" placeholder="https://example.com/avatar.png">
+            <p class="form-hint">留空则使用昵称首字母头像</p>
+          </div>
+        </div>
+
+        <div class="avatar-preview">
+          <div class="profile-avatar avatar-box" id="formAvatarPreview">
+            <span class="avatar-fallback">A</span>
+          </div>
+          <div class="avatar-preview-text">
+            <strong>头像预览</strong>
+            <p>支持 http/https 图片地址，加载失败自动回退首字母。</p>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-primary" id="btnSaveProfile" type="submit">保存修改</button>
+          <button class="btn-ghost" id="btnResetProfile" type="button">重置</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ---------- 账号安全 ---------- -->
+    <section class="profile-panel" data-panel="security">
+      <header class="panel-head">
+        <div>
+          <h2>账号安全</h2>
+          <p>修改密码前需要验证原密码，新密码长度 6–50 位。</p>
+        </div>
+      </header>
+
+      <div class="alert" id="pwdAlert" role="status"></div>
+
+      <form class="profile-form profile-form--narrow" id="passwordForm" novalidate>
+        <div class="form-field">
+          <label for="oldPassword">原密码</label>
+          <input id="oldPassword" type="password" autocomplete="current-password" placeholder="请输入当前密码">
+        </div>
+        <div class="form-field">
+          <label for="newPassword">新密码</label>
+          <input id="newPassword" type="password" autocomplete="new-password" placeholder="6–50 位新密码">
+          <p class="form-hint">修改成功后需要使用新密码重新登录</p>
+        </div>
+        <div class="form-field">
+          <label for="confirmPassword">确认新密码</label>
+          <input id="confirmPassword" type="password" autocomplete="new-password" placeholder="再次输入新密码">
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="btnChangePassword" type="submit">确认修改</button>
+        </div>
+      </form>
+
+      <aside class="security-note">
+        <strong>安全提示</strong>
+        <p>JWT 是无状态令牌。后端当前不会在改密后主动吊销已签发的 Token，因此本页在修改成功后强制退出登录；生产环境建议增加 Token 版本号或 Redis 黑名单。</p>
+      </aside>
+    </section>
+
+    <!-- ---------- 学习进度 ---------- -->
+    <section class="profile-panel" data-panel="progress">
+      <header class="panel-head">
+        <div>
+          <h2>学习进度</h2>
+          <p>进度由算法页上报；状态分为未开始、学习中、已掌握。</p>
+        </div>
+        <div class="segmented" id="progressFilter">
+          <button class="is-active" data-filter="ALL" type="button">全部</button>
+          <button data-filter="LEARNING" type="button">学习中</button>
+          <button data-filter="MASTERED" type="button">已掌握</button>
+        </div>
+      </header>
+      <div class="progress-list" id="progressList"></div>
+    </section>
+
+    <!-- ---------- 我的收藏 ---------- -->
+    <section class="profile-panel" data-panel="favorites">
+      <header class="panel-head">
+        <div>
+          <h2>我的收藏</h2>
+          <p>收藏按加入时间倒序排列，可直接跳回算法页。</p>
+        </div>
+        <a class="panel-action" href="./index.html">发现更多</a>
+      </header>
+      <div class="favorite-grid" id="favoriteList"></div>
+    </section>
+
+    <!-- ---------- 消息通知 ---------- -->
+    <section class="profile-panel" data-panel="notifications">
+      <header class="panel-head">
+        <div>
+          <h2>消息通知 <span class="title-badge hidden" id="notifUnreadBadge">0</span></h2>
+          <p>系统通知、进度提醒与成就消息。</p>
+        </div>
+        <div class="notify-actions">
+          <label class="switch">
+            <input id="unreadOnly" type="checkbox">
+            <span>只看未读</span>
+          </label>
+          <button class="btn-ghost btn-sm" id="btnReadAll" type="button">全部已读</button>
+        </div>
+      </header>
+      <div class="notification-list" id="notificationList"></div>
+      <footer class="pager" id="notifyPager">
+        <button class="btn-ghost btn-sm" id="btnPrevPage" type="button">上一页</button>
+        <span id="pageInfo">第 1 / 1 页</span>
+        <button class="btn-ghost btn-sm" id="btnNextPage" type="button">下一页</button>
+      </footer>
+    </section>
+
+  </section>
+</main>
+
+<script src="./js/site.js" data-base="./" data-auth="on" data-footer="full"></script>
+<script src="./js/api.js"></script>
+<script src="./js/auth.js"></script>
+<script src="./js/profile.js"></script>
+</body>
+</html>

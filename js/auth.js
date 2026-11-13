@@ -12,6 +12,16 @@
 const TOKEN_KEY = 'algostep_token';
 const REFRESH_KEY = 'algostep_refresh';
 const USER_KEY = 'algostep_user';
+const UNREAD_KEY = 'algostep_unread';   // 新增：顶栏未读角标缓存
+
+function escapeHtml(text) {
+  return String(text == null ? '' : text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 /* ====== Token 管理 ====== */
 function getToken() {
@@ -31,18 +41,32 @@ function setAuth(data) {
     nickname: data.nickname,
     role: data.role
   }));
+  localStorage.removeItem(UNREAD_KEY);   // 新增：清除未读角标缓存
 }
 
 function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REFRESH_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(UNREAD_KEY);   // 新增：清除未读角标缓存
 }
 
 function getUser() {
   const raw = localStorage.getItem(USER_KEY);
   if (!raw) return null;
   try { return JSON.parse(raw); } catch { return null; }
+}
+
+/**
+ * 局部更新 localStorage 中的用户信息，并刷新顶栏
+ * @param {Object} partial 例如 { nickname: '新昵称', avatar: 'https://...' }
+ */
+function updateCachedUser(partial) {
+  const current = getUser() || {};
+  const next = Object.assign({}, current, partial || {});
+  localStorage.setItem(USER_KEY, JSON.stringify(next));
+  updateAuthUI();
+  return next;
 }
 
 function isLoggedIn() {
@@ -81,12 +105,33 @@ function updateAuthUI() {
   if (!container) return;
 
   if (user) {
+    const displayName = user.nickname || user.username || '用户';
+    const initial = String(displayName).trim().charAt(0).toUpperCase() || 'U';
+    const avatar = typeof user.avatar === 'string' ? user.avatar.trim() : '';
+
+    // 有头像 URL 时渲染图片；图片加载失败自动移除，露出首字母
+    const avatarHtml = avatar
+      ? '<span class="user-avatar">' +
+          '<span class="avatar-fallback">' + escapeHtml(initial) + '</span>' +
+          '<img src="' + escapeHtml(avatar) + '" alt="" onerror="this.remove()">' +
+        '</span>'
+      : '<span class="user-avatar">' + escapeHtml(initial) + '</span>';
+
+    const unread = Number(localStorage.getItem(UNREAD_KEY) || 0);
+    const unreadHtml = unread > 0
+      ? '<span class="dropdown-badge">' + (unread > 99 ? '99+' : unread) + '</span>'
+      : '';
+
     container.innerHTML = `
       <div class="user-badge" onclick="toggleUserMenu(event)">
-        <span class="user-avatar">${user.username.charAt(0).toUpperCase()}</span>
-        <span class="user-name">${user.nickname || user.username}</span>
+        ${avatarHtml}
+        <span class="user-name">${escapeHtml(displayName)}</span>
         <div class="user-dropdown" id="user-dropdown">
-          <a href="javascript:void(0)" onclick="handleLogout()">登出</a>
+          <a href="./profile.html">个人中心</a>
+          <a href="./profile.html#progress">学习进度</a>
+          <a href="./profile.html#favorites">我的收藏</a>
+          <a href="./profile.html#notifications">消息通知${unreadHtml}</a>
+          <a href="javascript:void(0)" class="danger" onclick="handleLogout()">退出登录</a>
         </div>
       </div>
     `;

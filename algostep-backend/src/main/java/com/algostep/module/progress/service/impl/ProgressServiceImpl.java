@@ -127,7 +127,7 @@ public class ProgressServiceImpl implements ProgressService {
             progress.setStatus(dto.getStatus());
         } else {
             // 自动判断状态
-            if (progress.getTotalSteps() > 0 && progress.getStepIndex() >= progress.getTotalSteps()) {
+            if (progress.getTotalSteps() > 0 && progress.getStepIndex() >= progress.getTotalSteps() - 1) {
                 progress.setStatus(LearningStatus.MASTERED.getCode());
             } else if (progress.getStepIndex() > 0) {
                 progress.setStatus(LearningStatus.LEARNING.getCode());
@@ -200,6 +200,7 @@ public class ProgressServiceImpl implements ProgressService {
             vo.setAlgorithmNameZh(algorithm.getNameZh());
             vo.setCategory(algorithm.getCategory());
             vo.setDifficulty(algorithm.getDifficulty());
+            vo.setUrl(algorithm.getUrl());   // 新增：算法页路径，供“继续学习”跳转
         }
 
         return vo;

@@ -79,8 +79,10 @@ public class UserServiceImpl implements UserService {
         if (StringUtils.hasText(dto.getNickname())) {
             user.setNickname(dto.getNickname());
         }
-        if (StringUtils.hasText(dto.getAvatar())) {
-            user.setAvatar(dto.getAvatar());
+        // 新逻辑：null 表示“不修改”，空字符串表示“清空”
+        if (dto.getAvatar() != null) {
+            String avatar = dto.getAvatar().trim();
+            user.setAvatar(avatar.isEmpty() ? null : avatar);
         }
 
         userMapper.updateById(user);

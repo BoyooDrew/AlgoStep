@@ -13,6 +13,7 @@ public class ProgressVO {
     private String algorithmNameZh;
     private String category;
     private String difficulty;
+    private String url;          // 新增：算法页路径，供“继续学习”跳转
     private String status;
     private Integer stepIndex;
     private Integer totalSteps;

@@ -86,6 +86,10 @@
     }
   });
 
+  const redirect = new URLSearchParams(location.search).get('redirect');
+  const loginUrl = './login.html' + (redirect ? '?redirect=' + encodeURIComponent(redirect) : '');
+  window.location.href = loginUrl;
+
   async function handleRegister(event) {
     event.preventDefault();
 

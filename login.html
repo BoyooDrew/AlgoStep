@@ -46,7 +46,13 @@
     </form>
 
     <div class="auth-footer">
-      还没有账号？<a href="./register.html">立即注册</a>
+      还没有账号？<a id="registerLink" href="./register.html">立即注册</a>
+      <script>
+        if (REDIRECT !== './index.html') {
+          document.getElementById('registerLink').href =
+            './register.html?redirect=' + encodeURIComponent(REDIRECT);
+        }
+      </script>
     </div>
 
     <div class="back-home">
@@ -59,9 +65,22 @@
 <script src="./js/api.js"></script>
 <script src="./js/auth.js"></script>
 <script>
-  // 已登录则跳转首页
+  // 只允许站内 .html 相对路径，防止开放重定向
+  function getSafeRedirect() {
+    const raw = new URLSearchParams(location.search).get('redirect');
+    if (!raw) return './index.html';
+    // 允许 ./profile.html、../index.html、/profile.html，可带 #hash
+    if (!/^\.{0,2}\/[A-Za-z0-9._\-\/]*\.html(?:#[A-Za-z0-9_-]+)?$/.test(raw)) {
+      return './index.html';
+    }
+    return raw;
+  }
+
+  const REDIRECT = getSafeRedirect();
+
+  // 已登录则直接去目标页
   if (isLoggedIn()) {
-    window.location.href = './index.html';
+    window.location.href = REDIRECT;
   }
 
   async function handleLogin(event) {
@@ -79,7 +98,7 @@
     try {
       const data = await loginAPI(username, password);
       setAuth(data);
-      window.location.href = './index.html';
+      window.location.href = REDIRECT;   // 关键：回到来源页
     } catch (err) {
       errEl.textContent = (err && err.msg) || '网络错误，请检查后端服务是否启动';
       errEl.classList.add('visible');

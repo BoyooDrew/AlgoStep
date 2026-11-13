@@ -291,6 +291,64 @@ body {
     color: #e11d48;
 }
 
+/* 头像支持图片：图片绝对定位覆盖在首字母上 */
+.user-avatar {
+    position: relative;
+    overflow: hidden;
+}
+.user-avatar .avatar-fallback {
+    position: relative;
+    z-index: 0;
+}
+.user-avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* 下拉菜单加宽，容纳“消息通知 + 角标” */
+.user-dropdown {
+    min-width: 142px;
+}
+.user-dropdown a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+/* 普通菜单项 hover：浅灰；危险项 hover：浅红 */
+.user-dropdown a:hover {
+    background: #f8fafc;
+    color: var(--v2-text);
+}
+.user-dropdown a.danger {
+    color: #e11d48;
+}
+.user-dropdown a.danger:hover {
+    background: #fff1f2;
+    color: #be123c;
+}
+
+/* 未读角标 */
+.dropdown-badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 9.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* =======================================================
  * 底部信息栏
  * ======================================================= */
