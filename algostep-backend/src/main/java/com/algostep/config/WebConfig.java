@@ -23,7 +23,9 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         String location = resolveFrontendLocation();
         log.info("静态资源根目录: {}", location);
-        registry.addResourceHandler("/**").addResourceLocations(location);
+        // 自定义 /** 会覆盖 Spring Boot 默认静态资源映射（classpath:/META-INF/resources/ 等），
+        // 必须显式保留该 location，否则 knife4j 的 doc.html 与 /webjars 资源将无法访问。
+        registry.addResourceHandler("/**").addResourceLocations(location, "classpath:/META-INF/resources/");
     }
 
     /**
