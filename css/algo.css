@@ -87,6 +87,59 @@ body.algo-page {
     z-index: 1;
 }
 
+/* 学习进度与收藏（js/algo-learning.js 统一注入） */
+.algo-learning-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 9px;
+}
+
+.algo-favorite-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 27px;
+    padding: 3px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.10);
+    color: #e0e7ff;
+    font-size: 10.5px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.algo-favorite-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.42);
+}
+
+.algo-favorite-btn.is-active {
+    border-color: rgba(253, 230, 138, 0.58);
+    background: rgba(245, 158, 11, 0.20);
+    color: #fde68a;
+}
+
+.algo-favorite-btn.is-active .ico {
+    fill: currentColor;
+}
+
+.algo-favorite-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.algo-sync-status {
+    color: rgba(224, 231, 255, 0.72);
+    font-size: 9.5px;
+}
+
+.algo-sync-status.is-saved { color: #a7f3d0; }
+.algo-sync-status.is-error { color: #fecaca; }
+.algo-sync-status.is-saving { color: #c7d2fe; }
+
 .info-tag {
     display: inline-flex;
     align-items: center;

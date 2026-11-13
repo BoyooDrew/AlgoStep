@@ -26,6 +26,18 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationMapper notificationMapper;
 
     @Override
+    @Transactional
+    public void create(Long userId, String type, String title, String content) {
+        Notification notification = new Notification();
+        notification.setUserId(userId);
+        notification.setType(type);
+        notification.setTitle(title);
+        notification.setContent(content);
+        notification.setIsRead(0);
+        notificationMapper.insert(notification);
+    }
+
+    @Override
     public IPage<NotificationVO> page(int pageNum, int pageSize, Boolean unreadOnly) {
         Long userId = UserContext.getUserId();
 

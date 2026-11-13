@@ -58,7 +58,7 @@
     </form>
 
     <div class="auth-footer">
-      已有账号？<a href="./login.html">返回登录</a>
+      已有账号？<a id="loginLink" href="./login.html">返回登录</a>
     </div>
 
     <div class="back-home">
@@ -71,8 +71,22 @@
 <script src="./js/api.js"></script>
 <script src="./js/auth.js"></script>
 <script>
+  function getSafeRedirect() {
+    const raw = new URLSearchParams(location.search).get('redirect');
+    if (!raw) return './index.html';
+    if (!/^(?:\/(?!\/)|\.{1,2}\/)[A-Za-z0-9._\-\/]*\.html(?:#[A-Za-z0-9_-]+)?$/.test(raw)) {
+      return './index.html';
+    }
+    return raw;
+  }
+
+  const REDIRECT = getSafeRedirect();
+  const LOGIN_URL = './login.html' +
+    (REDIRECT !== './index.html' ? '?redirect=' + encodeURIComponent(REDIRECT) : '');
+  document.getElementById('loginLink').href = LOGIN_URL;
+
   if (isLoggedIn()) {
-    window.location.href = './index.html';
+    window.location.href = REDIRECT;
   }
 
   // 密码确认实时校验
@@ -85,10 +99,6 @@
       confirmPwd.classList.remove('invalid');
     }
   });
-
-  const redirect = new URLSearchParams(location.search).get('redirect');
-  const loginUrl = './login.html' + (redirect ? '?redirect=' + encodeURIComponent(redirect) : '');
-  window.location.href = loginUrl;
 
   async function handleRegister(event) {
     event.preventDefault();
@@ -119,7 +129,7 @@
       okEl.classList.add('show');
       btn.textContent = '注册成功';
       setTimeout(() => {
-        window.location.href = './login.html';
+        window.location.href = LOGIN_URL;
       }, 1500);
     } catch (err) {
       errEl.textContent = (err && err.msg) || '网络错误，请检查后端服务是否启动';

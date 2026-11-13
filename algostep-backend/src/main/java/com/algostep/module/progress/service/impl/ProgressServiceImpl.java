@@ -1,6 +1,8 @@
 package com.algostep.module.progress.service.impl;
 
 import com.algostep.common.enums.LearningStatus;
+import com.algostep.common.exception.BusinessException;
+import com.algostep.common.result.ResultCode;
 import com.algostep.common.utils.UserContext;
 import com.algostep.module.algorithm.entity.Algorithm;
 import com.algostep.module.algorithm.mapper.AlgorithmMapper;
@@ -93,6 +95,10 @@ public class ProgressServiceImpl implements ProgressService {
     @Transactional
     public ProgressVO save(ProgressDTO dto) {
         Long userId = UserContext.getUserId();
+        Algorithm algorithm = algorithmMapper.selectById(dto.getAlgorithmId());
+        if (algorithm == null) {
+            throw new BusinessException(ResultCode.ALGORITHM_NOT_FOUND);
+        }
 
         // 查询已有进度
         LearningProgress progress = progressMapper.selectOne(
@@ -126,11 +132,13 @@ public class ProgressServiceImpl implements ProgressService {
             LearningStatus.fromCode(dto.getStatus());
             progress.setStatus(dto.getStatus());
         } else {
-            // 自动判断状态
+            // stepIndex 为 0-based；最后一步已掌握，回到起点则回到未开始
             if (progress.getTotalSteps() > 0 && progress.getStepIndex() >= progress.getTotalSteps() - 1) {
                 progress.setStatus(LearningStatus.MASTERED.getCode());
             } else if (progress.getStepIndex() > 0) {
                 progress.setStatus(LearningStatus.LEARNING.getCode());
+            } else {
+                progress.setStatus(LearningStatus.UNSTARTED.getCode());
             }
         }
 
@@ -142,7 +150,6 @@ public class ProgressServiceImpl implements ProgressService {
             log.info("学习进度更新 | userId={} algoId={} step={}", userId, dto.getAlgorithmId(), progress.getStepIndex());
         }
 
-        Algorithm algorithm = algorithmMapper.selectById(dto.getAlgorithmId());
         return toVO(progress, algorithm);
     }
 

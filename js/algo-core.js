@@ -22,6 +22,8 @@
         this.onStep = options.onStep || function () {};
         this.onFinish = options.onFinish || function () {};
         this.onPlayChange = options.onPlayChange || function () {};
+        this.onStepsChange = options.onStepsChange || function () {};
+        this.onProgressChange = options.onProgressChange || function () {};
 
         this.steps = [];
         this.index = -1;
@@ -34,6 +36,7 @@
     StepController.prototype.setSteps = function (steps) {
         this.steps = Array.isArray(steps) ? steps : [];
         this.reset();
+        try { this.onStepsChange(this.steps.length); } catch (e) { console.error('[StepController] onStepsChange:', e); }
     };
 
     Object.defineProperties(StepController.prototype, {
@@ -51,6 +54,8 @@
             try { this.onStep(this.steps[this.index], this.index); }
             catch (e) { console.error('[StepController] onStep:', e); }
         }
+        try { this.onProgressChange(this.index, this.steps.length); }
+        catch (e) { console.error('[StepController] onProgressChange:', e); }
         if (this.index >= this.steps.length - 1) {
             try { this.onFinish(); } catch (_) {}
         }

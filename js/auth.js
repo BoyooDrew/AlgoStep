@@ -73,6 +73,16 @@ function isLoggedIn() {
   return !!getToken();
 }
 
+function siteUrl(path) {
+  const base = window.AlgoSite && window.AlgoSite.base ? window.AlgoSite.base : './';
+  return base + path;
+}
+
+function safeAvatarUrl(raw) {
+  const url = typeof raw === 'string' ? raw.trim() : '';
+  return /^(https?:\/\/|\/\/|\.{0,2}\/)/i.test(url) ? url : '';
+}
+
 /* ====== API 调用（统一走 js/api.js） ====== */
 async function loginAPI(username, password) {
   return AlgoAPI.post('/auth/login', { username, password }, { silent: true });
@@ -107,7 +117,7 @@ function updateAuthUI() {
   if (user) {
     const displayName = user.nickname || user.username || '用户';
     const initial = String(displayName).trim().charAt(0).toUpperCase() || 'U';
-    const avatar = typeof user.avatar === 'string' ? user.avatar.trim() : '';
+    const avatar = safeAvatarUrl(user.avatar);
 
     // 有头像 URL 时渲染图片；图片加载失败自动移除，露出首字母
     const avatarHtml = avatar
@@ -127,18 +137,18 @@ function updateAuthUI() {
         ${avatarHtml}
         <span class="user-name">${escapeHtml(displayName)}</span>
         <div class="user-dropdown" id="user-dropdown">
-          <a href="./profile.html">个人中心</a>
-          <a href="./profile.html#progress">学习进度</a>
-          <a href="./profile.html#favorites">我的收藏</a>
-          <a href="./profile.html#notifications">消息通知${unreadHtml}</a>
+          <a href="${siteUrl('profile.html')}">个人中心</a>
+          <a href="${siteUrl('profile.html#progress')}">学习进度</a>
+          <a href="${siteUrl('profile.html#favorites')}">我的收藏</a>
+          <a href="${siteUrl('profile.html#notifications')}">消息通知${unreadHtml}</a>
           <a href="javascript:void(0)" class="danger" onclick="handleLogout()">退出登录</a>
         </div>
       </div>
     `;
   } else {
     container.innerHTML = `
-      <a href="./login.html" class="auth-btn login-btn">登录</a>
-      <a href="./register.html" class="auth-btn register-btn">注册</a>
+      <a href="${siteUrl('login.html')}" class="auth-btn login-btn">登录</a>
+      <a href="${siteUrl('register.html')}" class="auth-btn register-btn">注册</a>
     `;
   }
 }
@@ -156,7 +166,7 @@ document.addEventListener('click', function() {
 
 async function handleLogout() {
   await logoutAPI();
-  window.location.href = './index.html';
+  window.location.href = siteUrl('index.html');
 }
 
 /* ====== 页面加载时自动更新 ====== */

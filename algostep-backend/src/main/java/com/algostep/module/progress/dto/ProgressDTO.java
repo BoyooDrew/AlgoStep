@@ -13,6 +13,7 @@ public class ProgressDTO {
     @Min(value = 0, message = "步数不能为负")
     private Integer stepIndex;
 
+    @Min(value = 1, message = "总步数必须大于0")
     private Integer totalSteps;
 
     @Min(value = 0, message = "学习时长不能为负")

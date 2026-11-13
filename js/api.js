@@ -89,10 +89,12 @@
   }
 
   function clearAuthAndRedirect() {
-    [TOKEN_KEY, REFRESH_KEY, USER_KEY].forEach(function (k) {
+    [TOKEN_KEY, REFRESH_KEY, USER_KEY, 'algostep_unread'].forEach(function (k) {
       localStorage.removeItem(k);
     });
-    location.href = './login.html';
+    var base = window.AlgoSite && window.AlgoSite.base ? window.AlgoSite.base : './';
+    var redirect = location.pathname + location.hash;
+    location.href = base + 'login.html?redirect=' + encodeURIComponent(redirect);
   }
 
   /* ---------- 统一入口 ---------- */
@@ -107,6 +109,7 @@
     };
     if (options.body !== undefined) reqOpts.body = options.body;
     if (options.credentials) reqOpts.credentials = options.credentials;
+    if (options.keepalive) reqOpts.keepalive = true;
 
     var token = localStorage.getItem(TOKEN_KEY);
     if (token) reqOpts.headers['Authorization'] = 'Bearer ' + token;
@@ -121,6 +124,7 @@
                 headers: Object.assign({}, opts.headers, { 'Authorization': 'Bearer ' + newToken })
               };
               if (opts.body !== undefined) retryOpts.body = opts.body;
+              if (opts.keepalive) retryOpts.keepalive = true;
               return raw(API_BASE + path, retryOpts, noLoading);
             })
             .catch(function () {

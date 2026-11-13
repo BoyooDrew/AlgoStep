@@ -998,6 +998,96 @@
     background: var(--v2-primary-hover);
 }
 
+/* ============================================================
+ * 内容密度：整体适度放大（宽屏下减少留白，不占满全屏）
+ * ============================================================ */
+.profile-shell {
+    max-width: 1320px;
+    padding: 30px 28px 48px;
+    grid-template-columns: 268px minmax(0, 1fr);
+    gap: 24px;
+}
+
+.profile-card {
+    padding: 28px 22px 22px;
+}
+
+.profile-name { font-size: 18px; }
+.profile-email { font-size: 12px; }
+.profile-role { font-size: 10.5px; }
+.profile-nav-item { font-size: 13px; }
+.profile-nav-item .ico { width: 15px; height: 15px; }
+.profile-logout { font-size: 12.5px; }
+
+.profile-panel {
+    padding: 30px 32px 34px;
+}
+
+.panel-head h2 { font-size: 22px; }
+.panel-head p { font-size: 12.5px; }
+.panel-action {
+    height: 32px;
+    padding: 0 14px;
+    font-size: 12px;
+}
+
+.stat-grid { gap: 14px; }
+.stat-card { padding: 18px 18px 16px; }
+.stat-label { font-size: 12px; }
+.stat-value { font-size: 30px; }
+.stat-value--sm { font-size: 22px; }
+.stat-foot { font-size: 11px; }
+
+.panel-card { padding: 18px; }
+.mini-body strong { font-size: 13px; }
+.mini-body small { font-size: 11px; }
+
+.progress-item { padding: 16px 18px; }
+.item-title { font-size: 15px; }
+.item-en { font-size: 11px; }
+.item-meta { font-size: 11px; }
+.chip {
+    height: 20px;
+    padding: 0 8px;
+    font-size: 10.5px;
+}
+.progress-bar {
+    width: 190px;
+    height: 8px;
+}
+.progress-percent {
+    width: 40px;
+    font-size: 11.5px;
+}
+.item-link {
+    height: 30px;
+    padding: 0 12px;
+    font-size: 11.5px;
+}
+
+.favorite-card { padding: 18px; }
+.btn-icon {
+    width: 30px;
+    height: 30px;
+}
+.btn-icon .ico {
+    width: 14px;
+    height: 14px;
+}
+
+.notif-title { font-size: 13.5px; }
+.notif-content { font-size: 12px; }
+.notif-meta { font-size: 10.5px; }
+
+.form-field label { font-size: 12.5px; }
+.form-field input { font-size: 13.5px; }
+.form-hint { font-size: 11px; }
+.btn-primary,
+.btn-ghost { font-size: 12.5px; }
+
+.empty-state p { font-size: 11.5px; }
+.empty-state a { font-size: 11.5px; }
+
 /* ---------------- 响应式 ---------------- */
 @media (max-width: 960px) {
     .profile-shell {

@@ -9,6 +9,7 @@ import com.algostep.module.auth.dto.RefreshDTO;
 import com.algostep.module.auth.dto.RegisterDTO;
 import com.algostep.module.auth.service.AuthService;
 import com.algostep.module.auth.vo.LoginVO;
+import com.algostep.module.notification.service.NotificationService;
 import com.algostep.module.user.entity.User;
 import com.algostep.module.user.mapper.UserMapper;
 import com.algostep.module.user.service.UserService;
@@ -27,6 +28,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserService userService;
     private final PasswordUtils passwordUtils;
     private final JwtUtils jwtUtils;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -47,6 +49,12 @@ public class AuthServiceImpl implements AuthService {
         user.setStatus(1);
 
         userMapper.insert(user);
+        notificationService.create(
+                user.getId(),
+                "SYSTEM",
+                "欢迎来到 AlgoStep",
+                "你好，" + user.getNickname() + "！从任意算法页开始播放，学习进度和收藏会自动同步到个人中心。"
+        );
         log.info("用户注册成功 | username={}", dto.getUsername());
     }
 

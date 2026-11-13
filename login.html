@@ -47,12 +47,6 @@
 
     <div class="auth-footer">
       还没有账号？<a id="registerLink" href="./register.html">立即注册</a>
-      <script>
-        if (REDIRECT !== './index.html') {
-          document.getElementById('registerLink').href =
-            './register.html?redirect=' + encodeURIComponent(REDIRECT);
-        }
-      </script>
     </div>
 
     <div class="back-home">
@@ -70,13 +64,18 @@
     const raw = new URLSearchParams(location.search).get('redirect');
     if (!raw) return './index.html';
     // 允许 ./profile.html、../index.html、/profile.html，可带 #hash
-    if (!/^\.{0,2}\/[A-Za-z0-9._\-\/]*\.html(?:#[A-Za-z0-9_-]+)?$/.test(raw)) {
+    if (!/^(?:\/(?!\/)|\.{1,2}\/)[A-Za-z0-9._\-\/]*\.html(?:#[A-Za-z0-9_-]+)?$/.test(raw)) {
       return './index.html';
     }
     return raw;
   }
 
   const REDIRECT = getSafeRedirect();
+
+  if (REDIRECT !== './index.html') {
+    document.getElementById('registerLink').href =
+      './register.html?redirect=' + encodeURIComponent(REDIRECT);
+  }
 
   // 已登录则直接去目标页
   if (isLoggedIn()) {

@@ -104,6 +104,9 @@
         var total = Number(progress.totalSteps) || 0;
         var current = Number(progress.stepIndex) || 0;
         if (total <= 0) return 0;
+        // stepIndex 从 0 开始，最后一步（totalSteps - 1）即代表全部完成
+        if (progress.status === 'MASTERED' || current >= total - 1) return 100;
+        if (current <= 0) return 0;
         return Math.max(0, Math.min(100, Math.round(current / total * 100)));
     }
 
@@ -618,22 +621,27 @@
         })[0];
         if (!target) return;
 
-        if (!window.confirm('确定取消收藏「' + nameOf(target) + '」吗？')) {
-            return;
-        }
+        AlgoDialog.confirm({
+            title: '取消收藏',
+            message: '确定取消收藏「' + nameOf(target) + '」吗？',
+            confirmText: '取消收藏',
+            danger: true
+        }).then(function (ok) {
+            if (!ok) return;
 
-        AlgoAPI.del('/favorites/' + algorithmId)
-            .then(function () {
-                state.favorites = state.favorites.filter(function (item) {
-                    return Number(item.algorithmId) !== Number(algorithmId);
+            AlgoAPI.del('/favorites/' + algorithmId)
+                .then(function () {
+                    state.favorites = state.favorites.filter(function (item) {
+                        return Number(item.algorithmId) !== Number(algorithmId);
+                    });
+                    renderFavorites();
+                    renderRecentFavorites();
+                    toast('已取消收藏');
+                })
+                .catch(function (err) {
+                    toast((err && err.msg) || '取消收藏失败');
                 });
-                renderFavorites();
-                renderRecentFavorites();
-                toast('已取消收藏');
-            })
-            .catch(function (err) {
-                toast((err && err.msg) || '取消收藏失败');
-            });
+        });
     }
 
     /* ============================================================
@@ -697,6 +705,9 @@
 
         // 缓存给顶栏用，避免每个页面都请求一次未读数
         localStorage.setItem('algostep_unread', String(value));
+        if (window.AlgoNotifications) {
+            window.AlgoNotifications.setUnread(value);
+        }
 
         ['navNotifBadge', 'notifUnreadBadge', 'nav-unread-badge'].forEach(function (id) {
             var el = document.getElementById(id);

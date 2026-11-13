@@ -3,7 +3,7 @@
 > 文档性质：工程落地方案 + 执行记录（可直接用于进度追溯与后续开发交接）
 > 覆盖范围：前端 `/*.html`、`css/`、`js/`；后端 `algostep-backend/`（Spring Boot 3 + MyBatis-Plus）
 > 版本基线：前端 v2.0 视觉体系；后端 1.0.0（23 个接口）
-> 最后更新：2026-11-07（S0、S1 已执行完成）
+> 最后更新：2026-11-14（S0–S4 已完成，含 UI 验收修复）
 
 ---
 
@@ -17,7 +17,7 @@
 | 四 | 全维度质量审核问题清单 | 回答"哪里有问题、怎么改" |
 | 五 | 落地路线图 S0–S6（含执行状态） | 回答"按什么顺序做、做到哪了" |
 | 六 | 架构逻辑与开发模式问答 | 回答"之后怎么协作、页面怎么同步、能否后台配置" |
-| 七 | 本轮（S0 + S1）变更与验收记录 | 追溯每次改动的文件与验证结论 |
+| 七 | 本轮（S0–S4）变更与验收记录 | 追溯每次改动的文件与验证结论 |
 | 八 | 附录：接口总表 / 数据模型 / 术语 | 日常速查 |
 
 ---
@@ -34,23 +34,27 @@
 | `about.html` | Hero + 技术栈 + 时间线 | 登录态导航 | 无（仅认证 UI） | — | 100% |
 | `login.html` | 登录卡片表单 | 表单校验、错误内联提示、登录跳转 | `POST /api/auth/login` | — | 100% |
 | `register.html` | 注册卡片表单 | 两次密码一致性校验、成功提示、跳登录 | `POST /api/auth/register` | — | 100% |
-| `algorithms/template.html` | 三栏模板（信息 / 代码 / 舞台） | 步骤播放、速度、轨迹回溯、字号、复制 | 无 | 进度、收藏 | 视觉 100% / 数据 0% |
-| `algorithms/sort/{bubble,selection,insertion,quick}-sort.html` | 同上 | 同上 | 无 | 进度、收藏 | 视觉 100% / 数据 0% |
-| `algorithms/dp/{climb-stairs,0-1knapsack,complete-knapsack,lcs,lis}.html` | 同上 | 同上 | 无 | 进度、收藏 | 视觉 100% / 数据 0% |
-| `algorithms/search/{binary-search,dfs,bfs}.html` | 同上 | 同上 | 无 | 进度、收藏 | 视觉 100% / 数据 0% |
+| `profile.html` | 个人中心 | 资料修改、改密、学习统计、进度筛选、收藏管理、通知管理 | `/api/user/**`、`/api/progress/**`、`/api/favorites`、`/api/notifications/**` | — | 100%（S3） |
+| `algorithms/template.html` | 三栏模板（信息 / 代码 / 舞台） | 已接入共享进度 / 收藏逻辑；无算法元数据时明确提示 | `GET /api/algorithms` | 无（模板不生成业务数据） | 模板已接入（S2） |
+| `algorithms/sort/{bubble,selection,insertion,quick}-sort.html` | 同上 | 步骤播放、进度恢复 / 节流保存、收藏同步 | `/api/algorithms`、`/api/progress/**`、`/api/favorites/**` | — | 100%（S2） |
+| `algorithms/dp/{climb-stairs,0-1knapsack,complete-knapsack,lcs,lis}.html` | 同上 | 同上 | 同上 | — | 100%（S2） |
+| `algorithms/search/{binary-search,dfs,bfs}.html` | 同上 | 同上 | 同上 | — | 100%（S2） |
 | `view.html` | GoatCounter 统计面板（`.gitignore` 排除） | 第三方数据查询 | GoatCounter API（非本项目后端） | — | 100% |
 
 **前端共享模块现状**
 
 | 文件 | 职责 | 本轮变化 |
 |---|---|---|
-| `js/api.js` | 统一请求层：BASE 推导、Token、401 静默刷新、业务码、Toast、loading | **S0 重写** |
-| `js/auth.js` | Token 存取、登录/注册/登出、登录态 UI | **S0 切换至 AlgoAPI** |
-| `js/algo-core.js` | `StepController` / `CodePanel` / 播放、字号、复制、轨迹绑定 | 不变 |
+| `js/api.js` | 统一请求层：BASE 推导、Token、401 静默刷新、业务码、Toast、loading | **S0 重写；S2 支持 keepalive，并修正子目录登录回跳** |
+| `js/auth.js` | Token 存取、登录/注册/登出、登录态 UI | **S0 切换至 AlgoAPI；S3 增加个人中心入口与头像渲染** |
+| `js/algo-core.js` | `StepController` / `CodePanel` / 播放、字号、复制、轨迹绑定 | **S2 增加步骤与进度生命周期钩子** |
+| `js/algo-learning.js` | 算法 slug→id、进度恢复 / 节流保存、学习时长、收藏 | **S2 新增，13 个算法页共用** |
+| `js/profile.js` | 个人中心资料、统计、进度、收藏、通知交互 | **S3 新增；S4 同步全站未读数** |
 | `js/algo-nav.js` | 算法目录树与面包屑下拉 | 不变 |
 | `js/algo-utils.js` | `parseNumArray` / `randomIntArray` | 不变 |
-| `js/site.js` | 顶栏 / 页脚统一注入（`data-base` / `data-auth` / `data-footer`） | 不变 |
-| `css/base.css` | 设计令牌、外壳、Toast、**全局 loading** | **S0 追加** |
+| `js/site.js` | 顶栏 / 页脚统一注入、通知铃铛与抽屉 | **S4 增加通知模块** |
+| `css/base.css` | 设计令牌、外壳、Toast、全局 loading、通知抽屉 | **S0 + S4 追加** |
+| `css/algo.css` | 算法页布局、收藏按钮与进度同步状态 | **S2 追加** |
 
 ### 1.2 后端侧盘点
 
@@ -91,11 +95,11 @@
 | # | 缺口模块 | 涉及接口 | 当前状态 | 阻塞点 |
 |---|---|---|---|---|
 | G1 | 首页算法卡片 | `GET /api/algorithms` | **已闭环（S1）**：卡片由接口渲染，失败保留静态兜底 | 无（历史阻塞点为前端无渲染逻辑） |
-| G2 | 算法页学习进度 | `PUT/GET /api/progress` | 未对接；播放进度仅存内存 | 算法页拿不到 `algorithmId`（slug→id 无映射）；无节流上报；无恢复逻辑 |
-| G3 | 算法页收藏 | `POST/DELETE /api/favorites/{id}` | 未对接；页面无按钮 | 同 G2 的 id 映射；需新增按钮样式与状态同步 |
-| G4 | 学习统计看板 | `GET /api/progress/stats` | 无展示位 | 需个人中心或独立页面 |
-| G5 | 个人中心 | `/api/user/profile`、`/api/user/password` | 仅有下拉菜单"登出" | 无 `profile.html` |
-| G6 | 站内通知 | 通知 4 接口 | 后端接口就绪，数据源为空 | 前端无铃铛 UI；后端无通知产生机制 |
+| G2 | 算法页学习进度 | `PUT/GET /api/progress` | **已闭环（S2）**：slug→id、5 秒节流、最后一步立即保存、刷新恢复、离页 keepalive | 无 |
+| G3 | 算法页收藏 | `POST/DELETE /api/favorites/{id}` | **已闭环（S2）**：13 页共享按钮与收藏状态同步，未登录引导登录 | 无 |
+| G4 | 学习统计看板 | `GET /api/progress/stats` | **已闭环（S3）**：个人中心展示总数、各状态数量与学习时长 | 无 |
+| G5 | 个人中心 | `/api/user/profile`、`/api/user/password` | **已闭环（S3）**：资料、改密、进度、收藏与通知页面可用 | 无 |
+| G6 | 站内通知 | 通知 4 接口 | **已闭环（S4）**：注册欢迎通知、全站铃铛、未读角标、抽屉与已读操作 | 无 |
 | G7 | Token 续期 | `POST /api/auth/refresh` | **已闭环（S0）**：401 自动刷新并重放一次 | 无（历史阻塞点为 refreshToken 存而不用） |
 | G8 | API 地址环境化 | 全部 | **已闭环（S0）**：`js/api.js` 统一推导 / 可覆盖 | 无 |
 | G9 | 管理后台 | 尚无管理接口 | 完全空白 | 后端无 `/api/admin/**`，前端无 admin 页面 |
@@ -179,7 +183,7 @@ https://algo-step.surge.sh   # 线上静态站
 | T16 | algorithms/{id} | 正常 / 边界 0、999999、非数字 | — | 详情 / `code=2001` / `code=400` |
 | T17 | algorithms | 字段完整性 | — | 每条含 `complexity`、`description`（S1 新增字段） |
 | T18 | progress PUT | 正常保存 | `stepIndex=5,totalSteps=12` | 返回 `status=LEARNING` |
-| T19 | progress PUT | 边界-状态机与幂等 | `0` / `>= totalSteps` / 重复 PUT | UNSTARTED / MASTERED / 幂等不报错 |
+| T19 | progress PUT | 边界-状态机与幂等 | 0-based `stepIndex=0` / `stepIndex=totalSteps-1` / 回到 0 / 重复 PUT | UNSTARTED / MASTERED / 回到 UNSTARTED / 幂等不报错 |
 | T20 | progress PUT | 异常 | 未登录 / algorithmId 不存在 | 401 / 业务错误 |
 | T21 | progress GET | 从未学习 | 新算法 | 返回默认 UNSTARTED（不 404） |
 | T22 | progress/stats | 空数据 / 混合状态 | — | 各状态之和 = total；studyTime 累加正确 |
@@ -251,9 +255,9 @@ https://algo-step.surge.sh   # 线上静态站
 |---|---|---|---|---|
 | **S0 基础设施** | `js/api.js` 落地；`base.css` loading；`api.js` 全站引入；auth 模块切换；CORS 收紧；JWT 密钥环境变量化；方法级鉴权开启；登录限流 | 统一请求层可用、安全项生效 | 登录/注册/登出回归正常；T07 限流生效；JS 语法与后端编译通过 | **已完成** |
 | **S1 首页联调** | 首页卡片由 `/api/algorithms` 渲染；失败回退静态兜底；过滤模板入口；补齐算法元数据（complexity / description） | 首页 DB 驱动 | T15/T16/T17 通过；后端未启动时首页仍完整可用 | **已完成** |
-| **S2 算法页进度 + 收藏** | 算法页注入 slug→id 映射（首屏并行取 `/api/algorithms`）；`StepController` 步骤节流上报；初始化拉取进度并 `goTo(stepIndex)` 恢复；收藏按钮与状态同步 | 13 页统一行为 | T18–T23 通过；「播放→保存→刷新→恢复」闭环 | 待执行 |
-| **S3 个人中心** | `profile.html`：资料修改、改密、学习统计、收藏列表 | 页面完整可用 | T12–T14、T22 通过 | 待执行 |
-| **S4 站内通知** | 注册成功写欢迎通知；顶栏铃铛 + 未读红点 + 通知抽屉 | 通知链路可用 | T24/T25 通过 | 待执行 |
+| **S2 算法页进度 + 收藏** | 算法页注入 slug→id 映射（首屏并行取 `/api/algorithms`）；`StepController` 步骤节流上报；初始化拉取进度并 `goTo(stepIndex)` 恢复；收藏按钮与状态同步 | 13 页统一行为 | T18–T23 通过；「播放→保存→刷新→恢复」闭环 | **已完成（2026-11-13）** |
+| **S3 个人中心** | `profile.html`：资料修改、改密、学习统计、收藏列表 | 页面完整可用 | T12–T14、T22 通过 | **已完成并核验（2026-11-13）** |
+| **S4 站内通知** | 注册成功写欢迎通知；顶栏铃铛 + 未读红点 + 通知抽屉 | 通知链路可用 | T24/T25 通过 | **已完成（2026-11-13）** |
 | **S5 管理后台** | 第三章 A1 → A2 → A3 | `admin.html` + `/api/admin/**` | 非 ADMIN 访问管理接口返回 403；算法元数据后台增删改后首页同步 | 待执行 |
 | **S6 发布准备** | MySQL profile 验证、`docker-compose` 部署、Surge 前端 + 服务器后端、Nginx 同域反代 `/api`、全量回归 | 上线包 + 回归报告 | T01–T27 全绿；线上注册登录进度链路实测通过 | 待执行 |
 
@@ -287,7 +291,7 @@ https://algo-step.surge.sh   # 线上静态站
 
 ---
 
-## 七、本轮（S0 + S1）变更与验收记录
+## 七、本轮（S0–S4）变更与验收记录
 
 ### 7.1 变更明细
 
@@ -313,13 +317,27 @@ https://algo-step.surge.sh   # 线上静态站
 | 18 | `README.md` | 开发文档区补充本文档链接 | 文档 |
 | 19 | `css/home.css` | 删除已无引用的 `.category-block.dev-block` 虚线卡片样式 | S1 |
 | 20 | `algostep-backend/.../resources/application-h2.yml` | 增加 `spring.sql.init.encoding: UTF-8`（修复 H2 seed 中文乱码） | S1（验证中发现） |
+| 21 | `js/algo-learning.js` | 新增算法页共享学习模块：slug→id 映射、进度恢复、5 秒节流保存、最后一步立即保存、学习时长统计、离页 `keepalive`、收藏与登录引导 | S2 |
+| 22 | `js/algo-core.js` | `StepController` 增加 `onStepsChange` / `onProgressChange` 钩子，保留各算法页原有渲染与播放逻辑 | S2 |
+| 23 | `algorithms/template.html` 及 12 个正式算法页 | 统一引入认证、请求与学习模块，并调用 `AlgoLearning.attach(controller)`；模板页无元数据时不生成业务记录 | S2 |
+| 24 | `css/algo.css` | 新增收藏按钮、已收藏状态及进度保存状态样式 | S2 |
+| 25 | `ProgressServiceImpl.java`、`ProgressDTO.java`、`ProgressVO.java` | 修正 0-based 状态机；校验算法存在与 `totalSteps >= 1`；返回算法页 `url` 供继续学习 | S2 / S3 |
+| 26 | `profile.html`、`js/profile.js` | S3 已实现资料、改密、统计、进度、收藏和通知管理；本轮核验，并补齐全站未读角标同步 | S3 / S4 |
+| 27 | `login.html`、`register.html` | 修复注册页自动跳转与登录页初始化顺序；登录、注册均保留来源页，并拒绝站外及协议相对重定向 | S3（核验修复） |
+| 28 | `js/auth.js`、`js/api.js` | 修正算法子目录中的登录、个人中心和登出路径；增加头像 URL 过滤、离页请求 `keepalive` 与未读缓存清理 | S2 / S3 |
+| 29 | `NotificationService.java`、`NotificationServiceImpl.java`、`AuthServiceImpl.java` | 新增内部通知创建能力；注册事务内写入欢迎通知，用户与通知同时提交或回滚 | S4 |
+| 30 | `js/site.js`、`css/base.css`、`js/icons.js` | 新增全站铃铛、未读角标、通知抽屉、单条/全部已读、空态与失败重试，并挂载到公共顶栏 | S4 |
+| 31 | `js/profile.js` | 进度百分比改按 0-based 最后一步判断：已掌握或到达 `totalSteps - 1` 显示 100% | S2 / S3（验收修复） |
+| 32 | `js/site.js`、`css/base.css` | 新增通用确认对话框 `AlgoDialog.confirm()`（Promise、遮罩、Escape、焦点还原），收藏删除不再使用浏览器原生 `confirm` | 全站公共组件 |
+| 33 | `css/base.css` | 全站 `.toast` 提示从页面底部移至顶部居中（顶栏下方），供前台与后续管理后台复用 | 全站公共组件 |
+| 34 | `css/profile.css` | 个人中心内容区 1180 → 1320px，侧栏 250 → 268px，标题、统计、进度、表单等字号整体上调 | S3（验收修复） |
 
 ### 7.2 验收记录
 
 | 检查项 | 方法 | 结果 |
 |---|---|---|
-| 前端 JS 语法 | `node --check` 逐个校验 9 个 js 文件 | 通过 |
-| 后端编译 | `mvn -o -DskipTests compile` | 通过（exit 0） |
+| 前端 JS 语法 | `node --check` 校验关键共享 JS；解析 13 个算法页及登录、注册页内联脚本 | 通过 |
+| 后端测试 | `mvn test` | 通过（exit 0） |
 | 接口契约 | `GET /api/algorithms` → 12 条；`?category=dp` → 5 条；`?category=sort` → 4 条；非法分类 → `code=200` 且 `count=0` | 通过 |
 | 元数据完整性 | 响应含 `complexity`（`O(n)` / `O(nW)` …）与中文 `description` | 通过 |
 | 中文编码 | 原始响应为 UTF-8：`"nameZh":"爬楼梯"`、`"description":"每次可上 1 或 2 级台阶…"` | 通过（见 7.4 修复） |
@@ -328,6 +346,14 @@ https://algo-step.surge.sh   # 线上静态站
 | CORS 白名单 | `Origin: http://localhost:5500` / `https://evil.example` | 前者回显允许源；后者 403 |
 | 认证链路 | 注册 → 登录 → `/auth/me` → `/auth/refresh` | 依次 `200 / 200(role=USER, 有 refreshToken) / 200 / 200(返回新 token)` |
 | 首页兜底 | 后端未启动时保留静态卡片与统计数字 | 逻辑保证（`catch` 内不修改 DOM） |
+| S0–S4 接口集成 | 使用独立 H2 实例执行注册、登录、刷新、资料、改密、进度、统计、收藏、通知等检查 | **32 项全部通过** |
+| 进度状态机 | 总步数 12：依次保存步骤 `0 / 5 / 11 / 0`；另测 `totalSteps=0` 与无效算法 ID | `UNSTARTED / LEARNING / MASTERED / UNSTARTED`；异常分别返回 400 / 2001 |
+| 收藏与通知 | 收藏添加、重复添加、取消、重复取消；欢迎通知、未读筛选、单条/全部已读、越界分页 | 全部符合业务码与幂等约定 |
+| 浏览器主链路 | 注册登录 → 欢迎通知 → 收藏冒泡排序 → 保存进度 → 刷新恢复 → 个人中心查看 → 修改昵称 → 全部已读 | 通过；顶栏昵称、收藏、进度与未读角标同步 |
+| 自动播放 | 播放/暂停、连续自动保存、学习时长累计与暂停后最终保存 | 通过 |
+| 安全回跳 | 合法站内算法页地址原样返回；`//evil.com`、完整站外 URL、`javascript:` 与无 `./` 的地址回退首页 | 登录、注册页均通过 |
+| 进度百分比 | 边界数据：`stepIndex=11/12`、`status=MASTERED, 8/9`、`0/12`、`totalSteps=0` | 依次 `100% / 100% / 0% / 0%`，脚本用例通过 |
+| UI 验收修复 | 进度 100%、自定义确认弹窗、提示移至顶部、个人中心放大 | 已按反馈修改，交由用户复核 |
 
 ### 7.3 运行态验证命令（可复现）
 
@@ -351,6 +377,17 @@ mvn -o spring-boot:run
 | dev(MySQL) 启动失败 | `Unknown column 'complexity' in 'field list'`，ApplicationContext 启动失败，首页请求接口 500/连接拒绝 | 已有 MySQL 的 `algorithm` 表为旧结构，`CREATE TABLE IF NOT EXISTS` 不会给已有表加列，而 INSERT 引用了新列 | `init.sql` 在 algorithm 建表语句后追加幂等迁移：`information_schema` 探测 + `PREPARE` 条件执行 `ALTER TABLE ADD COLUMN` |
 | dev(MySQL) seed 乱码 | 启动日志中 INSERT 语句中文显示为 `鍐掓场鎺掑簭`，且会真实写入库 | Java 17 中文 Windows 默认平台编码为 GBK，dev profile 未指定 SQL 脚本编码 | `application-dev.yml` 增加 `spring.sql.init.encoding: UTF-8`；存量乱码行由 `ON DUPLICATE KEY UPDATE` 自愈 |
 | IDE 启动后所有页面 500 | 直接运行 `AlgoStepApplication` main（工作目录=项目根）后访问 `/index.html`、`/login.html` 等全部返回 `{"code":500,"msg":"服务器内部错误"}`，日志 `No static resource index.html` | `algostep.frontend.path: file:../` 相对 JVM 工作目录：IDE 启动时指向项目根的上级目录导致找不到文件；且 Spring 对 `file:./` 相对位置的处理不可靠（实测 cwd 正确、文件存在仍 NoResourceFoundException），必须绝对路径 | `WebConfig.resolveFrontendLocation()`：按「配置值 → `file:./` → `file:../`」探测首个含 `index.html` 的目录，用 `getCanonicalPath()` 转绝对路径后再注册；`mvn spring-boot:run` 与 IDE 直跑两种方式均验证通过（12 项页面/资源/接口全 200） |
+| 注册页无法正常注册 | 打开注册页立即跳回登录页 | 顶层脚本无条件执行跳转 | 删除自动跳转，仅注册成功后延时跳登录；已登录用户访问时回安全目标页 |
+| 登录页脚本初始化异常 | 注册链接处理先于 `REDIRECT` 初始化，触发暂时性死区 | 常量声明与使用顺序错误 | 将注册链接处理移动到 `REDIRECT` 初始化之后 |
+| 算法子目录链接错误 | 登录、个人中心或登出后跳到不存在的路径 | 子目录页面直接使用根目录相对地址 | `auth.js` / `api.js` 根据 `AlgoSite.base` 统一生成站内地址，并保留当前页回跳 |
+| 进度状态判断偏差 | 最后一步不能稳定判定已掌握，回到首步后状态未回退 | 将 0-based 索引误按 `stepIndex >= totalSteps` 判断，且缺少首步分支 | 改为 `stepIndex >= totalSteps - 1`，并补齐 `UNSTARTED`；增加算法存在性与 `totalSteps >= 1` 校验 |
+| 通知入口不可见 | 通知逻辑已定义但顶栏没有可用抽屉，样式也不完整 | `mountNotifications()` 未挂载，公共 CSS 与图标未补齐 | 在公共顶栏挂载通知模块，补齐铃铛、角标、抽屉、列表样式与图标 |
+| 已读后角标不同步 | 个人中心已读操作后，其他公共顶栏仍可能显示旧未读数 | 页面内角标与全站通知状态未联动 | 通过 `AlgoNotifications.setUnread()` 同步本地缓存和顶栏角标 |
+| 回跳地址校验过宽 | `//evil.com/x.html` 可能被当作合法路径 | 旧正则未排除协议相对 URL | 登录、注册页明确禁止 `//` 开头，并回归合法站内地址与站外地址 |
+| 最后一步进度仍为 99% | 个人中心进度条到达最后一步仍不满，状态却已是已掌握 | `stepIndex` 为 0-based，旧算法按 `current / total` 计算 | 已掌握或 `current >= total - 1` 直接按 100% 展示，首步仍为 0% |
+| 收藏删除出现浏览器弹窗 | 点击垃圾桶图标弹出浏览器原生确认框，样式割裂且无法复用 | 直接使用了 `window.confirm` | 新增 `AlgoDialog.confirm()` 公共组件并替换调用，供后续管理后台复用 |
+| 提示信息位于页面底部 | Toast 出现在底部，容易被忽略 | `.toast` 固定为 `bottom: 28px` | 改为顶部居中（`top: 60px`，位于顶栏下方），全站统一 |
+| 个人中心内容偏小、留白过多 | 宽屏下整体偏小，视觉重心不足 | 容器 1180px、字号 9.5–13px 偏小 | 容器放宽至 1320px 并整体上调字号与关键控件尺寸，移动端响应式保持不变 |
 
 > 附：PowerShell 控制台中 Spring 日志中文显示乱码仅为控制台代码页（GBK）与日志 UTF-8 不匹配的显示问题，不影响数据；如需消除可在启动前执行 `chcp 65001`。同理 MyBatis 的 SQL 行日志（如 `O(n²)` 显示为 `O(n?)`）也仅是控制台显示问题，HTTP 响应字节为正确 UTF-8。
 
@@ -362,18 +399,18 @@ mvn -o spring-boot:run
 
 | 方法 | 路径 | 鉴权 | 前端调用方 | 状态 |
 |---|---|---|---|---|
-| GET | `/api/algorithms` | 否 | `index.html`（S1） | 已对接 |
-| GET | `/api/algorithms/{id}` | 否 | 待 S2 | 未对接 |
+| GET | `/api/algorithms` | 否 | `index.html`、`js/algo-learning.js`、`js/profile.js` | 已对接 |
+| GET | `/api/algorithms/{id}` | 否 | 当前以列表建立 slug→id 映射 | 已验证，页面暂未直接调用 |
 | POST | `/api/auth/register` | 否 | `register.html` | 已对接 |
 | POST | `/api/auth/login` | 否 | `login.html` | 已对接 |
 | POST | `/api/auth/refresh` | 否 | `js/api.js` | 已对接 |
 | POST | `/api/auth/logout` | 是 | `js/auth.js` | 已对接 |
-| GET | `/api/auth/me` | 是 | 待 S3 | 未对接 |
-| GET/PUT | `/api/user/profile` | 是 | 待 S3 | 未对接 |
-| PUT | `/api/user/password` | 是 | 待 S3 | 未对接 |
-| GET/PUT | `/api/progress`、`/api/progress/{id}`、`/stats` | 是 | 待 S2 / S3 | 未对接 |
-| GET/POST/DELETE | `/api/favorites`、`/api/favorites/{algorithmId}` | 是 | 待 S2 / S3 | 未对接 |
-| GET/PUT | `/api/notifications`（4 个） | 是 | 待 S4 | 未对接 |
+| GET | `/api/auth/me` | 是 | 页面使用登录缓存与 `/api/user/profile` | 已验证，页面暂未直接调用 |
+| GET/PUT | `/api/user/profile` | 是 | `js/profile.js` | 已对接 |
+| PUT | `/api/user/password` | 是 | `js/profile.js` | 已对接 |
+| GET/PUT | `/api/progress`、`/api/progress/{id}`、`/api/progress/stats` | 是 | `js/algo-learning.js`、`js/profile.js` | 已对接 |
+| GET/POST/DELETE | `/api/favorites`、`/api/favorites/{algorithmId}` | 是 | `js/algo-learning.js`、`js/profile.js` | 已对接 |
+| GET/PUT | `/api/notifications`（含单条已读、全部已读、未读数） | 是 | `js/site.js`、`js/profile.js` | 已对接 |
 
 ### 8.2 数据模型速查
 
@@ -383,7 +420,7 @@ sys_user 1 ──< learning_progress >── 1 algorithm
               notification
 ```
 
-- `learning_progress.status`：`stepIndex=0 → UNSTARTED`；`0 < stepIndex < totalSteps → LEARNING`；`stepIndex >= totalSteps → MASTERED`
+- `learning_progress.status`：`totalSteps >= 1`；`stepIndex=0 → UNSTARTED`；`0 < stepIndex < totalSteps-1 → LEARNING`；`stepIndex >= totalSteps-1 → MASTERED`
 - `favorite`、`learning_progress` 均以 `(user_id, algorithm_id)` 唯一，天然幂等
 
 ### 8.3 术语
